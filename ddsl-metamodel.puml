@@ -1,0 +1,385 @@
+@startuml DDSL Metamodel
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #6C757D
+skinparam classHeaderBackgroundColor #E9ECEF
+
+' Title
+title DDSL (Domain-Driven Design Specification Language) Metamodel
+
+' Core AST Infrastructure
+package "Core Infrastructure" {
+    abstract class ASTNode {
+        - location: SourceLocation
+        - documentation: String
+        + accept(visitor: CodeGenVisitor): void
+    }
+
+    class SourceLocation {
+        + getLine(): int
+        + getColumn(): int
+        + getFilePath(): String
+    }
+
+    class JavaType {
+        + getName(): String
+        + getPackageName(): String
+        + isCollection(): boolean
+        + getGenericTypes(): List<JavaType>
+    }
+
+    class ValidationError {
+        - message: String
+        - location: SourceLocation
+        - severity: ErrorSeverity
+    }
+}
+
+' Domain Model Root
+package "Domain Model" {
+    class DomainModel {
+        - modelName: String
+        - basePackage: String
+        - boundedContexts: List<BoundedContext>
+        + addBoundedContext(context: BoundedContext): void
+        + generateCode(): CodeArtifacts
+    }
+
+    class BoundedContext {
+        - name: String
+        - packageName: String
+        - aggregates: List<Aggregate>
+        - valueObjects: List<ValueObject>
+        - domainServices: List<DomainService>
+        - domainEvents: List<DomainEvent>
+        - repositories: List<RepositoryInterface>
+        - factories: List<Factory>
+        - specifications: List<Specification>
+        - applicationServices: List<ApplicationService>
+        + addAggregate(aggregate: Aggregate): void
+        + addValueObject(vo: ValueObject): void
+        + addDomainService(service: DomainService): void
+        + addDomainEvent(event: DomainEvent): void
+        + addRepository(repo: RepositoryInterface): void
+        + addFactory(factory: Factory): void
+        + addSpecification(spec: Specification): void
+        + addApplicationService(service: ApplicationService): void
+    }
+}
+
+' Aggregate Package
+package "Aggregate" {
+    class Aggregate {
+        - name: String
+        - root: Entity
+        - entities: List<Entity>
+        - valueObjects: List<ValueObject>
+        - invariants: List<Invariant>
+        - factories: List<Factory>
+        + addEntity(entity: Entity): void
+        + addValueObject(vo: ValueObject): void
+        + addInvariant(invariant: Invariant): void
+        + addFactory(factory: Factory): void
+    }
+
+    class Invariant {
+        - name: String
+        - expression: String
+        - errorMessage: String
+        + validate(): boolean
+    }
+}
+
+' Entity Package
+package "Entity" {
+    class Entity {
+        - name: String
+        - isAggregateRoot: boolean
+        - identityField: IdentityField
+        - fields: List<Field>
+        - methods: List<Method>
+        - domainEvents: List<EventReference>
+        + addField(field: Field): void
+        + addMethod(method: Method): void
+        + addDomainEvent(event: EventReference): void
+    }
+
+    class IdentityField {
+        - name: String
+        - type: IdentityType
+        - generationStrategy: IdGenerationStrategy
+        + copy(): IdentityField
+        + validate(location: SourceLocation): List<ValidationError>
+    }
+
+    enum IdentityType {
+        UUID
+        LONG
+        STRING
+        CUSTOM
+    }
+
+    enum IdGenerationStrategy {
+        AUTO
+        MANUAL
+        SEQUENCE
+        UUID_GENERATOR
+    }
+
+    class EventReference {
+        - eventName: String
+        - triggerCondition: String
+        + getEventType(): JavaType
+    }
+}
+
+' Value Object Package
+package "Value Object" {
+    class ValueObject {
+        - name: String
+        - fields: List<Field>
+        - methods: List<Method>
+        - validations: List<ValidationMethod>
+        + addField(field: Field): void
+        + addMethod(method: Method): void
+        + addValidation(validation: ValidationMethod): void
+    }
+
+    class ValidationMethod {
+        - name: String
+        - rules: List<ValidationRule>
+        + addRule(rule: ValidationRule): void
+    }
+
+    class ValidationRule {
+        - expression: String
+        - errorMessage: String
+        + validate(): boolean
+    }
+}
+
+' Domain Services
+package "Domain Services" {
+    class DomainService {
+        - name: String
+        - isInterface: boolean
+        - methods: List<Method>
+        + addMethod(method: Method): void
+    }
+
+    class DomainEvent {
+        - name: String
+        - aggregateId: Field
+        - occurredOn: Field
+        - fields: List<Field>
+        + addField(field: Field): void
+    }
+}
+
+' Repository Package
+package "Repository" {
+    class RepositoryInterface {
+        - name: String
+        - aggregateType: JavaType
+        - idType: JavaType
+        - methods: List<RepositoryMethod>
+        + addMethod(method: RepositoryMethod): void
+    }
+
+    class RepositoryMethod {
+        - name: String
+        - type: RepositoryMethodType
+        - parameters: List<Parameter>
+        - returnType: JavaType
+    }
+
+    enum RepositoryMethodType {
+        FIND_BY_ID
+        FIND_ALL
+        FIND_BY_CRITERIA
+        SAVE
+        DELETE
+        COUNT
+        EXISTS
+        CUSTOM
+    }
+}
+
+' Factory Package
+package "Factory" {
+    class Factory {
+        - name: String
+        - createdType: JavaType
+        - methods: List<FactoryMethod>
+        + addMethod(method: FactoryMethod): void
+    }
+
+    class FactoryMethod {
+        - name: String
+        - parameters: List<Parameter>
+        - returnType: JavaType
+        - body: CodeBlock
+    }
+}
+
+' Specification Package
+package "Specification" {
+    class Specification {
+        - name: String
+        - targetType: JavaType
+        - criteriaField: Field
+        + isSatisfiedBy(candidate: Object): boolean
+    }
+
+    class AggregateReference {
+        - referencedAggregate: String
+        - referenceType: ReferenceType
+        + resolve(): Aggregate
+    }
+}
+
+' Application Services
+package "Application Services" {
+    class ApplicationService {
+        - name: String
+        - useCases: List<UseCase>
+        - dependencies: List<Dependency>
+        + addUseCase(useCase: UseCase): void
+        + addDependency(dependency: Dependency): void
+    }
+
+    class UseCase {
+        - name: String
+        - parameters: List<Parameter>
+        - returnType: JavaType
+        - implementation: CodeBlock
+    }
+
+    class Dependency {
+        - name: String
+        - type: JavaType
+        - injectionType: InjectionType
+    }
+}
+
+' Building Blocks
+package "Building Blocks" {
+    class Field {
+        - name: String
+        - type: JavaType
+        - visibility: Visibility
+        - isFinal: boolean
+        - isNullable: boolean
+        - defaultValue: String
+        - constraints: List<Constraint>
+        + validate(): List<ValidationError>
+    }
+
+    class Method {
+        - name: String
+        - returnType: JavaType
+        - parameters: List<Parameter>
+        - visibility: Visibility
+        - isStatic: boolean
+        - isFinal: boolean
+        - body: CodeBlock
+        - throwsExceptions: List<JavaType>
+        - entityContext: Entity
+    }
+
+    class Parameter {
+        - name: String
+        - type: JavaType
+        - isNullable: boolean
+    }
+
+    class CodeBlock {
+        - statements: List<String>
+        + addStatement(statement: String): void
+        + generate(): String
+    }
+
+    class Constraint {
+        - type: ConstraintType
+        - value: String
+        - errorMessage: String
+    }
+
+    enum Visibility {
+        PUBLIC
+        PROTECTED
+        PACKAGE_PRIVATE
+        PRIVATE
+    }
+}
+
+' Relationships - Core Infrastructure
+ASTNode ||--o{ SourceLocation : "has"
+ASTNode ||--o{ ValidationError : "validates to"
+
+' Relationships - Domain Model Structure
+DomainModel ||--o{ BoundedContext : "contains"
+BoundedContext ||--o{ Aggregate : "contains"
+BoundedContext ||--o{ ValueObject : "contains"
+BoundedContext ||--o{ DomainService : "contains"
+BoundedContext ||--o{ DomainEvent : "contains"
+BoundedContext ||--o{ RepositoryInterface : "contains"
+BoundedContext ||--o{ Factory : "contains"
+BoundedContext ||--o{ Specification : "contains"
+BoundedContext ||--o{ ApplicationService : "contains"
+
+' Relationships - Aggregate Structure
+Aggregate ||--|| Entity : "root"
+Aggregate ||--o{ Entity : "contains"
+Aggregate ||--o{ ValueObject : "contains"
+Aggregate ||--o{ Invariant : "enforces"
+Aggregate ||--o{ Factory : "created by"
+
+' Relationships - Entity Structure
+Entity ||--|| IdentityField : "identified by"
+Entity ||--o{ Field : "has fields"
+Entity ||--o{ Method : "has methods"
+Entity ||--o{ EventReference : "raises events"
+
+' Relationships - Value Object Structure
+ValueObject ||--o{ Field : "has fields"
+ValueObject ||--o{ Method : "has methods"
+ValueObject ||--o{ ValidationMethod : "validates with"
+ValidationMethod ||--o{ ValidationRule : "contains"
+
+' Relationships - Repository Structure
+RepositoryInterface ||--o{ RepositoryMethod : "defines"
+RepositoryInterface ||--|| JavaType : "manages aggregate"
+
+' Relationships - Factory Structure
+Factory ||--o{ FactoryMethod : "contains"
+Factory ||--|| JavaType : "creates"
+
+' Relationships - Application Service Structure
+ApplicationService ||--o{ UseCase : "implements"
+ApplicationService ||--o{ Dependency : "depends on"
+
+' Relationships - Building Blocks
+Field ||--|| JavaType : "typed as"
+Field ||--o{ Constraint : "constrained by"
+Method ||--|| JavaType : "returns"
+Method ||--o{ Parameter : "accepts"
+Method ||--|| CodeBlock : "implemented by"
+Parameter ||--|| JavaType : "typed as"
+
+' Inheritance - All domain model elements extend ASTNode
+DomainModel --|> ASTNode
+BoundedContext --|> ASTNode
+Aggregate --|> ASTNode
+Entity --|> ASTNode
+ValueObject --|> ASTNode
+DomainService --|> ASTNode
+DomainEvent --|> ASTNode
+RepositoryInterface --|> ASTNode
+Factory --|> ASTNode
+Specification --|> ASTNode
+ApplicationService --|> ASTNode
+
+@enduml

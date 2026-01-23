@@ -1,0 +1,44 @@
+# Test file with warnings but no blocking errors
+model:
+  name: "TestModel"
+  basePackage: "com.example.test"
+
+boundedContexts:
+  - name: "TestContext"
+    package: "test"
+
+    # Value Object that will generate warnings but not errors
+    valueObjects:
+      - name: "Money"
+        description: "A value object with some warnings"
+        fields:
+          - name: "amount"
+            type: "BigDecimal"
+            final: true
+          - name: "currency"
+            type: "String"
+            final: true
+        # Note: This will generate a WARNING that the class should be final,
+        # but it won't prevent code generation
+
+    # Aggregate that should pass validation
+    aggregates:
+      - name: "Order"
+        description: "Order aggregate"
+
+        root:
+          name: "Order"
+          isAggregateRoot: true
+          identityField:
+            name: "orderId"
+            type: "UUID"
+          fields:
+            - name: "total"
+              type: "Money"
+              final: true
+
+    # Repository for the aggregate root (valid)
+    repositories:
+      - name: "OrderRepository"
+        aggregateType: "Order"
+        idType: "UUID"

@@ -1,0 +1,718 @@
+# ============================================
+# DDD Tactical Design DSL - Simple Demo
+# Blog Post Management System
+# ============================================
+
+model:
+  name: "BlogSystem"
+  basePackage: "com.example.blog"
+  version: "1.0.0"
+
+boundedContexts:
+
+  # ==========================================
+  # Blog Context
+  # ==========================================
+  - name: "BlogContext"
+    package: "blog"
+    description: "Manages blog posts and comments"
+
+    # ========================================
+    # VALUE OBJECTS
+    # ========================================
+    valueObjects:
+
+      - name: "PostTitle"
+        description: "Blog post title"
+        fields:
+          - name: "value"
+            type: "String"
+            constraints:
+              - type: "NOT_EMPTY"
+                message: "Title cannot be empty"
+              - type: "MAX"
+                value: "200"
+                message: "Title must be less than 200 characters"
+
+        methods:
+          - name: "length"
+            returnType: "int"
+            body: |
+              return value.length();
+
+      - name: "PostContent"
+        description: "Blog post content"
+        fields:
+          - name: "value"
+            type: "String"
+            constraints:
+              - type: "NOT_EMPTY"
+                message: "Content cannot be empty"
+              - type: "MIN"
+                value: "10"
+                message: "Content must be at least 10 characters"
+
+        methods:
+          - name: "getExcerpt"
+            returnType: "String"
+            parameterstg
+              - name: "maxLength"
+                type: "int"
+            body: |
+              if (value.length() <= maxLength) {
+                return value;
+              }
+              return value.substring(0, maxLength) + "...";
+
+      - name: "Email"
+        fields:
+          - name: "value"
+            type: "String"
+            constraints:
+              - type: "EMAIL"
+                message: "Invalid email format"
+
+    # ========================================
+    # ENUMS
+    # ========================================
+    enums:
+      - name: "PostStatus"
+        values:
+          - "DRAFT"
+          - "PUBLISHED"
+          - "ARCHIVED"
+
+    # ========================================
+    # AGGREGATES
+    # ========================================
+    aggregates:
+
+      # --------------------------------------
+      # Post Aggregate
+      # --------------------------------------
+      - name: "Post"
+        description: "Blog post aggregate"
+
+        root:
+          entity: "Post"
+          identity:
+            name: "id"
+            type: "UUID"
+            generation: "CLIENT_GENERATED"
+
+          fields:
+            - name: "authorId"
+              type: "AuthorId"
+              description: "Reference to Author aggregate by ID"
+              constraints:
+                - type: "NOT_NULL"
+
+            - name: "title"
+              type: "PostTitle"
+              constraints:
+                - type: "NOT_NULL"
+
+            - name: "content"
+              type: "PostContent"
+              constraints:
+                - type: "NOT_NULL"
+
+            - name: "status"
+              type: "PostStatus"
+              default: "PostStatus.DRAFT"
+
+            - name: "comments"
+              type: "List<Comment>"
+              default: "new ArrayList<>()"
+
+            - name: "publishedAt"
+              type: "Instant"
+              nullable: true
+
+            - name: "createdAt"
+              type: "Instant"
+
+            - name: "updatedAt"
+              type: "Instant"
+
+          invariants:
+            - name: "published_has_date"
+              description: "Published posts must have publishedAt date"
+              condition: "status != PostStatus.PUBLISHED || publishedAt != null"
+              errorMessage: "Published post must have publishedAt date"
+
+            - name: "max_comments"
+              description: "Post cannot have more than 100 comments"
+              condition: "comments.size() <= 100"
+              errorMessage: "Post cannot have more than 100 comments"
+
+          methods:
+            - name: "updateTitle"
+              description: "Updates the post title"
+              returnType: "void"
+              parameters:
+                - name: "newTitle"
+                  type: "PostTitle"
+              body: |
+                if (status == PostStatus.PUBLISHED) {
+                  throw new PostException("Cannot update title of published post");
+                }
+                this.title = Objects.requireNonNull(newTitle);
+                this.updatedAt = Instant.now();
+
+            - name: "updateContent"
+              returnType: "void"
+              parameters:
+                - name: "newContent"
+                  type: "PostContent"
+              body: |
+                if (status == PostStatus.ARCHIVED) {
+                  throw new PostException("Cannot update archived post");
+                }
+                this.content = Objects.requireNonNull(newContent);
+                this.updatedAt = Instant.now();
+
+            - name: "publish"
+              description: "Publishes the post"
+              returnType: "void"
+              body: |
+                if (status == PostStatus.PUBLISHED) {
+                  throw new PostException("Post is already published");
+                }
+                
+                checkInvariants();
+                
+                this.status = PostStatus.PUBLISHED;
+                this.publishedAt = Instant.now();
+                this.updatedAt = Instant.now();
+                
+                raiseEvent(new PostPublishedEvent(id, title, publishedAt));
+
+            - name: "archive"
+              returnType: "void"
+              body: |
+                if (status == PostStatus.ARCHIVED) {
+                  throw new PostException("Post is already archived");
+                }
+                
+                this.status = PostStatus.ARCHIVED;
+                this.updatedAt = Instant.now();
+                
+                raiseEvent(new PostArchivedEvent(id));
+
+            - name: "addComment"
+              description: "Adds a comment to the post"
+              returnType: "void"
+              parameters:
+                - name: "authorName"
+                  type: "String"
+                - name: "authorEmail"
+                  type: "Email"
+                - name: "commentText"
+                  type: "String"
+              body: |
+                if (status != PostStatus.PUBLISHED) {
+                  throw new PostException("Can only comment on published posts");
+                }
+                
+                Comment comment = new Comment(
+                  CommentId.generate(),
+                  authorName,
+                  authorEmail,
+                  commentText,
+                  Instant.now()
+                );
+                
+                comments.add(comment);
+                this.updatedAt = Instant.now();
+                
+                checkInvariants();
+                
+                raiseEvent(new CommentAddedEvent(id, comment.getId()));
+
+            - name: "removeComment"
+              returnType: "void"
+              parameters:
+                - name: "commentId"
+                  type: "CommentId"
+              body: |
+                boolean removed = comments.removeIf(c -> c.getId().equals(commentId));
+                if (!removed) {
+                  throw new CommentNotFoundException(commentId);
+                }
+                this.updatedAt = Instant.now();
+
+        entities:
+          - name: "Comment"
+            description: "Comment on a blog post"
+            identity:
+              name: "id"
+              type: "UUID"
+              generation: "CLIENT_GENERATED"
+
+            fields:
+              - name: "authorName"
+                type: "String"
+                constraints:
+                  - type: "NOT_EMPTY"
+
+              - name: "authorEmail"
+                type: "Email"
+                constraints:
+                  - type: "NOT_NULL"
+
+              - name: "text"
+                type: "String"
+                constraints:
+                  - type: "NOT_EMPTY"
+                  - type: "MAX"
+                    value: "500"
+                    message: "Comment must be less than 500 characters"
+
+              - name: "createdAt"
+                type: "Instant"
+
+            methods:
+              - name: "updateText"
+                returnType: "void"
+                parameters:
+                  - name: "newText"
+                    type: "String"
+                body: |
+                  if (newText == null || newText.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Comment text cannot be empty");
+                  }
+                  if (newText.length() > 500) {
+                    throw new IllegalArgumentException("Comment too long");
+                  }
+                  this.text = newText;
+
+        aggregateReferences:
+          - target: "Author"
+            field: "authorId"
+            byIdOnly: true
+
+        events:
+          - name: "PostPublishedEvent"
+            fields:
+              - name: "postId"
+                type: "PostId"
+              - name: "title"
+                type: "PostTitle"
+              - name: "publishedAt"
+                type: "Instant"
+
+          - name: "PostArchivedEvent"
+            fields:
+              - name: "postId"
+                type: "PostId"
+
+          - name: "CommentAddedEvent"
+            fields:
+              - name: "postId"
+                type: "PostId"
+              - name: "commentId"
+                type: "CommentId"
+
+    # ========================================
+    # DOMAIN SERVICES
+    # ========================================
+    domainServices:
+      - name: "PostSlugGenerator"
+        description: "Generates URL-friendly slugs from post titles"
+        methods:
+          - name: "generateSlug"
+            returnType: "String"
+            parameters:
+              - name: "title"
+                type: "PostTitle"
+            description: "Generates slug like 'my-blog-post-title'"
+
+    # ========================================
+    # FACTORIES
+    # ========================================
+    factories:
+      - name: "PostFactory"
+        creates: "Post"
+        methods:
+          - name: "createDraft"
+            returnType: "Post"
+            parameters:
+              - name: "authorId"
+                type: "AuthorId"
+              - name: "title"
+                type: "PostTitle"
+              - name: "content"
+                type: "PostContent"
+            body: |
+              PostId id = PostId.generate();
+              Instant now = Instant.now();
+              
+              return new Post(
+                id,
+                authorId,
+                title,
+                content,
+                PostStatus.DRAFT,
+                now,
+                now
+              );
+
+    # ========================================
+    # REPOSITORIES
+    # ========================================
+    repositories:
+      - name: "PostRepository"
+        aggregate: "Post"
+        idType: "PostId"
+
+        methods:
+          - name: "findById"
+            returnType: "Optional<Post>"
+            parameters:
+              - name: "id"
+                type: "PostId"
+
+          - name: "save"
+            returnType: "void"
+            parameters:
+              - name: "post"
+                type: "Post"
+
+          - name: "delete"
+            returnType: "void"
+            parameters:
+              - name: "id"
+                type: "PostId"
+
+          - name: "findByAuthorId"
+            returnType: "List<Post>"
+            parameters:
+              - name: "authorId"
+                type: "AuthorId"
+
+          - name: "findByStatus"
+            returnType: "List<Post>"
+            parameters:
+              - name: "status"
+                type: "PostStatus"
+
+          - name: "findPublishedPosts"
+            returnType: "List<Post>"
+            description: "Returns all published posts ordered by publishedAt desc"
+
+    # ========================================
+    # APPLICATION SERVICES
+    # ========================================
+    applicationServices:
+
+      - name: "PostApplicationService"
+        description: "Orchestrates post use cases"
+
+        dependencies:
+          - name: "postRepository"
+            type: "PostRepository"
+            required: true
+
+          - name: "authorRepository"
+            type: "AuthorRepository"
+            required: true
+
+          - name: "postFactory"
+            type: "PostFactory"
+            required: true
+
+          - name: "eventPublisher"
+            type: "DomainEventPublisher"
+            required: true
+
+        useCases:
+
+          # Use Case 1: Create Draft Post
+          - name: "createDraftPost"
+            description: "Creates a new draft blog post"
+            transactional: true
+
+            input:
+              name: "CreatePostCommand"
+              fields:
+                - name: "authorId"
+                  type: "String"
+                  constraints:
+                    - type: "NOT_NULL"
+
+                - name: "title"
+                  type: "String"
+                  constraints:
+                    - type: "NOT_EMPTY"
+
+                - name: "content"
+                  type: "String"
+                  constraints:
+                    - type: "NOT_EMPTY"
+
+            output:
+              name: "PostDto"
+              fields:
+                - name: "postId"
+                  type: "String"
+                - name: "title"
+                  type: "String"
+                - name: "status"
+                  type: "String"
+
+            steps:
+              - type: "VALIDATE"
+                description: "Check author exists"
+                code: |
+                  AuthorId authorId = AuthorId.of(command.getAuthorId());
+                  Author author = authorRepository.findById(authorId)
+                      .orElseThrow(() -> new AuthorNotFoundException(authorId));
+
+              - type: "CREATE"
+                description: "Create post using factory"
+                code: |
+                  PostTitle title = new PostTitle(command.getTitle());
+                  PostContent content = new PostContent(command.getContent());
+                  
+                  Post post = postFactory.createDraft(authorId, title, content);
+
+              - type: "SAVE"
+                code: |
+                  postRepository.save(post);
+
+              - type: "RETURN"
+                code: |
+                  return new PostDto(
+                      post.getId().getValue().toString(),
+                      post.getTitle().getValue(),
+                      post.getStatus().name()
+                  );
+
+          # Use Case 2: Publish Post
+          - name: "publishPost"
+            description: "Publishes a draft post"
+            transactional: true
+
+            input:
+              name: "PublishPostCommand"
+              fields:
+                - name: "postId"
+                  type: "String"
+
+            output:
+              type: "void"
+
+            steps:
+              - type: "LOAD"
+                code: |
+                  PostId postId = PostId.of(command.getPostId());
+                  Post post = postRepository.findById(postId)
+                      .orElseThrow(() -> new PostNotFoundException(postId));
+
+              - type: "EXECUTE_DOMAIN_LOGIC"
+                code: |
+                  post.publish();
+
+              - type: "SAVE"
+                code: |
+                  postRepository.save(post);
+
+              - type: "PUBLISH_EVENTS"
+                code: |
+                  for (DomainEvent event : post.getDomainEvents()) {
+                      eventPublisher.publish(event);
+                  }
+                  post.clearDomainEvents();
+
+          # Use Case 3: Add Comment
+          - name: "addComment"
+            description: "Adds a comment to a post"
+            transactional: true
+
+            input:
+              name: "AddCommentCommand"
+              fields:
+                - name: "postId"
+                  type: "String"
+                - name: "authorName"
+                  type: "String"
+                - name: "authorEmail"
+                  type: "String"
+                - name: "commentText"
+                  type: "String"
+
+            output:
+              type: "void"
+
+            steps:
+              - type: "LOAD"
+                code: |
+                  PostId postId = PostId.of(command.getPostId());
+                  Post post = postRepository.findById(postId)
+                      .orElseThrow(() -> new PostNotFoundException(postId));
+
+              - type: "EXECUTE_DOMAIN_LOGIC"
+                code: |
+                  Email email = new Email(command.getAuthorEmail());
+                  post.addComment(
+                      command.getAuthorName(),
+                      email,
+                      command.getCommentText()
+                  );
+
+              - type: "SAVE"
+                code: |
+                  postRepository.save(post);
+
+              - type: "PUBLISH_EVENTS"
+                code: |
+                  eventPublisher.publish(post.getDomainEvents());
+                  post.clearDomainEvents();
+
+          # Use Case 4: Get Post
+          - name: "getPost"
+            description: "Gets a post by ID"
+            transactional: false
+
+            input:
+              name: "GetPostQuery"
+              fields:
+                - name: "postId"
+                  type: "String"
+
+            output:
+              name: "PostDetailDto"
+              fields:
+                - name: "postId"
+                  type: "String"
+                - name: "title"
+                  type: "String"
+                - name: "content"
+                  type: "String"
+                - name: "status"
+                  type: "String"
+                - name: "authorId"
+                  type: "String"
+                - name: "comments"
+                  type: "List<CommentDto>"
+                - name: "publishedAt"
+                  type: "String"
+                  nullable: true
+
+            steps:
+              - type: "LOAD"
+                code: |
+                  PostId postId = PostId.of(query.getPostId());
+                  Post post = postRepository.findById(postId)
+                      .orElseThrow(() -> new PostNotFoundException(postId));
+
+              - type: "RETURN"
+                code: |
+                  return mapToPostDetailDto(post);
+
+          # Use Case 5: List Published Posts
+          - name: "listPublishedPosts"
+            description: "Lists all published posts"
+            transactional: false
+
+            input:
+              name: "ListPublishedPostsQuery"
+              fields: []
+
+            output:
+              name: "PostListDto"
+              fields:
+                - name: "posts"
+                  type: "List<PostSummaryDto>"
+
+            steps:
+              - type: "LOAD"
+                code: |
+                  List<Post> posts = postRepository.findPublishedPosts();
+
+              - type: "RETURN"
+                code: |
+                  List<PostSummaryDto> summaries = posts.stream()
+                      .map(this::mapToPostSummaryDto)
+                      .collect(Collectors.toList());
+                  
+                  return new PostListDto(summaries);
+
+    # ========================================
+    # DTOs
+    # ========================================
+    dtos:
+      - name: "CommentDto"
+        fields:
+          - name: "commentId"
+            type: "String"
+          - name: "authorName"
+            type: "String"
+          - name: "authorEmail"
+            type: "String"
+          - name: "text"
+            type: "String"
+          - name: "createdAt"
+            type: "String"
+
+      - name: "PostSummaryDto"
+        fields:
+          - name: "postId"
+            type: "String"
+          - name: "title"
+            type: "String"
+          - name: "excerpt"
+            type: "String"
+          - name: "status"
+            type: "String"
+          - name: "publishedAt"
+            type: "String"
+            nullable: true
+
+    # ========================================
+    # EXCEPTIONS
+    # ========================================
+    exceptions:
+      - name: "PostException"
+        superClass: "DomainException"
+
+      - name: "PostNotFoundException"
+        superClass: "PostException"
+
+      - name: "CommentNotFoundException"
+        superClass: "PostException"
+
+      - name: "AuthorNotFoundException"
+        superClass: "DomainException"
+
+# ============================================
+# EXTERNAL REFERENCES
+# ============================================
+externalAggregates:
+  - name: "Author"
+    package: "com.example.blog.author"
+    idType: "AuthorId"
+
+# ============================================
+# CODE GENERATION OPTIONS
+# ============================================
+codeGeneration:
+  targetLanguage: "Java"
+  javaVersion: "17"
+
+  options:
+    generateJavadoc: true
+    generateValidation: true
+    immutableValueObjects: true
+
+  packageStructure:
+    domain:
+      model: "domain.model"
+      service: "domain.service"
+      repository: "domain.repository"
+      event: "domain.event"
+      exception: "domain.exception"
+    application:
+      service: "application.service"
+      dto: "application.dto"
