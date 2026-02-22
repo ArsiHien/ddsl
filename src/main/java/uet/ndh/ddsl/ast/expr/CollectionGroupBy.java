@@ -1,7 +1,6 @@
-package uet.ndh.ddsl.ast.expr.collection;
+package uet.ndh.ddsl.ast.expr;
 
 import uet.ndh.ddsl.ast.SourceSpan;
-import uet.ndh.ddsl.ast.expr.Expr;
 import uet.ndh.ddsl.ast.visitor.AstVisitor;
 
 /**

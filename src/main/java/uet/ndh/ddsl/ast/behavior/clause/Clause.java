@@ -8,7 +8,7 @@ import uet.ndh.ddsl.ast.SourceSpan;
  * Sealed interface permitting all clause types used in behaviors, 
  * domain services, factories, and use cases.
  */
-public sealed interface Clause permits RequireClause, GivenClause, ThenClause, EmitClause, ReturnClause, FlowClause {
+public sealed interface Clause permits RequireClause, GivenClause, ThenClause, EmitClause, ReturnClause, FlowClause, ErrorAccumulationClause {
     SourceSpan span();
     ClauseType type();
     

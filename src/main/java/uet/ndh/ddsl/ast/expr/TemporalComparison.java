@@ -1,7 +1,7 @@
-package uet.ndh.ddsl.ast.expr.temporal;
+package uet.ndh.ddsl.ast.expr;
 
 import uet.ndh.ddsl.ast.SourceSpan;
-import uet.ndh.ddsl.ast.expr.Expr;
+import uet.ndh.ddsl.ast.expr.temporal.TemporalAnchor;
 
 /**
  * Represents a temporal comparison with a specific anchor point.

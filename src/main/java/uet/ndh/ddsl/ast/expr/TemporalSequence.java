@@ -1,7 +1,6 @@
-package uet.ndh.ddsl.ast.expr.temporal;
+package uet.ndh.ddsl.ast.expr;
 
 import uet.ndh.ddsl.ast.SourceSpan;
-import uet.ndh.ddsl.ast.expr.Expr;
 
 /**
  * Represents a temporal sequence check between two events.

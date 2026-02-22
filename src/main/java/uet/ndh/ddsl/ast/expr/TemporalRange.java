@@ -1,7 +1,8 @@
-package uet.ndh.ddsl.ast.expr.temporal;
+package uet.ndh.ddsl.ast.expr;
 
 import uet.ndh.ddsl.ast.SourceSpan;
-import uet.ndh.ddsl.ast.expr.Expr;
+import uet.ndh.ddsl.ast.expr.temporal.Duration;
+import uet.ndh.ddsl.ast.expr.temporal.TemporalAnchor;
 
 /**
  * Represents a temporal range check.
@@ -22,12 +23,12 @@ import uet.ndh.ddsl.ast.expr.Expr;
  * </pre>
  */
 public record TemporalRange(
-    SourceSpan span,
-    Expr dateTimeExpr,
-    RangeType rangeType,
-    Duration duration,      // For within
-    Expr startExpr,         // For between
-    Expr endExpr            // For between
+        SourceSpan span,
+        Expr dateTimeExpr,
+        RangeType rangeType,
+        Duration duration,      // For within
+        Expr startExpr,         // For between
+        Expr endExpr            // For between
 ) implements TemporalExpr {
     
     /**
@@ -62,8 +63,8 @@ public record TemporalRange(
      * Factory for "is between anchor1 and anchor2".
      * Anchors are wrapped as expressions.
      */
-    public static TemporalRange betweenAnchors(SourceSpan span, Expr dateTime, 
-                                                TemporalAnchor startAnchor, TemporalAnchor endAnchor) {
+    public static TemporalRange betweenAnchors(SourceSpan span, Expr dateTime,
+                                               TemporalAnchor startAnchor, TemporalAnchor endAnchor) {
         // For now, pass null for the Expr fields - the anchors can be accessed via dedicated fields
         // In a full implementation, TemporalAnchor might implement Expr or be wrapped
         return new TemporalRange(span, dateTime, RangeType.BETWEEN, null, null, null);

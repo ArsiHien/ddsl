@@ -21,6 +21,8 @@ public record BinaryExpr(
         MULTIPLY,
         DIVIDE,
         MODULO,
+        ADD,      // Alias for PLUS
+        SUBTRACT, // Alias for MINUS
         
         // Comparison
         EQUALS,
@@ -35,7 +37,10 @@ public record BinaryExpr(
         OR,
         
         // String
-        CONCAT
+        CONCAT,
+        
+        // Membership
+        IN
     }
     
     @Override
