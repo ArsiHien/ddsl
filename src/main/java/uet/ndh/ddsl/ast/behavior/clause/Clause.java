@@ -4,8 +4,11 @@ import uet.ndh.ddsl.ast.SourceSpan;
 
 /**
  * Base record for all behavior clauses.
+ * 
+ * Sealed interface permitting all clause types used in behaviors, 
+ * domain services, factories, and use cases.
  */
-public sealed interface Clause permits RequireClause, GivenClause, ThenClause, EmitClause {
+public sealed interface Clause permits RequireClause, GivenClause, ThenClause, EmitClause, ReturnClause, FlowClause {
     SourceSpan span();
     ClauseType type();
     
@@ -16,6 +19,8 @@ public sealed interface Clause permits RequireClause, GivenClause, ThenClause, E
         REQUIRE,  // Preconditions
         GIVEN,    // Data transformations
         THEN,     // State mutations
-        EMIT      // Event emission
+        EMIT,     // Event emission
+        RETURN,   // Return value
+        FLOW      // Use case orchestration
     }
 }

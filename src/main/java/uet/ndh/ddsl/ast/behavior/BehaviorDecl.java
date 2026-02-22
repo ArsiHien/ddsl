@@ -5,6 +5,7 @@ import uet.ndh.ddsl.ast.SourceSpan;
 import uet.ndh.ddsl.ast.behavior.clause.EmitClause;
 import uet.ndh.ddsl.ast.behavior.clause.GivenClause;
 import uet.ndh.ddsl.ast.behavior.clause.RequireClause;
+import uet.ndh.ddsl.ast.behavior.clause.ReturnClause;
 import uet.ndh.ddsl.ast.behavior.clause.ThenClause;
 import uet.ndh.ddsl.ast.member.ParameterDecl;
 import uet.ndh.ddsl.ast.visitor.AstVisitor;
@@ -23,6 +24,7 @@ import java.util.List;
  *     given: [transformations]
  *     then: [state changes]
  *     and emit [event]
+ *     return [value]  // For domain services
  * </pre>
  * 
  * Pure data record - no logic except accept().
@@ -31,6 +33,7 @@ import java.util.List;
  * @see GivenClause
  * @see ThenClause
  * @see EmitClause
+ * @see ReturnClause
  */
 public record BehaviorDecl(
     SourceSpan span,
@@ -40,12 +43,29 @@ public record BehaviorDecl(
     GivenClause givenClause,
     List<ThenClause> thenClauses,
     EmitClause emitClause,
+    ReturnClause returnClause,
     String documentation
 ) implements AstNode {
     
     public BehaviorDecl {
         parameters = parameters != null ? List.copyOf(parameters) : List.of();
         thenClauses = thenClauses != null ? List.copyOf(thenClauses) : List.of();
+    }
+    
+    /**
+     * Legacy constructor without returnClause for backward compatibility.
+     */
+    public BehaviorDecl(
+        SourceSpan span,
+        NaturalLanguagePhrase phrase,
+        List<ParameterDecl> parameters,
+        RequireClause requireClause,
+        GivenClause givenClause,
+        List<ThenClause> thenClauses,
+        EmitClause emitClause,
+        String documentation
+    ) {
+        this(span, phrase, parameters, requireClause, givenClause, thenClauses, emitClause, null, documentation);
     }
     
     /**
