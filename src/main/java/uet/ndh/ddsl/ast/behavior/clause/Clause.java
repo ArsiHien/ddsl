@@ -10,7 +10,7 @@ import uet.ndh.ddsl.ast.SourceSpan;
  */
 public sealed interface Clause permits RequireClause, GivenClause, ThenClause, EmitClause, ReturnClause, FlowClause, ErrorAccumulationClause {
     SourceSpan span();
-    ClauseType type();
+    ClauseType clauseType();
     
     /**
      * Type of clause in behavior specification.

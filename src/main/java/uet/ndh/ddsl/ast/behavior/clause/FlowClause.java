@@ -50,7 +50,7 @@ public record FlowClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.FLOW;
     }
     

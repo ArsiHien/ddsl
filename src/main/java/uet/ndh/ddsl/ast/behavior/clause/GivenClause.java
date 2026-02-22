@@ -48,7 +48,7 @@ public record GivenClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.GIVEN;
     }
     

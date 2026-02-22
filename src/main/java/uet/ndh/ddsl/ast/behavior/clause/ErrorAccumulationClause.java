@@ -40,7 +40,7 @@ public record ErrorAccumulationClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.REQUIRE;  // Acts as an enhanced require clause
     }
     

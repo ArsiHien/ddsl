@@ -36,7 +36,7 @@ public record RequireClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.REQUIRE;
     }
     

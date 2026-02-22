@@ -54,7 +54,7 @@ public record EmitClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.EMIT;
     }
     

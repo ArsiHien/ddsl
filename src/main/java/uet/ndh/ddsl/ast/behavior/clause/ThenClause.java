@@ -53,7 +53,7 @@ public record ThenClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.THEN;
     }
     

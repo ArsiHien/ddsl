@@ -363,4 +363,9 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
         result = aggregateResult(result, expr.elseExpr().accept(this));
         return result;
     }
+    
+    @Override
+    public R visitTypeRef(uet.ndh.ddsl.ast.common.TypeRef typeRef) {
+        return defaultResult();
+    }
 }

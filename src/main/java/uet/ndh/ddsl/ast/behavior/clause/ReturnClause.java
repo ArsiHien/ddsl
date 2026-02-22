@@ -80,7 +80,7 @@ public record ReturnClause(
     }
     
     @Override
-    public ClauseType type() {
+    public ClauseType clauseType() {
         return ClauseType.RETURN;
     }
     
