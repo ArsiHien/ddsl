@@ -43,7 +43,13 @@ dependencies {
 
 	// FreeMarker for template-based code generation
 	implementation("org.freemarker:freemarker:2.3.34")
-	
+
+	// LangGraph4j for Agentic Workflow orchestration
+	implementation("org.bsc.langgraph4j:langgraph4j-core:1.8.3")
+
+	// Spring AI MCP Server support
+	implementation("org.springframework.ai:spring-ai-starter-mcp-server-webmvc")
+
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
