@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "3.5.8"
+	id("org.springframework.boot") version "3.5.11"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.graalvm.buildtools.native") version "0.10.6"
 }
@@ -25,27 +25,41 @@ repositories {
 	mavenCentral()
 }
 
-extra["springShellVersion"] = "3.4.1"
+extra["springAiVersion"] = "1.1.2"
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.springframework.shell:spring-shell-starter")
+	implementation("org.springframework.boot:spring-boot-starter-websocket")
+	implementation("org.springframework.ai:spring-ai-advisors-vector-store")
+	implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
+	implementation("org.springframework.ai:spring-ai-starter-vector-store-qdrant")
 
+	// JavaPoet (Palantir fork) for type-safe Java code generation
+	implementation("com.palantir.javapoet:javapoet:0.11.0")
+	
+	// LSP4J for Language Server Protocol implementation
+	implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.23.1")
+	implementation("org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.23.1")
+
+	// FreeMarker for template-based code generation
 	implementation("org.freemarker:freemarker:2.3.34")
-	implementation("org.yaml:snakeyaml:2.2")
+	
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.springframework.shell:spring-shell-starter-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	developmentOnly("org.springframework.boot:spring-boot-devtools")
+	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+	developmentOnly("org.springframework.ai:spring-ai-spring-boot-docker-compose")
 }
 
 dependencyManagement {
 	imports {
-		mavenBom("org.springframework.shell:spring-shell-dependencies:${property("springShellVersion")}")
+		mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
 	}
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
