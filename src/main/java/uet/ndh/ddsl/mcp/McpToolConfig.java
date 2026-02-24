@@ -8,19 +8,17 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuration to register DDSL MCP tools with Spring AI's tool infrastructure.
  * <p>
- * These tools are exposed via the MCP Server (WebMVC transport) and also
- * available to the internal ChatClient for function calling.
+ * Exposes the parser-only validation tool via the MCP Server (WebMVC transport).
  */
 @Configuration
 public class McpToolConfig {
 
     @Bean
     public ToolCallbackProvider ddslToolCallbackProvider(
-            DdslValidationTool validationTool,
-            DdslCodegenTool codegenTool
+            DdslValidationTool validationTool
     ) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(validationTool, codegenTool)
+                .toolObjects(validationTool)
                 .build();
     }
 }
