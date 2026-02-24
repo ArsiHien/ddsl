@@ -1,6 +1,7 @@
 package uet.ndh.ddsl.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
@@ -22,9 +23,9 @@ import java.util.List;
  * @see DdslParser
  */
 @Component
+@Slf4j
 public class DdslValidationTool {
 
-    private static final Logger log = LoggerFactory.getLogger(DdslValidationTool.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**

@@ -1,5 +1,6 @@
 package uet.ndh.ddsl.lsp;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -25,10 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * - References (find all references)
  * - Diagnostics (errors/warnings)
  */
+@Slf4j
 public class DdslTextDocumentService implements TextDocumentService {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(DdslTextDocumentService.class);
-    
+
     /** Reference to the parent language server */
     private final DdslLanguageServer server;
     
@@ -65,7 +65,7 @@ public class DdslTextDocumentService implements TextDocumentService {
     public void didOpen(DidOpenTextDocumentParams params) {
         TextDocumentItem document = params.getTextDocument();
         String uri = document.getUri();
-        LOG.info("Document opened: {}", uri);
+        log.info("Document opened: {}", uri);
         
         documents.put(uri, document);
         
@@ -108,7 +108,7 @@ public class DdslTextDocumentService implements TextDocumentService {
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        LOG.info("Document closed: {}", uri);
+        log.info("Document closed: {}", uri);
         
         documents.remove(uri);
         tokenCache.remove(uri);
@@ -120,7 +120,7 @@ public class DdslTextDocumentService implements TextDocumentService {
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        LOG.info("Document saved: {}", uri);
+        log.info("Document saved: {}", uri);
         
         // If text is included, use it; otherwise use cached
         String text = params.getText();
@@ -135,7 +135,7 @@ public class DdslTextDocumentService implements TextDocumentService {
     @Override
     public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
         String uri = params.getTextDocument().getUri();
-        LOG.debug("Semantic tokens requested for: {}", uri);
+        log.debug("Semantic tokens requested for: {}", uri);
         
         return CompletableFuture.supplyAsync(() -> {
             List<Token> tokens = tokenCache.get(uri);
@@ -160,7 +160,7 @@ public class DdslTextDocumentService implements TextDocumentService {
             CompletionParams params) {
         String uri = params.getTextDocument().getUri();
         Position position = params.getPosition();
-        LOG.debug("Completion requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
+        log.debug("Completion requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
         
         return CompletableFuture.supplyAsync(() -> {
             TextDocumentItem doc = documents.get(uri);
@@ -189,7 +189,7 @@ public class DdslTextDocumentService implements TextDocumentService {
     public CompletableFuture<Hover> hover(HoverParams params) {
         String uri = params.getTextDocument().getUri();
         Position position = params.getPosition();
-        LOG.debug("Hover requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
+        log.debug("Hover requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
         
         return CompletableFuture.supplyAsync(() -> {
             TextDocumentItem doc = documents.get(uri);
@@ -210,7 +210,7 @@ public class DdslTextDocumentService implements TextDocumentService {
             DefinitionParams params) {
         String uri = params.getTextDocument().getUri();
         Position position = params.getPosition();
-        LOG.debug("Definition requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
+        log.debug("Definition requested at {}:{}:{}", uri, position.getLine(), position.getCharacter());
         
         return CompletableFuture.supplyAsync(() -> {
             TextDocumentItem doc = documents.get(uri);

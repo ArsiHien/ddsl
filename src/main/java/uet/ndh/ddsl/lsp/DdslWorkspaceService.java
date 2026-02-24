@@ -1,5 +1,6 @@
 package uet.ndh.ddsl.lsp;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -18,10 +19,9 @@ import java.util.concurrent.CompletableFuture;
  * - Workspace symbols
  * - Execute commands
  */
+@Slf4j
 public class DdslWorkspaceService implements WorkspaceService {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(DdslWorkspaceService.class);
-    
+
     private final DdslLanguageServer server;
     
     public DdslWorkspaceService(DdslLanguageServer server) {
@@ -30,22 +30,22 @@ public class DdslWorkspaceService implements WorkspaceService {
     
     @Override
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        LOG.info("Configuration changed: {}", params.getSettings());
+        log.info("Configuration changed: {}", params.getSettings());
         // Handle configuration changes (e.g., formatting options, validation rules)
     }
     
     @Override
     public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        LOG.info("Watched files changed: {}", params.getChanges().size());
+        log.info("Watched files changed: {}", params.getChanges().size());
         
         for (FileEvent event : params.getChanges()) {
             String uri = event.getUri();
             FileChangeType type = event.getType();
             
             switch (type) {
-                case Created -> LOG.debug("File created: {}", uri);
-                case Changed -> LOG.debug("File changed: {}", uri);
-                case Deleted -> LOG.debug("File deleted: {}", uri);
+                case Created -> log.debug("File created: {}", uri);
+                case Changed -> log.debug("File changed: {}", uri);
+                case Deleted -> log.debug("File deleted: {}", uri);
             }
         }
     }
@@ -53,7 +53,7 @@ public class DdslWorkspaceService implements WorkspaceService {
     @Override
     public CompletableFuture<Either<List<? extends SymbolInformation>, List<? extends WorkspaceSymbol>>> symbol(WorkspaceSymbolParams params) {
         String query = params.getQuery();
-        LOG.debug("Workspace symbol search: {}", query);
+        log.debug("Workspace symbol search: {}", query);
         
         // TODO: Implement workspace-wide symbol search
         // This would search across all DDSL files in the workspace
@@ -63,7 +63,7 @@ public class DdslWorkspaceService implements WorkspaceService {
     @Override
     public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
         String command = params.getCommand();
-        LOG.info("Execute command: {}", command);
+        log.info("Execute command: {}", command);
         
         return CompletableFuture.supplyAsync(() -> {
             switch (command) {
@@ -83,7 +83,7 @@ public class DdslWorkspaceService implements WorkspaceService {
                     return "Code generation started";
                 }
                 default -> {
-                    LOG.warn("Unknown command: {}", command);
+                    log.warn("Unknown command: {}", command);
                     return null;
                 }
             }

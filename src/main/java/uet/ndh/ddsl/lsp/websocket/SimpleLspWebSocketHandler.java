@@ -1,6 +1,7 @@
 package uet.ndh.ddsl.lsp.websocket;
 
 import com.google.gson.*;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.*;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -30,10 +31,9 @@ import java.util.concurrent.*;
  * This approach gives us more control over the message handling and
  * is better suited for WebSocket transport.
  */
+@Slf4j
 public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleLspWebSocketHandler.class);
-    
+
     /** Gson instance for JSON serialization */
     private final Gson gson = new GsonBuilder()
         .registerTypeAdapter(Either.class, new EitherTypeAdapter())
@@ -44,7 +44,7 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
     
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        LOG.info("LSP WebSocket connection established: {}", session.getId());
+        log.info("LSP WebSocket connection established: {}", session.getId());
         
         // Create language server and client proxy
         DdslLanguageServer server = new DdslLanguageServer();
@@ -54,7 +54,7 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
         SessionContext context = new SessionContext(server, client);
         sessions.put(session.getId(), context);
         
-        LOG.info("LSP session ready for: {}", session.getId());
+        log.info("LSP session ready for: {}", session.getId());
     }
     
     @Override
@@ -63,12 +63,12 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
         SessionContext context = sessions.get(sessionId);
         
         if (context == null) {
-            LOG.error("No session context for: {}", sessionId);
+            log.error("No session context for: {}", sessionId);
             return;
         }
         
         String payload = message.getPayload();
-        LOG.debug("Received: {}", payload);
+        log.debug("Received: {}", payload);
         
         try {
             // Parse JSON-RPC message
@@ -90,7 +90,7 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
                 }
             }
         } catch (Exception e) {
-            LOG.error("Error handling message", e);
+            log.error("Error handling message", e);
             // Send error response if we have an id
         }
     }
@@ -219,7 +219,7 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
             }
             
             default -> {
-                LOG.warn("Unknown method: {}", method);
+                log.warn("Unknown method: {}", method);
                 yield CompletableFuture.completedFuture(null);
             }
         };
@@ -244,22 +244,22 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
         
         try {
             String json = gson.toJson(response);
-            LOG.debug("Sending response: {}", json);
+            log.debug("Sending response: {}", json);
             session.sendMessage(new TextMessage(json));
         } catch (IOException e) {
-            LOG.error("Error sending response", e);
+            log.error("Error sending response", e);
         }
     }
     
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        LOG.info("LSP WebSocket closed: {} ({})", session.getId(), status);
+        log.info("LSP WebSocket closed: {} ({})", session.getId(), status);
         sessions.remove(session.getId());
     }
     
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        LOG.error("WebSocket error: {}", exception.getMessage());
+        log.error("WebSocket error: {}", exception.getMessage());
     }
     
     /**
@@ -287,10 +287,10 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
             
             try {
                 String json = gson.toJson(notification);
-                LOG.debug("Sending notification: {}", json);
+                log.debug("Sending notification: {}", json);
                 session.sendMessage(new TextMessage(json));
             } catch (IOException e) {
-                LOG.error("Error sending notification", e);
+                log.error("Error sending notification", e);
             }
         }
         

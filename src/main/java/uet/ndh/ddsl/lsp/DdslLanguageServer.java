@@ -1,5 +1,6 @@
 package uet.ndh.ddsl.lsp;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.*;
 import org.slf4j.Logger;
@@ -26,10 +27,9 @@ import java.util.concurrent.CompletableFuture;
  * 3. It provides type-safe interfaces for all LSP features
  * 4. It's actively maintained by Eclipse Foundation
  */
+@Slf4j
 public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(DdslLanguageServer.class);
-    
+
     /** The client proxy for sending notifications/requests to the editor */
     private LanguageClient client;
     
@@ -54,7 +54,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
     public void connect(LanguageClient client) {
         this.client = client;
         this.textDocumentService.setClient(client);
-        LOG.info("DDSL Language Server connected to client");
+        log.info("DDSL Language Server connected to client");
     }
     
     /**
@@ -65,9 +65,9 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
      */
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        LOG.info("Initializing DDSL Language Server...");
-        LOG.info("Client info: {}", params.getClientInfo());
-        LOG.info("Root URI: {}", params.getRootUri());
+        log.info("Initializing DDSL Language Server...");
+        log.info("Client info: {}", params.getClientInfo());
+        log.info("Root URI: {}", params.getRootUri());
         
         // Build server capabilities
         serverCapabilities = new ServerCapabilities();
@@ -137,7 +137,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
         serverInfo.setVersion("1.0.0");
         result.setServerInfo(serverInfo);
         
-        LOG.info("DDSL Language Server initialized successfully");
+        log.info("DDSL Language Server initialized successfully");
         return CompletableFuture.completedFuture(result);
     }
     
@@ -147,25 +147,25 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
      */
     @Override
     public void initialized(InitializedParams params) {
-        LOG.info("DDSL Language Server received initialized notification");
+        log.info("DDSL Language Server received initialized notification");
         
         // Register for file watching if needed
         if (client != null) {
             // Could register dynamic capabilities here
-            LOG.info("Ready to serve DDSL language features");
+            log.info("Ready to serve DDSL language features");
         }
     }
     
     @Override
     public CompletableFuture<Object> shutdown() {
-        LOG.info("DDSL Language Server shutting down...");
+        log.info("DDSL Language Server shutting down...");
         shutdownReceived = true;
         return CompletableFuture.completedFuture(null);
     }
     
     @Override
     public void exit() {
-        LOG.info("DDSL Language Server exiting");
+        log.info("DDSL Language Server exiting");
         // Exit with 0 if shutdown was received, 1 otherwise
         System.exit(shutdownReceived ? 0 : 1);
     }
@@ -200,7 +200,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
             params.setUri(uri);
             params.setDiagnostics(diagnostics);
             client.publishDiagnostics(params);
-            LOG.debug("Published {} diagnostics for {}", diagnostics.size(), uri);
+            log.debug("Published {} diagnostics for {}", diagnostics.size(), uri);
         }
     }
     
