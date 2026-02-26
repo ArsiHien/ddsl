@@ -188,9 +188,14 @@ public class DdslParser {
         
         // Parse bounded context(s)
         while (!isAtEnd()) {
+            int before = current;
             BoundedContextDecl context = boundedContextDeclaration();
             if (context != null) {
                 contexts.add(context);
+            }
+            // Safety: if no progress was made, skip the token to avoid infinite loop
+            if (current == before) {
+                advance();
             }
         }
         
@@ -829,9 +834,13 @@ public class DdslParser {
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'invariants'");
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            int before = current;
             InvariantDecl invariant = invariantRule();
             if (invariant != null) {
                 invariants.add(invariant);
+            }
+            if (current == before) {
+                advance(); // skip to avoid infinite loop
             }
         }
         
@@ -2024,6 +2033,8 @@ public class DdslParser {
                 if (check(TokenType.EQUAL)) {
                     advance();
                     if (check(TokenType.TO)) advance();
+                } else if (check(TokenType.EMPTY)) {
+                    advance();
                 }
                 return BinaryExpr.BinaryOperator.NOT_EQUALS;
             } else if (check(TokenType.EQUAL)) {
@@ -2090,7 +2101,7 @@ public class DdslParser {
         
         while (check(TokenType.PLUS) || check(TokenType.PLUS_SYMBOL) ||
                check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) ||
-               check(TokenType.DASH)) {
+               (check(TokenType.DASH) && !isDashListBullet())) {
             
             BinaryExpr.BinaryOperator op;
             if (check(TokenType.PLUS) || check(TokenType.PLUS_SYMBOL)) {
@@ -2106,6 +2117,25 @@ public class DdslParser {
         }
         
         return expr;
+    }
+    
+    /**
+     * Determine if a DASH token is a list bullet rather than a minus sign.
+     * A dash is a list bullet if it's followed by a then-statement keyword,
+     * an identifier (field/method reference), or another natural-language keyword
+     * used at the start of a statement.
+     */
+    private boolean isDashListBullet() {
+        if (!check(TokenType.DASH)) return false;
+        if (current + 1 >= tokens.size()) return false;
+        TokenType next = tokens.get(current + 1).getType();
+        return next == TokenType.SET || next == TokenType.CHANGE ||
+               next == TokenType.CALCULATE || next == TokenType.CREATE ||
+               next == TokenType.ADD || next == TokenType.REMOVE ||
+               next == TokenType.SAVE || next == TokenType.RECORD ||
+               next == TokenType.IF || next == TokenType.FOR ||
+               next == TokenType.ENABLE || next == TokenType.DISABLE ||
+               next == TokenType.IDENTIFIER;
     }
     
     private Expr multiplicativeExpression() {
@@ -2138,7 +2168,8 @@ public class DdslParser {
             return new UnaryExpr(currentSpan(), UnaryExpr.UnaryOperator.NOT, expr);
         }
         
-        if (check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) || check(TokenType.DASH)) {
+        if (check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) || 
+            (check(TokenType.DASH) && !isDashListBullet())) {
             advance();
             Expr expr = unaryExpression();
             return new UnaryExpr(currentSpan(), UnaryExpr.UnaryOperator.NEGATE, expr);
