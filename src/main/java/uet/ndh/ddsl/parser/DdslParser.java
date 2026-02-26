@@ -335,6 +335,20 @@ public class DdslParser {
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
+            } else if (check(TokenType.OPERATIONS)) {
+                // Parse operations block containing 'when' behaviors
+                advance(); // consume 'operations'
+                consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
+                while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+                    if (check(TokenType.WHEN)) {
+                        BehaviorDecl behavior = behaviorDeclaration();
+                        if (behavior != null) behaviors.add(behavior);
+                    } else {
+                        error("Expected 'when' in operations block");
+                        advance();
+                    }
+                }
+                consume(TokenType.RIGHT_BRACE, "Expected '}' at end of operations block");
             } else if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
                 behaviors.add(behavior);
@@ -344,6 +358,22 @@ public class DdslParser {
             } else if (check(TokenType.VALUE_OBJECT)) {
                 ValueObjectDecl vo = valueObjectDeclaration();
                 localValueObjects.add(vo);
+            } else if (check(TokenType.AT_SIGN)) {
+                // Leading annotations (e.g. @identity) before a field
+                List<Constraint> leadingConstraints = annotationList();
+                FieldDecl field = fieldDeclaration();
+                if (field != null) {
+                    // Merge leading constraints with any trailing constraints
+                    List<Constraint> allConstraints = new ArrayList<>(leadingConstraints);
+                    allConstraints.addAll(field.constraints());
+                    field = new FieldDecl(field.span(), field.name(), field.type(),
+                            field.visibility(), field.isFinal(), field.isNullable(),
+                            field.defaultValue(), allConstraints, field.documentation());
+                    rootFields.add(field);
+                    if (hasIdentityConstraint(field)) {
+                        identityField = toIdentityFieldDecl(field);
+                    }
+                }
             } else if (check(TokenType.IDENTIFIER)) {
                 FieldDecl field = fieldDeclaration();
                 if (field != null) {
@@ -398,10 +428,39 @@ public class DdslParser {
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
+            } else if (check(TokenType.OPERATIONS)) {
+                // Parse operations block containing 'when' behaviors
+                advance(); // consume 'operations'
+                consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
+                while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+                    if (check(TokenType.WHEN)) {
+                        BehaviorDecl behavior = behaviorDeclaration();
+                        if (behavior != null) behaviors.add(behavior);
+                    } else {
+                        error("Expected 'when' in operations block");
+                        advance();
+                    }
+                }
+                consume(TokenType.RIGHT_BRACE, "Expected '}' at end of operations block");
             } else if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
                 if (behavior != null) {
                     behaviors.add(behavior);
+                }
+            } else if (check(TokenType.AT_SIGN)) {
+                // Leading annotations (e.g. @identity) before a field
+                List<Constraint> leadingConstraints = annotationList();
+                FieldDecl field = fieldDeclaration();
+                if (field != null) {
+                    List<Constraint> allConstraints = new ArrayList<>(leadingConstraints);
+                    allConstraints.addAll(field.constraints());
+                    field = new FieldDecl(field.span(), field.name(), field.type(),
+                            field.visibility(), field.isFinal(), field.isNullable(),
+                            field.defaultValue(), allConstraints, field.documentation());
+                    fields.add(field);
+                    if (hasIdentityConstraint(field)) {
+                        identityField = toIdentityFieldDecl(field);
+                    }
                 }
             } else if (check(TokenType.IDENTIFIER)) {
                 FieldDecl field = fieldDeclaration();
@@ -1111,7 +1170,7 @@ public class DdslParser {
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected repository name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
         
-        consume(TokenType.FOR_PREP, "Expected 'for' after repository name");
+        consume(TokenType.FOR, "Expected 'for' after repository name");
         
         TypeRef aggregateType = typeReference();
         
@@ -1120,9 +1179,13 @@ public class DdslParser {
         List<RepositoryMethodDecl> methods = new ArrayList<>();
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            int before = current;
             RepositoryMethodDecl method = repositoryMethod();
             if (method != null) {
                 methods.add(method);
+            } else if (current == before) {
+                // No progress — skip token to avoid infinite loop
+                advance();
             }
         }
         
@@ -1134,8 +1197,15 @@ public class DdslParser {
     private RepositoryMethodDecl repositoryMethod() {
         SourceSpan span = currentSpan();
         
-        Token nameToken = consume(TokenType.IDENTIFIER, "Expected method name");
-        if (nameToken == null) return null;
+        // Method name can be an identifier or a keyword used as method name (save, remove, add, count, etc.)
+        Token nameToken;
+        if (check(TokenType.IDENTIFIER) || check(TokenType.SAVE) || check(TokenType.REMOVE) 
+                || check(TokenType.ADD) || check(TokenType.COUNT)) {
+            nameToken = advance();
+        } else {
+            nameToken = consume(TokenType.IDENTIFIER, "Expected method name");
+            if (nameToken == null) return null;
+        }
         
         String methodName = nameToken.getLexeme();
         
@@ -1511,7 +1581,7 @@ public class DdslParser {
             if (nameToken == null) break;
             
             TypeRef type = null;
-            if (check(TokenType.AS) || check(TokenType.COLON)) {
+            if (check(TokenType.AS) || (check(TokenType.COLON) && checkNextIsTypeStart())) {
                 advance();
                 type = typeReference();
             }
@@ -2669,7 +2739,7 @@ public class DdslParser {
             return SpecificationCondition.matches(span, subject, spec);
         }
         
-        if (matchSequence(TokenType.IS, TokenType.ELIGIBLE, TokenType.FOR_PREP)) {
+        if (matchSequence(TokenType.IS, TokenType.ELIGIBLE, TokenType.FOR)) {
             SpecificationCondition.SpecificationRef spec = parseSpecificationRef();
             return SpecificationCondition.isEligibleFor(span, subject, spec);
         }
@@ -2873,6 +2943,22 @@ public class DdslParser {
     private boolean checkNext(TokenType type) {
         if (current + 1 >= tokens.size()) return false;
         return tokens.get(current + 1).getType() == type;
+    }
+    
+    /**
+     * Check if the next token (current + 1) is a valid type start.
+     * Used by parameterList() to disambiguate ':' as type annotation vs. behavior header colon.
+     */
+    private boolean checkNextIsTypeStart() {
+        if (current + 1 >= tokens.size()) return false;
+        TokenType next = tokens.get(current + 1).getType();
+        return next == TokenType.IDENTIFIER ||
+               next == TokenType.STRING_TYPE || next == TokenType.INT_TYPE ||
+               next == TokenType.DECIMAL_TYPE || next == TokenType.BOOLEAN_TYPE ||
+               next == TokenType.DATETIME_TYPE || next == TokenType.UUID_TYPE ||
+               next == TokenType.LIST_TYPE || next == TokenType.SET_TYPE ||
+               next == TokenType.MAP_TYPE || next == TokenType.VOID_TYPE ||
+               next == TokenType.RESULT;
     }
     
     private Token advance() {
