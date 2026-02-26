@@ -1640,13 +1640,16 @@ public class DdslParser {
     
     private NaturalLanguageCondition parseNaturalLanguageCondition() {
         SourceSpan span = currentSpan();
+        
+        // Collect all tokens until end of condition
+        List<Token> condTokens = new ArrayList<>();
         StringBuilder conditionText = new StringBuilder();
         
-        // Consume tokens until comma, newline, or end of conditions
         while (!check(TokenType.COMMA) && !check(TokenType.DASH) && 
                !check(TokenType.GIVEN) && !check(TokenType.THEN) && 
                !check(TokenType.REQUIRE) && !check(TokenType.RIGHT_BRACE) && 
                !check(TokenType.COLON) && !isAtEnd()) {
+            condTokens.add(peek());
             if (!conditionText.isEmpty()) {
                 conditionText.append(" ");
             }
@@ -1654,7 +1657,228 @@ public class DdslParser {
             advance();
         }
         
-        return NaturalLanguageCondition.simple(span, conditionText.toString(), null);
+        String rawText = conditionText.toString();
+        
+        // Try to classify the condition based on token patterns
+        return classifyCondition(span, rawText, condTokens);
+    }
+    
+    /**
+     * Classify a natural language condition from its tokens.
+     * Patterns recognized:
+     *   <subject> is not empty       → IS_NOT_EMPTY
+     *   <subject> is empty           → IS_EMPTY
+     *   <subject> is not <value>     → COMPARISON (NOT_EQUAL)
+     *   <subject> is <value>         → STATE_IS or COMPARISON (EQUAL)
+     *   <subject> is greater than <value>  → COMPARISON (GREATER_THAN)
+     *   <subject> is less than <value>     → COMPARISON (LESS_THAN)
+     *   <subject> is at least <value>      → COMPARISON (AT_LEAST)
+     *   <subject> is at most <value>       → COMPARISON (AT_MOST)
+     *   <subject> exists in system   → EXISTS_IN_SYSTEM
+     *   <subject> does not exist     → DOES_NOT_EXIST
+     *   all <coll> have <prop>       → UNIVERSAL
+     *   any <coll> has <prop>        → EXISTENTIAL
+     *   no <coll> has <prop>         → NEGATED_EXISTENTIAL
+     *   <subject> has been <participle> → HAS_BEEN
+     */
+    private NaturalLanguageCondition classifyCondition(SourceSpan span, String rawText, List<Token> tokens) {
+        if (tokens.isEmpty()) {
+            return NaturalLanguageCondition.simple(span, rawText, null);
+        }
+        
+        // Find the 'is' token position
+        int isPos = findToken(tokens, TokenType.IS);
+        
+        if (isPos >= 1) {
+            String subject = buildText(tokens, 0, isPos);
+            int afterIs = isPos + 1;
+            
+            // "X is not ..."
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.NOT) {
+                int afterNot = afterIs + 1;
+                
+                // "X is not empty"
+                if (afterNot < tokens.size() && tokens.get(afterNot).getType() == TokenType.EMPTY) {
+                    return NaturalLanguageCondition.collectionEmpty(span, rawText, subject, false);
+                }
+                
+                // "X is not <value>" → NOT_EQUAL comparison
+                if (afterNot < tokens.size()) {
+                    Expr leftExpr = new VariableExpr(span, subject);
+                    Expr rightExpr = buildValueExpr(span, tokens, afterNot);
+                    return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                        NaturalLanguageCondition.ComparisonOperator.NOT_EQUAL, rightExpr);
+                }
+            }
+            
+            // "X is empty"
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.EMPTY) {
+                return NaturalLanguageCondition.collectionEmpty(span, rawText, subject, true);
+            }
+            
+            // "X is greater than Y"
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.GREATER) {
+                int thanPos = afterIs + 1;
+                if (thanPos < tokens.size() && tokens.get(thanPos).getType() == TokenType.THAN) {
+                    Expr leftExpr = new VariableExpr(span, subject);
+                    Expr rightExpr = buildValueExpr(span, tokens, thanPos + 1);
+                    return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                        NaturalLanguageCondition.ComparisonOperator.GREATER_THAN, rightExpr);
+                }
+            }
+            
+            // "X is less than Y"
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.LESS) {
+                int thanPos = afterIs + 1;
+                if (thanPos < tokens.size() && tokens.get(thanPos).getType() == TokenType.THAN) {
+                    Expr leftExpr = new VariableExpr(span, subject);
+                    Expr rightExpr = buildValueExpr(span, tokens, thanPos + 1);
+                    return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                        NaturalLanguageCondition.ComparisonOperator.LESS_THAN, rightExpr);
+                }
+            }
+            
+            // "X is at least Y" or "X is at most Y"
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.AT) {
+                int nextPos = afterIs + 1;
+                if (nextPos < tokens.size()) {
+                    String nextLex = tokens.get(nextPos).getLexeme().toLowerCase();
+                    if (nextLex.equals("least")) {
+                        Expr leftExpr = new VariableExpr(span, subject);
+                        Expr rightExpr = buildValueExpr(span, tokens, nextPos + 1);
+                        return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                            NaturalLanguageCondition.ComparisonOperator.AT_LEAST, rightExpr);
+                    } else if (nextLex.equals("most")) {
+                        Expr leftExpr = new VariableExpr(span, subject);
+                        Expr rightExpr = buildValueExpr(span, tokens, nextPos + 1);
+                        return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                            NaturalLanguageCondition.ComparisonOperator.AT_MOST, rightExpr);
+                    }
+                }
+            }
+            
+            // "X is one of [...]" → STATE_ONE_OF  
+            if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.ONE) {
+                int ofPos = afterIs + 1;
+                if (ofPos < tokens.size() && tokens.get(ofPos).getType() == TokenType.OF) {
+                    List<String> values = new ArrayList<>();
+                    for (int i = ofPos + 1; i < tokens.size(); i++) {
+                        Token t = tokens.get(i);
+                        if (t.getType() == TokenType.LEFT_BRACKET || t.getType() == TokenType.RIGHT_BRACKET
+                            || t.getType() == TokenType.COMMA) continue;
+                        values.add(t.getLexeme());
+                    }
+                    Expr leftExpr = new VariableExpr(span, subject);
+                    return NaturalLanguageCondition.stateOneOf(span, rawText, leftExpr, values);
+                }
+            }
+            
+            // "X is <value>" → STATE_IS (for string literals) or COMPARISON (EQUAL)
+            if (afterIs < tokens.size()) {
+                Expr leftExpr = new VariableExpr(span, subject);
+                Expr rightExpr = buildValueExpr(span, tokens, afterIs);
+                if (tokens.get(afterIs).getType() == TokenType.STRING_LITERAL) {
+                    return NaturalLanguageCondition.state(span, rawText, leftExpr, rightExpr);
+                }
+                return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
+                    NaturalLanguageCondition.ComparisonOperator.EQUAL, rightExpr);
+            }
+        }
+        
+        // "X exists in system"
+        int existsPos = findToken(tokens, TokenType.EXISTS);
+        if (existsPos >= 1) {
+            String subject = buildText(tokens, 0, existsPos);
+            return NaturalLanguageCondition.existence(span, rawText, subject, true);
+        }
+        
+        // "X does not exist"
+        int doesPos = findToken(tokens, TokenType.DOES);
+        if (doesPos >= 1 && doesPos + 2 < tokens.size()
+            && tokens.get(doesPos + 1).getType() == TokenType.NOT
+            && (tokens.get(doesPos + 2).getType() == TokenType.EXISTS
+                || tokens.get(doesPos + 2).getLexeme().equalsIgnoreCase("exist"))) {
+            String subject = buildText(tokens, 0, doesPos);
+            return NaturalLanguageCondition.existence(span, rawText, subject, false);
+        }
+        
+        // "all X have Y" → UNIVERSAL
+        if (tokens.get(0).getType() == TokenType.ALL && tokens.size() >= 4) {
+            int havePos = findToken(tokens, TokenType.HAVE);
+            if (havePos >= 2) {
+                String collection = buildText(tokens, 1, havePos);
+                String property = buildText(tokens, havePos + 1, tokens.size());
+                return NaturalLanguageCondition.universal(span, rawText, collection, property, null);
+            }
+        }
+        
+        // "any X has Y" → EXISTENTIAL
+        if (tokens.get(0).getType() == TokenType.ANY && tokens.size() >= 4) {
+            int hasPos = findToken(tokens, TokenType.HAS);
+            if (hasPos >= 2) {
+                String collection = buildText(tokens, 1, hasPos);
+                String property = buildText(tokens, hasPos + 1, tokens.size());
+                return NaturalLanguageCondition.existential(span, rawText, collection, property, null);
+            }
+        }
+        
+        // "no X has Y" → NEGATED_EXISTENTIAL
+        if (tokens.get(0).getType() == TokenType.NO && tokens.size() >= 4) {
+            int hasPos = findToken(tokens, TokenType.HAS);
+            if (hasPos >= 2) {
+                String collection = buildText(tokens, 1, hasPos);
+                String property = buildText(tokens, hasPos + 1, tokens.size());
+                return NaturalLanguageCondition.negatedExistential(span, rawText, collection, property, null);
+            }
+        }
+        
+        // "X has been Y" → HAS_BEEN
+        int hasPos = findToken(tokens, TokenType.HAS);
+        if (hasPos >= 1 && hasPos + 1 < tokens.size() 
+            && tokens.get(hasPos + 1).getType() == TokenType.BEEN) {
+            String subject = buildText(tokens, 0, hasPos);
+            String participle = buildText(tokens, hasPos + 2, tokens.size());
+            return NaturalLanguageCondition.hasBeen(span, rawText, subject, participle);
+        }
+        
+        // Fallback: SIMPLE
+        return NaturalLanguageCondition.simple(span, rawText, null);
+    }
+    
+    private int findToken(List<Token> tokens, TokenType type) {
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i).getType() == type) return i;
+        }
+        return -1;
+    }
+    
+    private String buildText(List<Token> tokens, int from, int to) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = from; i < to && i < tokens.size(); i++) {
+            if (!sb.isEmpty()) sb.append(" ");
+            sb.append(tokens.get(i).getLexeme());
+        }
+        return sb.toString();
+    }
+    
+    private Expr buildValueExpr(SourceSpan span, List<Token> tokens, int from) {
+        if (from >= tokens.size()) {
+            return new VariableExpr(span, "null");
+        }
+        Token t = tokens.get(from);
+        return switch (t.getType()) {
+            case STRING_LITERAL -> new LiteralExpr(span, t.getStringValue(), LiteralExpr.LiteralType.STRING);
+            case INTEGER_LITERAL -> new LiteralExpr(span, Integer.parseInt(t.getLexeme()), LiteralExpr.LiteralType.INTEGER);
+            case DECIMAL_LITERAL -> new LiteralExpr(span, Double.parseDouble(t.getLexeme()), LiteralExpr.LiteralType.DECIMAL);
+            case TRUE -> new LiteralExpr(span, true, LiteralExpr.LiteralType.BOOLEAN);
+            case FALSE -> new LiteralExpr(span, false, LiteralExpr.LiteralType.BOOLEAN);
+            case NULL -> new NullExpr(span);
+            default -> {
+                // Multi-token value: just use the remaining text as a variable reference
+                String valueText = buildText(tokens, from, tokens.size());
+                yield new VariableExpr(span, valueText);
+            }
+        };
     }
     
     private GivenClause givenClause() {
