@@ -1129,20 +1129,18 @@ public class DdslParser {
         consume(TokenType.FROM, "Expected 'from' after entity type");
         
         TypeRef sourceType = typeReference();
-        
-        // Parse optional parameters
-        List<ParameterDecl> params = new ArrayList<>();
+
         if (check(TokenType.WITH)) {
             advance();
-            params = parameterList();
+            parameterList(); // Retained the method call for potential side effects
         }
-        
+
         consume(TokenType.COLON, "Expected ':' after factory rule header");
-        
+
         // Parse clauses - skip for now, just build the rule
         StringBuilder description = new StringBuilder();
         description.append("creating ").append(entityType.name()).append(" from ").append(sourceType.name());
-        
+
         while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.REQUIRE) || check(TokenType.GIVEN) || check(TokenType.THEN) || check(TokenType.RETURN)) {
                 // Skip clause parsing for now
@@ -2244,6 +2242,31 @@ public class DdslParser {
                check(TokenType.NEQ) || check(TokenType.EQ) ||
                check(TokenType.EXCEEDS)) {
             
+            SourceSpan opSpan = currentSpan();
+            
+            // Special case: "is [not] empty" — unary predicate, no right-hand expression
+            if (check(TokenType.IS)) {
+                int saved = current;
+                advance(); // consume IS
+                
+                if (check(TokenType.NOT) && checkNext(TokenType.EMPTY)) {
+                    advance(); // consume NOT
+                    advance(); // consume EMPTY
+                    expr = new UnaryExpr(opSpan, UnaryExpr.UnaryOperator.NOT,
+                        new MethodCallExpr(opSpan, expr, "isEmpty", List.of()));
+                    continue;
+                }
+                
+                if (check(TokenType.EMPTY)) {
+                    advance(); // consume EMPTY
+                    expr = new MethodCallExpr(opSpan, expr, "isEmpty", List.of());
+                    continue;
+                }
+                
+                // Not a special case, backtrack to let parseComparisonOperator handle it
+                current = saved;
+            }
+            
             BinaryExpr.BinaryOperator op = parseComparisonOperator();
             Expr right = additiveExpression();
             expr = new BinaryExpr(currentSpan(), expr, op, right);
@@ -2968,6 +2991,8 @@ public class DdslParser {
         }
         
         String groupByProperty = parsePropertyPath();
+        
+        return CollectionGroupBy.simple(span, collection, groupByProperty);
         
         return CollectionGroupBy.simple(span, collection, groupByProperty);
     }
