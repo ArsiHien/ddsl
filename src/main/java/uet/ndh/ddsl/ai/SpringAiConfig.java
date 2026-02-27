@@ -17,11 +17,12 @@ import uet.ndh.ddsl.agent.prompt.PromptManager;
 public class SpringAiConfig {
 
     @Bean
-    public ChatClient.Builder chatClientBuilder(
+    public ChatClient ddslChatClient(
             ChatClient.Builder builder,
             PromptManager promptManager
     ) {
         return builder
-                .defaultSystem(promptManager.defaultSystemPrompt());
+                .defaultSystem(promptManager.defaultSystemPrompt())
+                .build();
     }
 }
