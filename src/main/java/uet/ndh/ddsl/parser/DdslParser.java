@@ -547,12 +547,15 @@ public class DdslParser {
         consume(TokenType.LEFT_BRACE, "Expected '{' after domain service name");
         
         List<MethodDecl> methods = new ArrayList<>();
+        List<BehaviorDecl> behaviors = new ArrayList<>();
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
                 if (behavior != null) {
-                    // Convert behavior to method
+                    // Store behavior for full code generation
+                    behaviors.add(behavior);
+                    // Also convert to method for backward compatibility
                     methods.add(behaviorToMethod(behavior));
                 }
             } else {
@@ -563,7 +566,7 @@ public class DdslParser {
         
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of domain service");
         
-        return new DomainServiceDecl(span, name, methods, List.of(), null);
+        return new DomainServiceDecl(span, name, methods, behaviors, List.of(), null);
     }
     
     /**
