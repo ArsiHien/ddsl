@@ -2993,8 +2993,6 @@ public class DdslParser {
         String groupByProperty = parsePropertyPath();
         
         return CollectionGroupBy.simple(span, collection, groupByProperty);
-        
-        return CollectionGroupBy.simple(span, collection, groupByProperty);
     }
     
     /**
