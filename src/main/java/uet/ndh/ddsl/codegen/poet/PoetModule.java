@@ -1,13 +1,13 @@
 package uet.ndh.ddsl.codegen.poet;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
+import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
 import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.codegen.CodeArtifact;
@@ -40,7 +40,6 @@ import java.util.List;
  * List<CodeArtifact> artifacts = poet.generateFromModel(domainModel);
  * </pre>
  */
-@Component
 @Slf4j
 public class PoetModule {
     
@@ -48,6 +47,7 @@ public class PoetModule {
     private final AggregateTranslator aggregateTranslator;
     private final EntityTranslator entityTranslator;
     private final ServiceTranslator serviceTranslator;
+    private final SpecificationTranslator specificationTranslator;
     private final EnumTranslator enumTranslator;
     private final StateMachineTranslator stateMachineTranslator;
     
@@ -56,6 +56,7 @@ public class PoetModule {
         this.aggregateTranslator = new AggregateTranslator(typeMapper);
         this.entityTranslator = new EntityTranslator(typeMapper);
         this.serviceTranslator = new ServiceTranslator(typeMapper);
+        this.specificationTranslator = new SpecificationTranslator(typeMapper);
         this.enumTranslator = new EnumTranslator(typeMapper, basePackage);
         this.stateMachineTranslator = new StateMachineTranslator(typeMapper, basePackage);
     }
@@ -97,6 +98,11 @@ public class PoetModule {
             // Generate repository interfaces
             for (RepositoryDecl repository : boundedContext.repositories()) {
                 artifacts.add(generateRepository(repository));
+            }
+            
+            // Generate specifications
+            for (SpecificationDecl specification : boundedContext.specifications()) {
+                artifacts.add(generateSpecification(specification));
             }
         }
         
@@ -141,7 +147,15 @@ public class PoetModule {
      */
     public CodeArtifact generateDomainService(DomainServiceDecl service) {
         log.debug("Generating domain service: {}", service.name());
-        return serviceTranslator.translate(service);
+        serviceTranslator.clearTranslationErrors();
+        CodeArtifact artifact = serviceTranslator.translate(service);
+        
+        // Log any translation errors (unresolved types, etc.)
+        for (String error : serviceTranslator.getTranslationErrors()) {
+            log.error("Code generation error: {}", error);
+        }
+        
+        return artifact;
     }
     
     /**
@@ -150,6 +164,14 @@ public class PoetModule {
     public CodeArtifact generateRepository(RepositoryDecl repository) {
         log.debug("Generating repository: {}", repository.name());
         return serviceTranslator.translateRepository(repository);
+    }
+    
+    /**
+     * Generate a specification class (DDD Specification pattern).
+     */
+    public CodeArtifact generateSpecification(SpecificationDecl specification) {
+        log.debug("Generating specification: {}", specification.name());
+        return specificationTranslator.translate(specification);
     }
     
     /**
@@ -238,6 +260,12 @@ public class PoetModule {
             
             for (DomainEventDecl event : boundedContext.domainEvents()) {
                 typeMapper.registerDomainType(event.name(), contextPackage);
+            }
+            
+            // Register specification types
+            String specPackage = contextPackage + ".specification";
+            for (SpecificationDecl spec : boundedContext.specifications()) {
+                typeMapper.registerDomainType(spec.name(), specPackage);
             }
         }
     }

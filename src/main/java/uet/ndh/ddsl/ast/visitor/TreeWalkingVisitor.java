@@ -135,6 +135,9 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
         for (var method : decl.methods()) {
             result = aggregateResult(result, method.accept(this));
         }
+        for (var behavior : decl.behaviors()) {
+            result = aggregateResult(result, behavior.accept(this));
+        }
         for (var dependency : decl.dependencies()) {
             result = aggregateResult(result, dependency.accept(this));
         }

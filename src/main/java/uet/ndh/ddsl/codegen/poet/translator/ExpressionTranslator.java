@@ -78,7 +78,8 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
      * Translate a BehaviorDecl into a complete MethodSpec.
      */
     public MethodSpec translateBehavior(BehaviorDecl behavior) {
-        String methodName = toMethodName(behavior.getName());
+        // behavior.getName() already returns proper camelCase via NaturalLanguagePhrase.toMethodName()
+        String methodName = behavior.getName();
         TypeName returnType = determineReturnType(behavior);
         
         MethodSpec.Builder builder = MethodSpec.methodBuilder(methodName)
@@ -90,9 +91,16 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             builder.addJavadoc("Behavior: $L\n", behavior.getName());
         }
         
-        // Add parameters
+        // Add parameters with domain type resolution
         for (ParameterDecl param : behavior.parameters()) {
             TypeName paramType = typeMapper.mapType(param.type());
+            // If the param type is Object (untyped in DDSL), try to resolve from domain types
+            if ("Object".equals(param.type().name())) {
+                TypeName resolved = typeMapper.tryResolveParamType(param.name());
+                if (resolved != null) {
+                    paramType = resolved;
+                }
+            }
             builder.addParameter(paramType, param.name());
         }
         
@@ -165,18 +173,82 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         code.add("// Preconditions\n");
         
         for (RequireClause.RequireCondition condition : requireClause.conditions()) {
-            CodeBlock guardCondition = translateCondition(condition.condition());
+            CodeBlock guardCondition = translateGuardCondition(condition.condition());
             String errorMessage = condition.errorMessage() != null 
                 ? condition.errorMessage() 
                 : "Precondition failed: " + condition.condition().rawText();
             
-            code.beginControlFlow("if (!($L))", guardCondition)
+            code.beginControlFlow("if ($L)", guardCondition)
                 .addStatement("throw new $T($S)", ILLEGAL_ARGUMENT, errorMessage)
                 .endControlFlow();
         }
         code.add("\n");
         
         return code.build();
+    }
+    
+    /**
+     * Translate a condition into its NEGATED (guard/failure) form for precondition checks.
+     * This avoids ugly double negation like if (!(!x.isEmpty())).
+     * 
+     * "checkIn is not empty" → guard fires when checkIn IS empty → checkIn.isEmpty()
+     * "reservationStatus is PENDING" → guard fires when status != PENDING → !status.equals("PENDING")
+     */
+    private CodeBlock translateGuardCondition(NaturalLanguageCondition condition) {
+        if (condition == null) {
+            return CodeBlock.of("false");
+        }
+        
+        return switch (condition.type()) {
+            // "X is not empty" → guard: X.isEmpty()
+            case IS_NOT_EMPTY -> CodeBlock.of("$N.isEmpty()", condition.quantifierTarget());
+            // "X is empty" → guard: !X.isEmpty()
+            case IS_EMPTY -> CodeBlock.of("!$N.isEmpty()", condition.quantifierTarget());
+            
+            // "X exists in system" → guard: !repo.existsById(...)
+            case EXISTS_IN_SYSTEM -> CodeBlock.of("!$NRepository.existsById($NId)", 
+                condition.quantifierTarget(), condition.quantifierTarget());
+            // "X does not exist" → guard: repo.existsById(...)
+            case DOES_NOT_EXIST -> CodeBlock.of("$NRepository.existsById($NId)", 
+                condition.quantifierTarget(), condition.quantifierTarget());
+            
+            // "X has been Y" → guard: !X.hasBeenProcessed()
+            case HAS_BEEN -> CodeBlock.of("!$N.hasBeenProcessed()", condition.quantifierTarget());
+            
+            // For comparison/state: negate the whole expression
+            case COMPARISON -> {
+                CodeBlock positive = translateComparisonCondition(condition);
+                yield CodeBlock.of("!($L)", positive);
+            }
+            case STATE_IS -> {
+                CodeBlock positive = translateStateCondition(condition);
+                yield CodeBlock.of("!($L)", positive);
+            }
+            case STATE_ONE_OF -> {
+                CodeBlock positive = translateStateOneOfCondition(condition);
+                yield CodeBlock.of("!$L", positive);
+            }
+            
+            // Quantifiers: negate
+            case UNIVERSAL -> {
+                CodeBlock positive = translateUniversalCondition(condition);
+                yield CodeBlock.of("!$L", positive);
+            }
+            case EXISTENTIAL -> {
+                CodeBlock positive = translateExistentialCondition(condition);
+                yield CodeBlock.of("!$L", positive);
+            }
+            case NEGATED_EXISTENTIAL -> {
+                CodeBlock positive = translateNegatedExistentialCondition(condition);
+                yield CodeBlock.of("!$L", positive);
+            }
+            
+            // Fallback: negate the positive form
+            default -> {
+                CodeBlock positive = translateCondition(condition);
+                yield CodeBlock.of("!($L)", positive);
+            }
+        };
     }
     
     /**
@@ -652,8 +724,48 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             
             case COMPARISON -> translateComparisonCondition(condition);
             
+            case SIMPLE -> translateSimpleCondition(condition);
+            
             default -> CodeBlock.of("/* $L */ true", condition.rawText());
         };
+    }
+    
+    /**
+     * Translate a SIMPLE condition by analyzing the raw text as a best-effort fallback.
+     * Tries common patterns before generating a placeholder.
+     */
+    private CodeBlock translateSimpleCondition(NaturalLanguageCondition condition) {
+        String raw = condition.rawText();
+        if (raw == null || raw.isBlank()) {
+            return CodeBlock.of("true");
+        }
+        
+        // Try "X is not null" pattern
+        if (raw.matches("\\w+ is not null")) {
+            String var = raw.split(" ")[0];
+            return CodeBlock.of("this.$N != null", var);
+        }
+        // Try "X is null" pattern
+        if (raw.matches("\\w+ is null")) {
+            String var = raw.split(" ")[0];
+            return CodeBlock.of("this.$N == null", var);
+        }
+        // Try "X is not empty" pattern (backup if parser didn't catch it)
+        if (raw.matches(".+ is not empty")) {
+            String var = raw.replaceAll(" is not empty$", "").trim();
+            return CodeBlock.of("!$N.isEmpty()", var);
+        }
+        // Try "X is empty" pattern (backup)
+        if (raw.matches(".+ is empty")) {
+            String var = raw.replaceAll(" is empty$", "").trim();
+            return CodeBlock.of("$N.isEmpty()", var);
+        }
+        // If the condition has an expression, translate it
+        if (condition.leftExpression() != null) {
+            return translateExpression(condition.leftExpression());
+        }
+        
+        return CodeBlock.of("/* $L */ true", raw);
     }
     
     /**
@@ -713,12 +825,28 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     }
     
     private CodeBlock translateStateCondition(NaturalLanguageCondition condition) {
+        // Use structured expression data from parser
+        if (condition.leftExpression() instanceof VariableExpr left 
+            && condition.rightExpression() != null) {
+            CodeBlock rightValue = translateExpression(condition.rightExpression());
+            // For string literal comparison: this.property.equals("value")
+            if (condition.rightExpression() instanceof LiteralExpr lit 
+                && lit.type() == LiteralExpr.LiteralType.STRING) {
+                return CodeBlock.of("$L.equals(this.$N)", rightValue, left.name());
+            }
+            return CodeBlock.of("this.$N == $L", left.name(), rightValue);
+        }
+        // Fallback: parse raw text
         String rawText = condition.rawText();
         String[] parts = rawText.split(" is ");
         if (parts.length == 2) {
             String property = parts[0].trim();
-            String state = parts[1].trim().toUpperCase();
-            return CodeBlock.of("this.$N == Status.$L", property, state);
+            String state = parts[1].trim();
+            // String literal check
+            if (state.startsWith("\"") && state.endsWith("\"")) {
+                return CodeBlock.of("$S.equals(this.$N)", state.substring(1, state.length() - 1), property);
+            }
+            return CodeBlock.of("this.$N == Status.$L", property, state.toUpperCase());
         }
         return CodeBlock.of("/* $L */ true", rawText);
     }
@@ -741,12 +869,33 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     }
     
     private CodeBlock translateComparisonCondition(NaturalLanguageCondition condition) {
-        String property = condition.propertyPath();
         String operator = mapComparisonOperator(condition.comparisonOperator());
         CodeBlock rightValue = condition.rightExpression() != null 
             ? translateExpression(condition.rightExpression()) 
             : CodeBlock.of("null");
         
+        // Use structured expression data when available
+        if (condition.leftExpression() instanceof VariableExpr left) {
+            // For NOT_EQUAL with string values: !"value".equals(this.property)
+            if (condition.comparisonOperator() == NaturalLanguageCondition.ComparisonOperator.NOT_EQUAL
+                && condition.rightExpression() instanceof LiteralExpr lit 
+                && lit.type() == LiteralExpr.LiteralType.STRING) {
+                return CodeBlock.of("!$L.equals(this.$N)", rightValue, left.name());
+            }
+            // For EQUAL with string values: "value".equals(this.property)
+            if (condition.comparisonOperator() == NaturalLanguageCondition.ComparisonOperator.EQUAL
+                && condition.rightExpression() instanceof LiteralExpr lit 
+                && lit.type() == LiteralExpr.LiteralType.STRING) {
+                return CodeBlock.of("$L.equals(this.$N)", rightValue, left.name());
+            }
+            return CodeBlock.of("this.$N $L $L", left.name(), operator, rightValue);
+        }
+        
+        // Fallback: use propertyPath
+        String property = condition.propertyPath();
+        if (property == null || property.isEmpty()) {
+            property = "unknown";
+        }
         return CodeBlock.of("this.$N $L $L", property, operator, rightValue);
     }
     

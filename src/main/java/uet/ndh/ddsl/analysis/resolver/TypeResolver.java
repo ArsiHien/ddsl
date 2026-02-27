@@ -41,6 +41,11 @@ public class TypeResolver extends TreeWalkingVisitor<Void> {
         if (typeRef == null) return;
         
         String typeName = typeRef.name();
+        
+        // Skip 'Object' - it's a placeholder for untyped natural language params
+        // These are validated separately during code generation
+        if ("Object".equals(typeName)) return;
+        
         if (!symbolTable.isTypeDefined(typeName)) {
             errors.add(new TypeResolutionError(
                 context.span(),

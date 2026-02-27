@@ -2,6 +2,7 @@ package uet.ndh.ddsl.ast.model.service;
 
 import uet.ndh.ddsl.ast.AstNode;
 import uet.ndh.ddsl.ast.SourceSpan;
+import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.member.MethodDecl;
 import uet.ndh.ddsl.ast.visitor.AstVisitor;
@@ -18,13 +19,28 @@ public record DomainServiceDecl(
     SourceSpan span,
     String name,
     List<MethodDecl> methods,
+    List<BehaviorDecl> behaviors,
     List<FieldDecl> dependencies,
     String documentation
 ) implements AstNode {
     
     public DomainServiceDecl {
         methods = methods != null ? List.copyOf(methods) : List.of();
+        behaviors = behaviors != null ? List.copyOf(behaviors) : List.of();
         dependencies = dependencies != null ? List.copyOf(dependencies) : List.of();
+    }
+    
+    /**
+     * Legacy constructor without behaviors for backward compatibility.
+     */
+    public DomainServiceDecl(
+        SourceSpan span,
+        String name,
+        List<MethodDecl> methods,
+        List<FieldDecl> dependencies,
+        String documentation
+    ) {
+        this(span, name, methods, List.of(), dependencies, documentation);
     }
     
     @Override

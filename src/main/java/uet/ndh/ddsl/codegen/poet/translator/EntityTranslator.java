@@ -2,6 +2,7 @@ package uet.ndh.ddsl.codegen.poet.translator;
 
 import com.palantir.javapoet.*;
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
+import uet.ndh.ddsl.ast.common.Constraint;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.entity.IdentityFieldDecl;
@@ -103,6 +104,14 @@ public class EntityTranslator {
         // Add constructor
         classBuilder.addMethod(buildEntityConstructor(entity));
         
+        // Register field types for behavior parameter resolution
+        typeMapper.clearFieldTypes();
+        for (FieldDecl field : entity.fields()) {
+            if (field.type() != null) {
+                typeMapper.registerFieldType(field.name(), field.type().name());
+            }
+        }
+        
         // Add behavior methods
         for (BehaviorDecl behavior : entity.behaviors()) {
             classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
@@ -140,13 +149,34 @@ public class EntityTranslator {
             .addJavadoc(generateJavadoc(valueObject.documentation(), "Value Object: " + valueObject.name()))
             .recordConstructor(recordConstructorBuilder.build());
         
-        // Add compact constructor for validation
-        if (!valueObject.invariants().isEmpty()) {
+        // Determine if we need a compact constructor for validation
+        boolean hasFieldConstraints = valueObject.fields().stream()
+            .anyMatch(f -> !f.constraints().isEmpty());
+        boolean hasInvariants = !valueObject.invariants().isEmpty();
+        
+        if (hasFieldConstraints || hasInvariants) {
             MethodSpec.Builder compactConstructor = MethodSpec.compactConstructorBuilder()
                 .addModifiers(Modifier.PUBLIC);
             
-            for (var invariant : valueObject.invariants()) {
-                compactConstructor.addCode(expressionTranslator.translateInvariantValidation(invariant));
+            // Generate field constraint validations
+            if (hasFieldConstraints) {
+                compactConstructor.addCode("// Field constraint validations\n");
+                for (FieldDecl field : valueObject.fields()) {
+                    for (Constraint constraint : field.constraints()) {
+                        compactConstructor.addCode(
+                            generateConstraintValidation(field, constraint));
+                    }
+                }
+                if (hasInvariants) {
+                    compactConstructor.addCode("\n");
+                }
+            }
+            
+            // Generate invariant validations
+            if (hasInvariants) {
+                for (var invariant : valueObject.invariants()) {
+                    compactConstructor.addCode(expressionTranslator.translateInvariantValidation(invariant));
+                }
             }
             
             recordBuilder.addMethod(compactConstructor.build());
@@ -156,6 +186,146 @@ public class EntityTranslator {
             .skipJavaLangImports(true)
             .indent("    ")
             .build();
+    }
+    
+    /**
+     * Generate validation code for a single field constraint annotation.
+     * Maps DDSL constraint annotations to Java validation guard clauses.
+     */
+    private CodeBlock generateConstraintValidation(FieldDecl field, Constraint constraint) {
+        String fieldName = field.name();
+        ClassName illegalArg = ClassName.get(IllegalArgumentException.class);
+        
+        return switch (constraint.type()) {
+            case REQUIRED, NOT_NULL -> CodeBlock.builder()
+                .beginControlFlow("if ($N == null)", fieldName)
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " is required")
+                .endControlFlow()
+                .build();
+                
+            case NOT_EMPTY -> CodeBlock.builder()
+                .beginControlFlow("if ($N == null || $N.isEmpty())", fieldName, fieldName)
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " must not be empty")
+                .endControlFlow()
+                .build();
+                
+            case NOT_BLANK -> CodeBlock.builder()
+                .beginControlFlow("if ($N == null || $N.isBlank())", fieldName, fieldName)
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " must not be blank")
+                .endControlFlow()
+                .build();
+            
+            case MAX_LENGTH -> {
+                String maxVal = extractConstraintValue(constraint);
+                yield CodeBlock.builder()
+                    .beginControlFlow("if ($N != null && $N.length() > $L)", fieldName, fieldName, maxVal)
+                    .addStatement("throw new $T($S)", illegalArg, 
+                        fieldName + " must not exceed " + maxVal + " characters")
+                    .endControlFlow()
+                    .build();
+            }
+            
+            case MIN_LENGTH -> {
+                String minVal = extractConstraintValue(constraint);
+                yield CodeBlock.builder()
+                    .beginControlFlow("if ($N != null && $N.length() < $L)", fieldName, fieldName, minVal)
+                    .addStatement("throw new $T($S)", illegalArg, 
+                        fieldName + " must be at least " + minVal + " characters")
+                    .endControlFlow()
+                    .build();
+            }
+            
+            case MIN -> {
+                String minVal = extractConstraintValue(constraint);
+                yield CodeBlock.builder()
+                    .beginControlFlow("if ($N < $L)", fieldName, minVal)
+                    .addStatement("throw new $T($S)", illegalArg, 
+                        fieldName + " must be at least " + minVal)
+                    .endControlFlow()
+                    .build();
+            }
+            
+            case MAX -> {
+                String maxVal = extractConstraintValue(constraint);
+                yield CodeBlock.builder()
+                    .beginControlFlow("if ($N > $L)", fieldName, maxVal)
+                    .addStatement("throw new $T($S)", illegalArg, 
+                        fieldName + " must not exceed " + maxVal)
+                    .endControlFlow()
+                    .build();
+            }
+            
+            case POSITIVE -> CodeBlock.builder()
+                .beginControlFlow("if ($N <= 0)", fieldName)
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " must be positive")
+                .endControlFlow()
+                .build();
+                
+            case NEGATIVE -> CodeBlock.builder()
+                .beginControlFlow("if ($N >= 0)", fieldName)
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " must be negative")
+                .endControlFlow()
+                .build();
+            
+            case PATTERN -> {
+                String pattern = extractConstraintStringValue(constraint);
+                yield CodeBlock.builder()
+                    .beginControlFlow("if ($N != null && !$N.matches($S))", fieldName, fieldName, pattern)
+                    .addStatement("throw new $T($S)", illegalArg, 
+                        fieldName + " does not match required pattern")
+                    .endControlFlow()
+                    .build();
+            }
+            
+            case EMAIL -> CodeBlock.builder()
+                .beginControlFlow("if ($N != null && !$N.matches($S))", fieldName, fieldName, 
+                    "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
+                .addStatement("throw new $T($S)", illegalArg, 
+                    fieldName + " must be a valid email address")
+                .endControlFlow()
+                .build();
+            
+            case UNIQUE -> CodeBlock.builder()
+                .add("// @unique constraint for $N enforced at repository/persistence level\n", fieldName)
+                .build();
+                
+            case IDENTITY, IMMUTABLE, COMPUTED, DEFAULT -> 
+                CodeBlock.builder().build(); // No validation needed for these
+                
+            default -> CodeBlock.builder()
+                .add("// TODO: Validate $N constraint $L\n", fieldName, constraint.type())
+                .build();
+        };
+    }
+    
+    /**
+     * Extract the numeric value from a constraint expression.
+     */
+    private String extractConstraintValue(Constraint constraint) {
+        if (constraint.value() != null) {
+            return expressionTranslator.translateExpression(constraint.value()).toString();
+        }
+        return "0";
+    }
+    
+    /**
+     * Extract a string value from a constraint expression.
+     */
+    private String extractConstraintStringValue(Constraint constraint) {
+        if (constraint.value() != null) {
+            String val = expressionTranslator.translateExpression(constraint.value()).toString();
+            // Remove surrounding quotes if present
+            if (val.startsWith("\"") && val.endsWith("\"")) {
+                return val.substring(1, val.length() - 1);
+            }
+            return val;
+        }
+        return "";
     }
     
     private JavaFile translateEventToJavaFile(DomainEventDecl event, String packageName) {

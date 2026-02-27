@@ -1,6 +1,7 @@
 package uet.ndh.ddsl.codegen.poet.translator;
 
 import com.palantir.javapoet.*;
+import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.member.MethodDecl;
 import uet.ndh.ddsl.ast.member.ParameterDecl;
@@ -11,6 +12,8 @@ import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.poet.TypeMapper;
 
 import javax.lang.model.element.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -23,16 +26,34 @@ public class ServiceTranslator {
     
     private final TypeMapper typeMapper;
     private final ExpressionTranslator expressionTranslator;
+    private final List<String> translationErrors;
     
     private static final ClassName OPTIONAL = ClassName.get(Optional.class);
     
     public ServiceTranslator(TypeMapper typeMapper) {
         this.typeMapper = typeMapper;
         this.expressionTranslator = new ExpressionTranslator(typeMapper);
+        this.translationErrors = new ArrayList<>();
+    }
+    
+    /**
+     * Get any errors that occurred during translation (e.g. unresolved param types).
+     */
+    public List<String> getTranslationErrors() {
+        return List.copyOf(translationErrors);
+    }
+    
+    /**
+     * Clear accumulated translation errors.
+     */
+    public void clearTranslationErrors() {
+        translationErrors.clear();
     }
     
     /**
      * Translate a domain service to a CodeArtifact.
+     * Uses full BehaviorDecl data to generate complete method bodies with domain logic.
+     * Parameters are resolved to their domain types (Entity/VO/Aggregate).
      */
     public CodeArtifact translate(DomainServiceDecl service) {
         String packageName = typeMapper.getBasePackage() + ".service";
@@ -65,9 +86,18 @@ public class ServiceTranslator {
         
         classBuilder.addMethod(constructor.build());
         
-        // Add declared methods
-        for (MethodDecl method : service.methods()) {
-            classBuilder.addMethod(translateMethodDecl(method));
+        // Prefer behaviors over plain methods for full code generation
+        if (!service.behaviors().isEmpty()) {
+            for (BehaviorDecl behavior : service.behaviors()) {
+                // Validate parameter types before generating code
+                validateBehaviorParamTypes(behavior, service.name());
+                classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
+            }
+        } else {
+            // Fallback: use plain method declarations (legacy path)
+            for (MethodDecl method : service.methods()) {
+                classBuilder.addMethod(translateMethodDeclWithTypeResolution(method));
+            }
         }
         
         JavaFile javaFile = JavaFile.builder(packageName, classBuilder.build())
@@ -81,6 +111,28 @@ public class ServiceTranslator {
             javaFile.toString(),
             CodeArtifact.ArtifactType.DOMAIN_SERVICE
         );
+    }
+    
+    /**
+     * Validate that behavior parameter types can be resolved to known domain types.
+     * Reports errors for parameters that remain as 'Object' and cannot be resolved.
+     */
+    private void validateBehaviorParamTypes(BehaviorDecl behavior, String serviceName) {
+        for (ParameterDecl param : behavior.parameters()) {
+            if ("Object".equals(param.type().name())) {
+                TypeName resolved = typeMapper.tryResolveParamType(param.name());
+                if (resolved == null) {
+                    translationErrors.add(
+                        "Service '" + serviceName + "', method '" + behavior.getName() 
+                        + "': parameter '" + param.name() 
+                        + "' has unresolved type. No Entity, ValueObject, or Aggregate named '"
+                        + capitalize(param.name()) + "' is defined. "
+                        + "Define the type or use explicit type annotation (e.g., '" 
+                        + param.name() + " as TypeName')."
+                    );
+                }
+            }
+        }
     }
     
     /**
@@ -121,7 +173,11 @@ public class ServiceTranslator {
     
     // ========== Helper Methods ==========
     
-    private MethodSpec translateMethodDecl(MethodDecl method) {
+    /**
+     * Translate a MethodDecl with type resolution for parameters.
+     * If a parameter type is 'Object', tries to resolve it to a known domain type.
+     */
+    private MethodSpec translateMethodDeclWithTypeResolution(MethodDecl method) {
         TypeName returnType = method.returnType() != null 
             ? typeMapper.mapType(method.returnType())
             : TypeName.VOID;
@@ -130,9 +186,16 @@ public class ServiceTranslator {
             .addModifiers(Modifier.PUBLIC)
             .returns(returnType);
         
-        // Add parameters
+        // Add parameters with domain type resolution
         for (ParameterDecl param : method.parameters()) {
             TypeName paramType = typeMapper.mapType(param.type());
+            // If the param type is Object (untyped in DDSL), try to resolve from domain types
+            if ("Object".equals(param.type().name())) {
+                TypeName resolved = typeMapper.tryResolveParamType(param.name());
+                if (resolved != null) {
+                    paramType = resolved;
+                }
+            }
             builder.addParameter(paramType, param.name());
         }
         
