@@ -33,6 +33,7 @@ dependencies {
 	implementation("org.springframework.ai:spring-ai-advisors-vector-store")
 	implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
 	implementation("org.springframework.ai:spring-ai-starter-vector-store-qdrant")
+	implementation("org.springframework.ai:spring-ai-google-genai-embedding")
 
 	// JavaPoet (Palantir fork) for type-safe Java code generation
 	implementation("com.palantir.javapoet:javapoet:0.11.0")

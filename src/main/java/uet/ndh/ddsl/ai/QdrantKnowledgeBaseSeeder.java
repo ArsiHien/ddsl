@@ -128,12 +128,14 @@ public class QdrantKnowledgeBaseSeeder {
             frontMatter = Map.of();
         }
 
-        // Extract document id (required)
-        String id = String.valueOf(frontMatter.getOrDefault("id", resource.getFilename()));
+        // Extract document id (required) — convert to UUID because Qdrant requires it
+        String rawId = String.valueOf(frontMatter.getOrDefault("id", resource.getFilename()));
+        String id = UUID.nameUUIDFromBytes(rawId.getBytes(StandardCharsets.UTF_8)).toString();
 
         // Build metadata map
         Map<String, Object> metadata = new HashMap<>(frontMatter);
         metadata.remove("id"); // id is used as the Document ID, not metadata
+        metadata.put("original_id", rawId); // preserve the human-readable id
         metadata.put("source", "ddsl-knowledge-base");
         metadata.put("version", "2.0");
         metadata.put("file", resource.getFilename());

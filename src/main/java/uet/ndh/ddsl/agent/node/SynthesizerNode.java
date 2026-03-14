@@ -1,5 +1,6 @@
 package uet.ndh.ddsl.agent.node;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.slf4j.Logger;
@@ -41,10 +42,10 @@ public class SynthesizerNode implements NodeAction<DslState> {
     private final VectorStore vectorStore;
     private final PromptManager promptManager;
 
-    public SynthesizerNode(ChatClient.Builder chatClientBuilder,
+    public SynthesizerNode(ChatClient ddslChatClient,
                            VectorStore vectorStore,
                            PromptManager promptManager) {
-        this.chatClient = chatClientBuilder.build();
+        this.chatClient = ddslChatClient;
         this.vectorStore = vectorStore;
         this.promptManager = promptManager;
     }
