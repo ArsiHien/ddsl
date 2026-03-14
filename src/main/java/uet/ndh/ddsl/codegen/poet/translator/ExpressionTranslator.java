@@ -14,8 +14,10 @@ import uet.ndh.ddsl.codegen.poet.TypeMapper;
 import javax.lang.model.element.Modifier;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,8 @@ import static uet.ndh.ddsl.parser.lexer.TokenType.EXCEEDS;
 public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     
     private final TypeMapper typeMapper;
+    private boolean guardUnresolvedResultTarget;
+    private Set<String> declaredFieldTargets = Set.of();
     
     // Common type references
     private static final ClassName ILLEGAL_ARGUMENT = ClassName.get(IllegalArgumentException.class);
@@ -62,6 +66,25 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     
     public ExpressionTranslator(TypeMapper typeMapper) {
         this.typeMapper = typeMapper;
+        this.guardUnresolvedResultTarget = false;
+    }
+
+    /**
+     * Enable defensive guard for unresolved `result` assignment targets.
+     */
+    public ExpressionTranslator withUnresolvedResultGuard(Set<String> fieldTargets) {
+        this.guardUnresolvedResultTarget = true;
+        this.declaredFieldTargets = fieldTargets != null ? Set.copyOf(fieldTargets) : Set.of();
+        return this;
+    }
+
+    /**
+     * Disable defensive guard for unresolved `result` assignment targets.
+     */
+    public ExpressionTranslator clearUnresolvedResultGuard() {
+        this.guardUnresolvedResultTarget = false;
+        this.declaredFieldTargets = Collections.emptySet();
+        return this;
     }
     
     /**
@@ -303,6 +326,12 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     }
     
     private CodeBlock translateSetStatement(ThenClause.ThenStatement statement) {
+        if (guardUnresolvedResultTarget
+                && "result".equals(statement.target())
+                && !declaredFieldTargets.contains("result")) {
+            return CodeBlock.of("// WARN: unresolved target 'result'\n");
+        }
+
         CodeBlock value = translateExpression(statement.expression());
         return CodeBlock.of("this.$N = $L;\n", statement.target(), value);
     }
@@ -385,7 +414,7 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         
         // EmitClause has eventName and eventArguments (simple strings)
         String eventType = emitClause.eventName();
-        ClassName eventClass = typeMapper.domainType("", eventType);
+        ClassName eventClass = typeMapper.resolveDomainClassName(eventType);
         
         // Build event constructor arguments from argument names
         if (!emitClause.eventArguments().isEmpty()) {
@@ -1112,12 +1141,11 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     private CodeBlock translateSpecificationRef(SpecificationCondition.SpecificationRef ref, CodeBlock subject) {
         return switch (ref) {
             case SpecificationCondition.SpecificationRef.Simple simple -> {
-                // Use domainType to resolve specification class in the current package
-                ClassName specClassName = typeMapper.domainType("", simple.name());
+                ClassName specClassName = typeMapper.resolveDomainClassName(simple.name());
                 yield CodeBlock.of("new $T().isSatisfiedBy($L)", specClassName, subject);
             }
             case SpecificationCondition.SpecificationRef.Parameterized param -> {
-                ClassName specClassName = typeMapper.domainType("", param.name());
+                ClassName specClassName = typeMapper.resolveDomainClassName(param.name());
                 CodeBlock.Builder args = CodeBlock.builder();
                 for (int i = 0; i < param.arguments().size(); i++) {
                     if (i > 0) args.add(", ");

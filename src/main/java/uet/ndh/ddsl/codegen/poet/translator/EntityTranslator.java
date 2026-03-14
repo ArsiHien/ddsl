@@ -42,7 +42,7 @@ public class EntityTranslator {
      * Translate a standalone entity to a CodeArtifact.
      */
     public CodeArtifact translate(EntityDecl entity) {
-        String packageName = typeMapper.getBasePackage();
+        String packageName = typeMapper.packageForStandaloneModel();
         JavaFile javaFile = translateEntityToJavaFile(entity, packageName);
         
         return new CodeArtifact(
@@ -57,7 +57,7 @@ public class EntityTranslator {
      * Translate a value object to a CodeArtifact.
      */
     public CodeArtifact translateValueObject(ValueObjectDecl valueObject) {
-        String packageName = typeMapper.getBasePackage();
+        String packageName = typeMapper.packageForStandaloneModel();
         JavaFile javaFile = translateValueObjectToJavaFile(valueObject, packageName);
         
         return new CodeArtifact(
@@ -72,7 +72,7 @@ public class EntityTranslator {
      * Translate a domain event to a CodeArtifact.
      */
     public CodeArtifact translateDomainEvent(DomainEventDecl event) {
-        String packageName = typeMapper.getBasePackage();
+        String packageName = typeMapper.packageForStandaloneEvents();
         JavaFile javaFile = translateEventToJavaFile(event, packageName);
         
         return new CodeArtifact(

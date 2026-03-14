@@ -13,8 +13,10 @@ import uet.ndh.ddsl.codegen.poet.TypeMapper;
 
 import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Translates DomainService and Repository AST nodes to JavaPoet TypeSpecs.
@@ -88,11 +90,23 @@ public class ServiceTranslator {
         
         // Prefer behaviors over plain methods for full code generation
         if (!service.behaviors().isEmpty()) {
+            Set<String> declaredFields = new HashSet<>();
+            for (FieldDecl dependency : service.dependencies()) {
+                if (dependency.name() != null && !dependency.name().isBlank()) {
+                    declaredFields.add(dependency.name());
+                }
+            }
+
             for (BehaviorDecl behavior : service.behaviors()) {
                 // Validate parameter types before generating code
                 validateBehaviorParamTypes(behavior, service.name());
-                classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
+                classBuilder.addMethod(
+                    expressionTranslator
+                        .withUnresolvedResultGuard(declaredFields)
+                        .translateBehavior(behavior)
+                );
             }
+            expressionTranslator.clearUnresolvedResultGuard();
         } else {
             // Fallback: use plain method declarations (legacy path)
             for (MethodDecl method : service.methods()) {

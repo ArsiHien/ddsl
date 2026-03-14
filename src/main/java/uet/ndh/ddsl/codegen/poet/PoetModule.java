@@ -11,6 +11,7 @@ import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
 import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.codegen.CodeArtifact;
+import uet.ndh.ddsl.codegen.scaffold.ScaffoldGenerator;
 import uet.ndh.ddsl.codegen.poet.translator.*;
 
 import java.util.ArrayList;
@@ -50,15 +51,18 @@ public class PoetModule {
     private final SpecificationTranslator specificationTranslator;
     private final EnumTranslator enumTranslator;
     private final StateMachineTranslator stateMachineTranslator;
+    private final ScaffoldGenerator scaffoldGenerator;
     
     public PoetModule(String basePackage) {
         this.typeMapper = new TypeMapper(basePackage);
+        String normalizedBasePackage = this.typeMapper.getBasePackage();
         this.aggregateTranslator = new AggregateTranslator(typeMapper);
         this.entityTranslator = new EntityTranslator(typeMapper);
         this.serviceTranslator = new ServiceTranslator(typeMapper);
         this.specificationTranslator = new SpecificationTranslator(typeMapper);
-        this.enumTranslator = new EnumTranslator(typeMapper, basePackage);
-        this.stateMachineTranslator = new StateMachineTranslator(typeMapper, basePackage);
+        this.enumTranslator = new EnumTranslator(typeMapper, normalizedBasePackage);
+        this.stateMachineTranslator = new StateMachineTranslator(typeMapper, normalizedBasePackage);
+        this.scaffoldGenerator = new ScaffoldGenerator();
     }
     
     /**
@@ -69,6 +73,9 @@ public class PoetModule {
      */
     public List<CodeArtifact> generateFromModel(DomainModel model) {
         List<CodeArtifact> artifacts = new ArrayList<>();
+
+        // Generate shared scaffolding (AggregateRoot, Entity, ValueObject, DomainEvent, etc.)
+        artifacts.addAll(scaffoldGenerator.generateBaseScaffolding(typeMapper.getBasePackage()));
         
         // Register all domain types for proper import resolution
         registerDomainTypes(model);
@@ -231,6 +238,9 @@ public class PoetModule {
     private void registerDomainTypes(DomainModel model) {
         for (var boundedContext : model.boundedContexts()) {
             String contextPackage = typeMapper.getBasePackage();
+            String standaloneModelPackage = typeMapper.packageForStandaloneModel();
+            String standaloneEventPackage = typeMapper.packageForStandaloneEvents();
+            String specificationPackage = typeMapper.packageForSpecifications();
             
             // Register aggregate types
             for (AggregateDecl aggregate : boundedContext.aggregates()) {
@@ -255,17 +265,16 @@ public class PoetModule {
             
             // Register standalone types
             for (ValueObjectDecl vo : boundedContext.valueObjects()) {
-                typeMapper.registerDomainType(vo.name(), contextPackage);
+                typeMapper.registerDomainType(vo.name(), standaloneModelPackage);
             }
             
             for (DomainEventDecl event : boundedContext.domainEvents()) {
-                typeMapper.registerDomainType(event.name(), contextPackage);
+                typeMapper.registerDomainType(event.name(), standaloneEventPackage);
             }
             
             // Register specification types
-            String specPackage = contextPackage + ".specification";
             for (SpecificationDecl spec : boundedContext.specifications()) {
-                typeMapper.registerDomainType(spec.name(), specPackage);
+                typeMapper.registerDomainType(spec.name(), specificationPackage);
             }
         }
     }

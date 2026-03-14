@@ -28,6 +28,10 @@ import java.util.UUID;
  * - Domain-specific types (resolved via package context)
  */
 public class TypeMapper {
+    private static final String SHARED_SUBPACKAGE = "shared";
+    private static final String MODEL_SUBPACKAGE = "model";
+    private static final String EVENT_SUBPACKAGE = "event";
+    private static final String SPECIFICATION_SUBPACKAGE = "specification";
     
     // Primitive type mappings
     private static final Map<String, TypeName> PRIMITIVE_TYPES = Map.ofEntries(
@@ -76,18 +80,26 @@ public class TypeMapper {
         "Map", ClassName.get(Map.class)
     );
     
-    // DDD base types - these reference scaffold-generated base classes
-    private static final ClassName AGGREGATE_ROOT = ClassName.get("", "AggregateRoot");
-    private static final ClassName ENTITY = ClassName.get("", "Entity");
-    private static final ClassName VALUE_OBJECT = ClassName.get("", "ValueObject");
-    private static final ClassName DOMAIN_EVENT = ClassName.get("", "DomainEvent");
-    
     private final String basePackage;
     private final Map<String, String> domainTypePackages;
+    // Maps field names to their declared type names (e.g. "guest" → "GuestProfile")
+    private final Map<String, String> fieldTypeMap;
     
     public TypeMapper(String basePackage) {
-        this.basePackage = basePackage;
+        this.basePackage = normalizeBasePackage(basePackage);
         this.domainTypePackages = new HashMap<>();
+        this.fieldTypeMap = new HashMap<>();
+    }
+
+    private String normalizeBasePackage(String pkg) {
+        if (pkg == null || pkg.isBlank()) {
+            return "com.example.domain";
+        }
+        String normalized = pkg.trim();
+        while (normalized.endsWith(".")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
     
     /**
@@ -95,6 +107,22 @@ public class TypeMapper {
      */
     public void registerDomainType(String typeName, String packageName) {
         domainTypePackages.put(typeName, packageName);
+    }
+    
+    /**
+     * Register a field name → type name mapping from the enclosing entity/aggregate.
+     * Used to resolve untyped behavior parameters by matching against field declarations.
+     * For example: field "guest: GuestProfile" registers "guest" → "GuestProfile".
+     */
+    public void registerFieldType(String fieldName, String typeName) {
+        fieldTypeMap.put(fieldName, typeName);
+    }
+    
+    /**
+     * Clear field type mappings. Call before processing a new entity/aggregate.
+     */
+    public void clearFieldTypes() {
+        fieldTypeMap.clear();
     }
     
     /**
@@ -188,36 +216,63 @@ public class TypeMapper {
      * Get the AggregateRoot base interface ClassName.
      */
     public ClassName getAggregateRootInterface() {
-        return ClassName.get(basePackage + ".shared", "AggregateRoot");
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "AggregateRoot");
     }
     
     /**
      * Get the Entity base interface ClassName.
      */
     public ClassName getEntityInterface() {
-        return ClassName.get(basePackage + ".shared", "Entity");
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "Entity");
     }
     
     /**
      * Get the ValueObject base interface ClassName.
      */
     public ClassName getValueObjectInterface() {
-        return ClassName.get(basePackage + ".shared", "ValueObject");
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "ValueObject");
     }
     
     /**
      * Get the DomainEvent base interface ClassName.
      */
     public ClassName getDomainEventInterface() {
-        return ClassName.get(basePackage + ".shared", "DomainEvent");
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "DomainEvent");
     }
     
     /**
      * Create a ClassName for a domain type within an aggregate package.
      */
     public ClassName domainType(String aggregateName, String typeName) {
-        String packageName = basePackage + "." + aggregateName.toLowerCase();
+        String packageName = aggregateName == null || aggregateName.isBlank()
+            ? basePackage
+            : basePackage + "." + aggregateName.toLowerCase();
         return ClassName.get(packageName, typeName);
+    }
+
+    /**
+     * Resolve a domain type to a concrete class name using registered package metadata.
+     */
+    public ClassName resolveDomainClassName(String typeName) {
+        if (typeName == null || typeName.isBlank()) {
+            return ClassName.get(basePackage, "Object");
+        }
+        if (domainTypePackages.containsKey(typeName)) {
+            return ClassName.get(domainTypePackages.get(typeName), typeName);
+        }
+        return ClassName.get(basePackage, typeName);
+    }
+
+    public String packageForStandaloneModel() {
+        return basePackage + "." + MODEL_SUBPACKAGE;
+    }
+
+    public String packageForStandaloneEvents() {
+        return basePackage + "." + EVENT_SUBPACKAGE;
+    }
+
+    public String packageForSpecifications() {
+        return basePackage + "." + SPECIFICATION_SUBPACKAGE;
     }
     
     /**
@@ -225,5 +280,50 @@ public class TypeMapper {
      */
     public String getBasePackage() {
         return basePackage;
+    }
+    
+    /**
+     * Try to resolve a parameter name to a domain type.
+     * Capitalizes the param name and checks if it matches a registered domain type.
+     * For example: "roomType" → "RoomType" → resolves to the RoomType value object.
+     * 
+     * @param paramName the parameter name (e.g. "roomType", "guest")
+     * @return the resolved TypeName if found, null otherwise
+     */
+    public TypeName tryResolveParamType(String paramName) {
+        if (paramName == null || paramName.isEmpty()) return null;
+        
+        // 1. Check field-to-type mappings first (highest priority)
+        // e.g. field "guest: GuestProfile" → param "guest" resolves to GuestProfile
+        if (fieldTypeMap.containsKey(paramName)) {
+            String fieldTypeName = fieldTypeMap.get(paramName);
+            return mapSimpleType(fieldTypeName);
+        }
+        
+        // 2. Capitalize first letter: "roomType" → "RoomType"
+        String candidateType = Character.toUpperCase(paramName.charAt(0)) + paramName.substring(1);
+        
+        // Check if it's a registered domain type
+        if (domainTypePackages.containsKey(candidateType)) {
+            return ClassName.get(domainTypePackages.get(candidateType), candidateType);
+        }
+        
+        // Check if it matches a known Java type (String, UUID, etc.)
+        if (COMMON_TYPES.containsKey(candidateType)) {
+            return COMMON_TYPES.get(candidateType);
+        }
+        if (TEMPORAL_TYPES.containsKey(candidateType)) {
+            return TEMPORAL_TYPES.get(candidateType);
+        }
+        
+        // 3. Case-insensitive match against registered domain types
+        String upperParam = candidateType.toUpperCase();
+        for (var entry : domainTypePackages.entrySet()) {
+            if (entry.getKey().toUpperCase().equals(upperParam)) {
+                return ClassName.get(entry.getValue(), entry.getKey());
+            }
+        }
+        
+        return null;
     }
 }
