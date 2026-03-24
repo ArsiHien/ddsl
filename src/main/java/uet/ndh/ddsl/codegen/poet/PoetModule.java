@@ -8,10 +8,13 @@ import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
+import uet.ndh.ddsl.ast.model.statemachine.GuardRule;
 import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
+import uet.ndh.ddsl.ast.model.statemachine.TransitionRule;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.scaffold.ScaffoldGenerator;
+import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.codegen.poet.translator.*;
 
 import java.util.ArrayList;
@@ -51,6 +54,7 @@ public class PoetModule {
     private final SpecificationTranslator specificationTranslator;
     private final EnumTranslator enumTranslator;
     private final StateMachineTranslator stateMachineTranslator;
+    private final HelperClassTranslator helperClassTranslator;
     private final ScaffoldGenerator scaffoldGenerator;
     
     public PoetModule(String basePackage) {
@@ -62,6 +66,7 @@ public class PoetModule {
         this.specificationTranslator = new SpecificationTranslator(typeMapper);
         this.enumTranslator = new EnumTranslator(typeMapper, normalizedBasePackage);
         this.stateMachineTranslator = new StateMachineTranslator(typeMapper, normalizedBasePackage);
+        this.helperClassTranslator = new HelperClassTranslator(typeMapper);
         this.scaffoldGenerator = new ScaffoldGenerator();
     }
     
@@ -111,10 +116,148 @@ public class PoetModule {
             for (SpecificationDecl specification : boundedContext.specifications()) {
                 artifacts.add(generateSpecification(specification));
             }
+
+            // Generate standalone state machines
+            for (StateMachineDecl stateMachine : boundedContext.stateMachines()) {
+                String ownerName = stateMachine.forField() != null && !stateMachine.forField().isBlank()
+                    ? stateMachine.forField()
+                    : (stateMachine.name() != null && !stateMachine.name().isBlank() ? stateMachine.name() : "State");
+                artifacts.addAll(generateStateMachine(stateMachine, ownerName));
+            }
+        }
+
+        // Generate shared helper classes based on detected feature usage.
+        if (containsTemporalFeatures(model)) {
+            artifacts.addAll(helperClassTranslator.generateTemporalHelpers());
+        }
+        if (containsErrorAccumulationFeatures(model)) {
+            artifacts.addAll(helperClassTranslator.generateValidationHelpers());
+        }
+        if (containsStateMachineFeatures(model)) {
+            artifacts.addAll(helperClassTranslator.generateStateMachineExceptions());
         }
         
         log.info("Generated {} artifacts from domain model", artifacts.size());
         return artifacts;
+    }
+
+    private boolean containsStateMachineFeatures(DomainModel model) {
+        for (var boundedContext : model.boundedContexts()) {
+            if (!boundedContext.stateMachines().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsErrorAccumulationFeatures(DomainModel model) {
+        for (var boundedContext : model.boundedContexts()) {
+            for (AggregateDecl aggregate : boundedContext.aggregates()) {
+                if (hasErrorAccumulation(aggregate.behaviors())) {
+                    return true;
+                }
+                if (aggregate.root() != null && hasErrorAccumulation(aggregate.root().behaviors())) {
+                    return true;
+                }
+                for (var entity : aggregate.entities()) {
+                    if (hasErrorAccumulation(entity.behaviors())) {
+                        return true;
+                    }
+                }
+            }
+
+            for (DomainServiceDecl service : boundedContext.domainServices()) {
+                if (hasErrorAccumulation(service.behaviors())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasErrorAccumulation(List<BehaviorDecl> behaviors) {
+        for (BehaviorDecl behavior : behaviors) {
+            if (behavior.errorAccumulationClause() != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsTemporalFeatures(DomainModel model) {
+        for (var boundedContext : model.boundedContexts()) {
+            for (AggregateDecl aggregate : boundedContext.aggregates()) {
+                if (hasTemporalInBehaviors(aggregate.behaviors())) {
+                    return true;
+                }
+                if (aggregate.root() != null && hasTemporalInBehaviors(aggregate.root().behaviors())) {
+                    return true;
+                }
+                for (var entity : aggregate.entities()) {
+                    if (hasTemporalInBehaviors(entity.behaviors())) {
+                        return true;
+                    }
+                }
+            }
+
+            for (DomainServiceDecl service : boundedContext.domainServices()) {
+                if (hasTemporalInBehaviors(service.behaviors())) {
+                    return true;
+                }
+            }
+
+            for (StateMachineDecl stateMachine : boundedContext.stateMachines()) {
+                for (TransitionRule transition : stateMachine.transitions()) {
+                    if (transition.condition() != null && transition.condition().withinDuration() != null) {
+                        return true;
+                    }
+                    if (transition.condition() != null
+                            && transition.condition().condition() != null
+                            && isLikelyTemporal(transition.condition().condition().rawText())) {
+                        return true;
+                    }
+                }
+                for (GuardRule guard : stateMachine.guards()) {
+                    if (guard.condition() != null && isLikelyTemporal(guard.condition().rawText())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasTemporalInBehaviors(List<BehaviorDecl> behaviors) {
+        for (BehaviorDecl behavior : behaviors) {
+            if (behavior.requireClause() == null) {
+                continue;
+            }
+            for (var requireCondition : behavior.requireClause().conditions()) {
+                if (requireCondition != null
+                        && requireCondition.condition() != null
+                        && isLikelyTemporal(requireCondition.condition().rawText())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isLikelyTemporal(String rawText) {
+        if (rawText == null || rawText.isBlank()) {
+            return false;
+        }
+        String lower = rawText.toLowerCase();
+        return lower.contains(" before ")
+            || lower.contains(" after ")
+            || lower.contains("within")
+            || lower.contains("between")
+            || lower.contains(" ago")
+            || lower.contains("from now")
+            || lower.contains(" today")
+            || lower.contains(" now")
+            || lower.contains("tomorrow")
+            || lower.contains("yesterday");
     }
     
     /**
@@ -275,6 +418,19 @@ public class PoetModule {
             // Register specification types
             for (SpecificationDecl spec : boundedContext.specifications()) {
                 typeMapper.registerDomainType(spec.name(), specificationPackage);
+            }
+
+            // Register standalone state machine enum types
+            for (StateMachineDecl stateMachine : boundedContext.stateMachines()) {
+                String enumName;
+                if (stateMachine.name() != null && !stateMachine.name().isBlank()) {
+                    enumName = stateMachine.name() + "State";
+                } else if (stateMachine.forField() != null && !stateMachine.forField().isBlank()) {
+                    enumName = Character.toUpperCase(stateMachine.forField().charAt(0)) + stateMachine.forField().substring(1);
+                } else {
+                    enumName = "State";
+                }
+                typeMapper.registerDomainType(enumName, standaloneModelPackage);
             }
         }
     }

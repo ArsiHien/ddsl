@@ -8,6 +8,7 @@ import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
+import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.ast.application.ApplicationServiceDecl;
 import uet.ndh.ddsl.ast.visitor.AstVisitor;
@@ -30,6 +31,7 @@ public record BoundedContextDecl(
     List<DomainEventDecl> domainEvents,
     List<RepositoryDecl> repositories,
     List<FactoryDecl> factories,
+    List<StateMachineDecl> stateMachines,
     List<SpecificationDecl> specifications,
     List<ApplicationServiceDecl> applicationServices,
     String documentation
@@ -43,6 +45,7 @@ public record BoundedContextDecl(
         domainEvents = domainEvents != null ? List.copyOf(domainEvents) : List.of();
         repositories = repositories != null ? List.copyOf(repositories) : List.of();
         factories = factories != null ? List.copyOf(factories) : List.of();
+        stateMachines = stateMachines != null ? List.copyOf(stateMachines) : List.of();
         specifications = specifications != null ? List.copyOf(specifications) : List.of();
         applicationServices = applicationServices != null ? List.copyOf(applicationServices) : List.of();
     }

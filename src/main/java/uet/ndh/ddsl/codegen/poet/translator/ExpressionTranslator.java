@@ -21,13 +21,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static uet.ndh.ddsl.ast.expr.BinaryExpr.BinaryOperator.EQUALS;
-import static uet.ndh.ddsl.ast.expr.BinaryExpr.BinaryOperator.GREATER_THAN_OR_EQUAL;
-import static uet.ndh.ddsl.ast.expr.BinaryExpr.BinaryOperator.LESS_THAN_OR_EQUAL;
-import static uet.ndh.ddsl.ast.expr.BinaryExpr.BinaryOperator.NOT_EQUALS;
-import static uet.ndh.ddsl.ast.expr.TemporalRange.RangeType.BETWEEN;
-import static uet.ndh.ddsl.parser.lexer.TokenType.EXCEEDS;
-
 /**
  * Translates DDSL expressions and behaviors to JavaPoet CodeBlocks.
  * 
@@ -62,7 +55,6 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     private static final ClassName COLLECTORS = ClassName.get(Collectors.class);
     private static final ClassName INSTANT = ClassName.get(Instant.class);
     private static final ClassName CHRONO_UNIT = ClassName.get(ChronoUnit.class);
-    private static final ClassName OBJECTS = ClassName.get(Objects.class);
     
     public ExpressionTranslator(TypeMapper typeMapper) {
         this.typeMapper = typeMapper;
@@ -143,6 +135,11 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         if (behavior.requireClause() != null) {
             code.add(translateRequireClause(behavior.requireClause()));
         }
+
+        // 1b. Generate validation-accumulation blocks
+        if (behavior.errorAccumulationClause() != null) {
+            code.add(translateErrorAccumulationClause(behavior.errorAccumulationClause()));
+        }
         
         // 2. Generate local variables from given
         if (behavior.givenClause() != null) {
@@ -164,6 +161,77 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             code.add(translateReturnClause(behavior.returnClause()));
         }
         
+        return code.build();
+    }
+
+    /**
+     * Translate error accumulation clause to imperative Java validation code.
+     */
+    private CodeBlock translateErrorAccumulationClause(ErrorAccumulationClause clause) {
+        CodeBlock.Builder code = CodeBlock.builder();
+        code.add("// Error accumulation\n");
+
+        if (clause.type() == ErrorAccumulationClause.AccumulationType.COLLECT_BY_GROUP) {
+            code.addStatement("$T<$T, $T<$T>> groupedErrors = new $T<>()",
+                java.util.Map.class, String.class, java.util.List.class, String.class, java.util.HashMap.class);
+
+            for (ErrorAccumulationClause.GroupedValidation group : clause.groupedValidations()) {
+                String varName = group.groupName().replaceAll("[^a-zA-Z0-9_]", "") + "Errors";
+                if (varName.isBlank()) {
+                    varName = "groupErrors";
+                }
+                code.addStatement("$T<$T> $N = new $T<>()", java.util.List.class, String.class, varName, java.util.ArrayList.class);
+                for (ErrorAccumulationClause.ValidationRule rule : group.validations()) {
+                    CodeBlock condition = translateCondition(rule.condition());
+                    String message = rule.message() != null ? rule.message() : "Validation failed";
+                    code.beginControlFlow("if (!($L))", condition)
+                        .addStatement("$N.add($S)", varName, message)
+                        .endControlFlow();
+                }
+                code.addStatement("groupedErrors.put($S, $N)", group.groupName(), varName);
+            }
+
+            code.addStatement("boolean hasErrors = groupedErrors.values().stream().anyMatch(list -> !list.isEmpty())");
+            if (clause.returnType() == ErrorAccumulationClause.ReturnErrorsType.FAIL_IF_ANY_ERRORS
+                || clause.returnType() == ErrorAccumulationClause.ReturnErrorsType.FAIL_IF_CRITICAL) {
+                code.beginControlFlow("if (hasErrors)")
+                    .addStatement("throw new $T($S + groupedErrors)", ILLEGAL_ARGUMENT, "Validation failed: ")
+                    .endControlFlow();
+            }
+
+            code.add("\n");
+            return code.build();
+        }
+
+        code.addStatement("$T<$T> errors = new $T<>()", java.util.List.class, String.class, java.util.ArrayList.class);
+        code.addStatement("$T<$T> warnings = new $T<>()", java.util.List.class, String.class, java.util.ArrayList.class);
+
+        for (ErrorAccumulationClause.ValidationRule rule : clause.validationRules()) {
+            CodeBlock condition = translateCondition(rule.condition());
+            String message = rule.message() != null ? rule.message() : "Validation failed";
+
+            if (clause.type() == ErrorAccumulationClause.AccumulationType.COLLECT_UP_TO) {
+                code.beginControlFlow("if (errors.size() < $L && !($L))", clause.maxErrors(), condition);
+            } else {
+                code.beginControlFlow("if (!($L))", condition);
+            }
+
+            if (rule.messageType() == ErrorAccumulationClause.ValidationRule.MessageType.WARNING) {
+                code.addStatement("warnings.add($S)", message);
+            } else {
+                code.addStatement("errors.add($S)", message);
+            }
+            code.endControlFlow();
+        }
+
+        switch (clause.returnType()) {
+            case FAIL_IF_ANY_ERRORS, FAIL_IF_CRITICAL -> code.beginControlFlow("if (!errors.isEmpty())")
+                .addStatement("throw new $T($S + errors)", ILLEGAL_ARGUMENT, "Validation failed: ")
+                .endControlFlow();
+            case RETURN_ALL_ERRORS, RETURN_ERRORS_IF_ANY -> code.add("// Return-policy handling can be layered by surrounding method contract\n");
+        }
+
+        code.add("\n");
         return code.build();
     }
     
@@ -459,8 +527,14 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             case NewInstanceExpr newInst -> visitNewInstanceExpr(newInst);
             case ListExpr list -> visitListExpr(list);
             case TernaryExpr ternary -> visitTernaryExpr(ternary);
-            case ThisExpr thisExpr -> CodeBlock.of("this");
-            case NullExpr nullExpr -> CodeBlock.of("null");
+            case ThisExpr thisExpr -> {
+                Objects.requireNonNull(thisExpr);
+                yield CodeBlock.of("this");
+            }
+            case NullExpr nullExpr -> {
+                Objects.requireNonNull(nullExpr);
+                yield CodeBlock.of("null");
+            }
             case CollectionFilter filter -> visitCollectionFilter(filter);
             case CollectionAggregation agg -> visitCollectionAggregation(agg);
             case CollectionGroupBy groupBy -> visitCollectionGroupBy(groupBy);
@@ -469,6 +543,10 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             case StringCondition strCond -> visitStringCondition(strCond);
             case StringOperation strOp -> visitStringOperation(strOp);
             case SpecificationCondition specCond -> visitSpecificationCondition(specCond);
+            case TemporalComparison temporalComparison -> visitTemporalComparison(temporalComparison);
+            case TemporalRange temporalRange -> visitTemporalRange(temporalRange);
+            case TemporalRelative temporalRelative -> visitTemporalRelative(temporalRelative);
+            case TemporalSequence temporalSequence -> visitTemporalSequence(temporalSequence);
             default -> CodeBlock.of("/* unsupported: $L */", expr.getClass().getSimpleName());
         };
     }
@@ -695,10 +773,14 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         code.add("switch ($L) {\n", subject);
         
         for (MatchExpr.MatchCase matchCase : match.cases()) {
+            String casePattern = renderMatchCasePattern(matchCase.pattern());
             CodeBlock bodyCode = translateMatchCaseBody(matchCase.body());
-            code.add("    case $L -> $L;\n", 
-                matchCase.pattern(), 
-                bodyCode);
+            if (matchCase.hasGuard()) {
+                CodeBlock guard = translateCondition(matchCase.guard());
+                code.add("    case $L when $L -> $L;\n", casePattern, guard, bodyCode);
+            } else {
+                code.add("    case $L -> $L;\n", casePattern, bodyCode);
+            }
         }
         
         if (match.defaultCase() != null) {
@@ -709,6 +791,56 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         code.add("}");
         return code.build();
     }
+
+    private String renderMatchCasePattern(MatchExpr.CasePattern pattern) {
+        if (pattern instanceof MatchExpr.CasePattern.SingleValue single) {
+            return renderSingleValuePattern(single);
+        }
+        if (pattern instanceof MatchExpr.CasePattern.MultipleValues many) {
+            return many.values().stream()
+                .map(this::renderRawCaseValue)
+                .collect(Collectors.joining(", "));
+        }
+        if (pattern instanceof MatchExpr.CasePattern.NullValue) {
+            return "null";
+        }
+        return "default";
+    }
+
+    private String renderSingleValuePattern(MatchExpr.CasePattern.SingleValue single) {
+        if (single.expression() != null) {
+            return translateExpression(single.expression()).toString();
+        }
+        if (single.value() == null) {
+            return "null";
+        }
+        return renderRawCaseValue(single.value());
+    }
+
+    private String renderRawCaseValue(String value) {
+        if (value == null || value.isBlank()) {
+            return "null";
+        }
+
+        String trimmed = value.trim();
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+            return trimmed;
+        }
+        if (trimmed.matches("-?\\d+(\\.\\d+)?")) {
+            return trimmed;
+        }
+        if ("true".equalsIgnoreCase(trimmed) || "false".equalsIgnoreCase(trimmed) || "null".equalsIgnoreCase(trimmed)) {
+            return trimmed.toLowerCase();
+        }
+
+        // Heuristic: TitleCase tokens in DSL usually denote enum constants.
+        if (Character.isUpperCase(trimmed.charAt(0))) {
+            return trimmed.replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();
+        }
+
+        // Fallback to a String literal case label.
+        return "\"" + trimmed + "\"";
+    }
     
     /**
      * Translate a MatchCaseBody to CodeBlock.
@@ -717,11 +849,96 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         return switch (body) {
             case MatchExpr.MatchCaseBody.ExpressionBody exprBody -> 
                 translateExpression(exprBody.expression());
-            case MatchExpr.MatchCaseBody.StatementBody stmtBody -> 
-                CodeBlock.of("/* statement */");
-            case MatchExpr.MatchCaseBody.BlockBody blockBody -> 
-                CodeBlock.of("/* block */");
+            case MatchExpr.MatchCaseBody.StatementBody stmtBody ->
+                CodeBlock.of("/* statement: $L */", stmtBody.statement().getClass().getSimpleName());
+            case MatchExpr.MatchCaseBody.BlockBody blockBody ->
+                CodeBlock.of("/* block statements: $L */", blockBody.statements().size());
         };
+    }
+
+    private CodeBlock visitTemporalComparison(TemporalComparison expr) {
+        CodeBlock left = translateExpression(expr.dateTimeExpr());
+        CodeBlock anchor = translateTemporalAnchor(expr.anchor());
+        return switch (expr.operator()) {
+            case IS_BEFORE -> CodeBlock.of("$L.isBefore($L)", left, anchor);
+            case IS_AFTER -> CodeBlock.of("$L.isAfter($L)", left, anchor);
+            case IS_ON -> CodeBlock.of("$L.equals($L)", left, anchor);
+            case IS_NOT_BEFORE -> CodeBlock.of("!$L.isBefore($L)", left, anchor);
+            case IS_NOT_AFTER -> CodeBlock.of("!$L.isAfter($L)", left, anchor);
+        };
+    }
+
+    private CodeBlock visitTemporalRange(TemporalRange expr) {
+        CodeBlock dateExpr = translateExpression(expr.dateTimeExpr());
+        return switch (expr.rangeType()) {
+            case WITHIN -> {
+                CodeBlock duration = translateDuration(expr.duration());
+                yield CodeBlock.of("$L.isAfter($T.now().minus($L))", dateExpr, INSTANT, duration);
+            }
+            case WITHIN_LAST -> {
+                CodeBlock duration = translateDuration(expr.duration());
+                yield CodeBlock.of("$L.isAfter($T.now().minus($L))", dateExpr, INSTANT, duration);
+            }
+            case WITHIN_NEXT -> {
+                CodeBlock duration = translateDuration(expr.duration());
+                yield CodeBlock.of("$L.isBefore($T.now().plus($L))", dateExpr, INSTANT, duration);
+            }
+            case BETWEEN -> {
+                CodeBlock start = expr.startExpr() != null ? translateExpression(expr.startExpr()) : CodeBlock.of("$T.MIN", INSTANT);
+                CodeBlock end = expr.endExpr() != null ? translateExpression(expr.endExpr()) : CodeBlock.of("$T.MAX", INSTANT);
+                yield CodeBlock.of("($L.isAfter($L) && $L.isBefore($L))", dateExpr, start, dateExpr, end);
+            }
+        };
+    }
+
+    private CodeBlock visitTemporalRelative(TemporalRelative expr) {
+        CodeBlock left = translateExpression(expr.dateTimeExpr());
+        CodeBlock duration = translateDuration(expr.duration());
+        CodeBlock base = expr.direction() == TemporalRelative.RelativeDirection.AGO
+            ? CodeBlock.of("$T.now().minus($L)", INSTANT, duration)
+            : CodeBlock.of("$T.now().plus($L)", INSTANT, duration);
+
+        return switch (expr.operator()) {
+            case MORE_THAN -> CodeBlock.of("$L.isBefore($L)", left, base);
+            case LESS_THAN -> CodeBlock.of("$L.isAfter($L)", left, base);
+            case AT_LEAST -> CodeBlock.of("!$L.isAfter($L)", left, base);
+            case AT_MOST -> CodeBlock.of("!$L.isBefore($L)", left, base);
+            case EXACTLY -> CodeBlock.of("$L.equals($L)", left, base);
+        };
+    }
+
+    private CodeBlock visitTemporalSequence(TemporalSequence expr) {
+        CodeBlock left = translateExpression(expr.dateTimeExpr());
+        CodeBlock right = translateExpression(expr.otherDateTimeExpr());
+        return switch (expr.operator()) {
+            case IS_BEFORE, OCCURRED_BEFORE -> CodeBlock.of("$L.isBefore($L)", left, right);
+            case IS_AFTER, OCCURRED_AFTER -> CodeBlock.of("$L.isAfter($L)", left, right);
+        };
+    }
+
+    private CodeBlock translateTemporalAnchor(uet.ndh.ddsl.ast.expr.temporal.TemporalAnchor anchor) {
+        if (anchor == null) {
+            return CodeBlock.of("$T.now()", INSTANT);
+        }
+        return switch (anchor.type()) {
+            case NOW -> CodeBlock.of("$T.now()", INSTANT);
+            case TODAY -> CodeBlock.of("$T.now()", INSTANT);
+            case YESTERDAY -> CodeBlock.of("$T.now().minus(1, $T.DAYS)", INSTANT, CHRONO_UNIT);
+            case TOMORROW -> CodeBlock.of("$T.now().plus(1, $T.DAYS)", INSTANT, CHRONO_UNIT);
+            case AGO -> CodeBlock.of("$T.now().minus($L)", INSTANT, translateDuration(anchor.relativeDuration()));
+            case FROM_NOW -> CodeBlock.of("$T.now().plus($L)", INSTANT, translateDuration(anchor.relativeDuration()));
+            case EXPRESSION -> translateExpression(anchor.expression());
+            default -> CodeBlock.of("$T.now()", INSTANT);
+        };
+    }
+
+    private CodeBlock translateDuration(uet.ndh.ddsl.ast.expr.temporal.Duration duration) {
+        if (duration == null) {
+            return CodeBlock.of("0, $T.SECONDS", CHRONO_UNIT);
+        }
+
+        String unit = duration.unit().toChronoUnit();
+        return CodeBlock.of("$L, $T.$L", duration.amount(), CHRONO_UNIT, unit);
     }
     
     // ========== Condition Translation ==========
@@ -947,6 +1164,7 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         return TypeName.VOID;
     }
     
+    @SuppressWarnings("unused")
     private String toMethodName(String behaviorName) {
         if (behaviorName == null) return "execute";
         

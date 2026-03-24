@@ -469,6 +469,12 @@ public enum TokenType {
     
     /** Guard: only */
     ONLY,
+
+    /** Transition condition: always */
+    ALWAYS,
+
+    /** Transition condition: never */
+    NEVER,
     
     // ========== ERROR ACCUMULATION KEYWORDS ==========
     

@@ -225,6 +225,8 @@ public class Scanner {
         KEYWORDS.put("must", TokenType.MUST);
         KEYWORDS.put("transition", TokenType.TRANSITION);
         KEYWORDS.put("only", TokenType.ONLY);
+        KEYWORDS.put("always", TokenType.ALWAYS);
+        KEYWORDS.put("never", TokenType.NEVER);
         
         // Error accumulation keywords
         KEYWORDS.put("collect", TokenType.COLLECT);
@@ -244,8 +246,6 @@ public class Scanner {
         KEYWORDS.put("ends", TokenType.ENDS);
         KEYWORDS.put("blank", TokenType.BLANK);
         KEYWORDS.put("format", TokenType.FORMAT);
-        KEYWORDS.put("email", TokenType.EMAIL);
-        KEYWORDS.put("phone", TokenType.PHONE);
         KEYWORDS.put("url", TokenType.URL);
         KEYWORDS.put("alphanumeric", TokenType.ALPHANUMERIC);
         KEYWORDS.put("numeric", TokenType.NUMERIC);
@@ -345,12 +345,7 @@ public class Scanner {
             
             // Two-character tokens
             case '-':
-                if (match('>')) {
-                    // Arrow operator (not commonly used but reserved)
-                    addToken(TokenType.DASH);
-                } else {
-                    addToken(TokenType.DASH);
-                }
+                addToken(TokenType.DASH);
                 break;
                 
             case ':':

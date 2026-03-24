@@ -3,6 +3,7 @@ package uet.ndh.ddsl.ast.behavior;
 import uet.ndh.ddsl.ast.AstNode;
 import uet.ndh.ddsl.ast.SourceSpan;
 import uet.ndh.ddsl.ast.behavior.clause.EmitClause;
+import uet.ndh.ddsl.ast.behavior.clause.ErrorAccumulationClause;
 import uet.ndh.ddsl.ast.behavior.clause.GivenClause;
 import uet.ndh.ddsl.ast.behavior.clause.RequireClause;
 import uet.ndh.ddsl.ast.behavior.clause.ReturnClause;
@@ -40,6 +41,7 @@ public record BehaviorDecl(
     NaturalLanguagePhrase phrase,
     List<ParameterDecl> parameters,
     RequireClause requireClause,
+    ErrorAccumulationClause errorAccumulationClause,
     GivenClause givenClause,
     List<ThenClause> thenClauses,
     EmitClause emitClause,
@@ -60,12 +62,30 @@ public record BehaviorDecl(
         NaturalLanguagePhrase phrase,
         List<ParameterDecl> parameters,
         RequireClause requireClause,
+        ErrorAccumulationClause errorAccumulationClause,
         GivenClause givenClause,
         List<ThenClause> thenClauses,
         EmitClause emitClause,
         String documentation
     ) {
-        this(span, phrase, parameters, requireClause, givenClause, thenClauses, emitClause, null, documentation);
+        this(span, phrase, parameters, requireClause, errorAccumulationClause, givenClause,
+            thenClauses, emitClause, null, documentation);
+    }
+
+    /**
+     * Legacy constructor kept for compatibility with older parser callsites.
+     */
+    public BehaviorDecl(
+        SourceSpan span,
+        NaturalLanguagePhrase phrase,
+        List<ParameterDecl> parameters,
+        RequireClause requireClause,
+        GivenClause givenClause,
+        List<ThenClause> thenClauses,
+        EmitClause emitClause,
+        String documentation
+    ) {
+        this(span, phrase, parameters, requireClause, null, givenClause, thenClauses, emitClause, null, documentation);
     }
     
     /**

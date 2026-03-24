@@ -8,6 +8,7 @@ import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.behavior.NaturalLanguageCondition;
 import uet.ndh.ddsl.ast.behavior.NaturalLanguagePhrase;
 import uet.ndh.ddsl.ast.behavior.clause.EmitClause;
+import uet.ndh.ddsl.ast.behavior.clause.ErrorAccumulationClause;
 import uet.ndh.ddsl.ast.behavior.clause.GivenClause;
 import uet.ndh.ddsl.ast.behavior.clause.RequireClause;
 import uet.ndh.ddsl.ast.behavior.clause.ReturnClause;
@@ -59,11 +60,19 @@ import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryMethodDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
+import uet.ndh.ddsl.ast.model.statemachine.GuardRule;
+import uet.ndh.ddsl.ast.model.statemachine.OnEntryRule;
+import uet.ndh.ddsl.ast.model.statemachine.OnExitRule;
+import uet.ndh.ddsl.ast.model.statemachine.StateDecl;
+import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
+import uet.ndh.ddsl.ast.model.statemachine.TransitionRule;
 import uet.ndh.ddsl.ast.model.valueobject.OperationDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.parser.lexer.Scanner;
 import uet.ndh.ddsl.parser.lexer.Token;
 import uet.ndh.ddsl.parser.lexer.TokenType;
+import uet.ndh.ddsl.ast.stmt.ExpressionStmt;
+import uet.ndh.ddsl.ast.stmt.Stmt;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,27 +82,27 @@ import java.util.List;
 
 /**
  * Recursive descent parser for the DDSL language.
- * 
+ *
  * This parser reads a stream of tokens from the Scanner and produces
  * an Abstract Syntax Tree (AST) representing the domain model.
  */
 public class DdslParser {
-    
+
     /** The list of tokens to parse */
     private final List<Token> tokens;
-    
+
     /** Current position in the token list */
     private int current = 0;
-    
+
     /** List of parse errors */
     private final List<ParseError> errors = new ArrayList<>();
-    
+
     /** Source file name for error reporting */
     private final String sourceName;
-    
+
     /**
      * Creates a new parser for the given source code.
-     * 
+     *
      * @param source     the source code to parse
      * @param sourceName the name of the source file
      */
@@ -101,19 +110,19 @@ public class DdslParser {
         Scanner scanner = new Scanner(source);
         this.tokens = scanner.scanTokens();
         this.sourceName = sourceName;
-        
+
         // Check for scanner errors
         if (scanner.hasErrors()) {
             for (Scanner.LexicalError error : scanner.getErrors()) {
-                errors.add(new ParseError(error.getMessage(), 
-                    currentSpan()));
+                errors.add(new ParseError(error.getMessage(),
+                        currentSpan()));
             }
         }
     }
-    
+
     /**
      * Creates a parser from pre-scanned tokens.
-     * 
+     *
      * @param tokens     the tokens to parse
      * @param sourceName the name of the source file
      */
@@ -121,12 +130,12 @@ public class DdslParser {
         this.tokens = tokens;
         this.sourceName = sourceName;
     }
-    
+
     // ========== Public API ==========
-    
+
     /**
      * Parses a file and returns the domain model.
-     * 
+     *
      * @param filePath the path to the source file
      * @return the parsed domain model
      * @throws IOException if the file cannot be read
@@ -139,21 +148,21 @@ public class DdslParser {
         DdslParser parser = new DdslParser(source, fileName);
         return parser.parse();
     }
-    
+
     /**
      * Parses the token stream and returns the domain model.
-     * 
+     *
      * @return the parsed domain model
      * @throws ParseException if there are parse errors
      */
     public DomainModel parse() throws ParseException {
         try {
             DomainModel model = program();
-            
+
             if (!errors.isEmpty()) {
                 throw new ParseException("Parse failed with " + errors.size() + " error(s)", errors);
             }
-            
+
             return model;
         } catch (ParseException e) {
             throw e;
@@ -162,30 +171,30 @@ public class DdslParser {
             throw new ParseException("Parse failed", errors);
         }
     }
-    
+
     /**
      * Get the list of parse errors.
      */
     public List<ParseError> getErrors() {
         return new ArrayList<>(errors);
     }
-    
+
     /**
      * Check if there were parse errors.
      */
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
-    
+
     // ========== Grammar Rules ==========
-    
+
     /**
      * Program ::= BoundedContextDeclaration*
      */
     private DomainModel program() {
         SourceSpan span = currentSpan();
         List<BoundedContextDecl> contexts = new ArrayList<>();
-        
+
         // Parse bounded context(s)
         while (!isAtEnd()) {
             int before = current;
@@ -198,12 +207,12 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         return new DomainModel(span, "DomainModel", contexts, null);
     }
-    
+
     /**
-     * BoundedContextDeclaration ::= 
+     * BoundedContextDeclaration ::=
      *     'BoundedContext' Identifier '{'
      *         UbiquitousLanguageSection?
      *         DomainSection
@@ -216,18 +225,18 @@ public class DdslParser {
      */
     private BoundedContextDecl boundedContextDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.BOUNDED_CONTEXT)) {
             error("Expected 'BoundedContext'");
             return null;
         }
         advance(); // consume 'BoundedContext'
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected bounded context name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after bounded context name");
-        
+
         List<ModuleDecl> modules = new ArrayList<>();
         List<AggregateDecl> aggregates = new ArrayList<>();
         List<ValueObjectDecl> valueObjects = new ArrayList<>();
@@ -235,9 +244,10 @@ public class DdslParser {
         List<DomainEventDecl> domainEvents = new ArrayList<>();
         List<RepositoryDecl> repositories = new ArrayList<>();
         List<FactoryDecl> factories = new ArrayList<>();
+        List<StateMachineDecl> stateMachines = new ArrayList<>();
         List<SpecificationDecl> specifications = new ArrayList<>();
         List<ApplicationServiceDecl> applicationServices = new ArrayList<>();
-        
+
         // Parse sections in any order
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.UBIQUITOUS_LANGUAGE)) {
@@ -246,7 +256,7 @@ public class DdslParser {
                 consume(TokenType.LEFT_BRACE, "Expected '{' after 'ubiquitous-language'");
                 skipBlock();
             } else if (check(TokenType.DOMAIN)) {
-                parseDomainSection(aggregates, valueObjects, domainServices);
+                parseDomainSection(aggregates, valueObjects, domainServices, stateMachines);
             } else if (check(TokenType.EVENTS)) {
                 parseEventsSection(domainEvents);
             } else if (check(TokenType.FACTORIES)) {
@@ -262,27 +272,28 @@ public class DdslParser {
                 advance(); // skip the unexpected token
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of bounded context");
-        
+
         return new BoundedContextDecl(
-            span, name, modules, aggregates, valueObjects, domainServices,
-            domainEvents, repositories, factories, specifications, applicationServices, null
+                span, name, modules, aggregates, valueObjects, domainServices,
+                domainEvents, repositories, factories, stateMachines, specifications, applicationServices, null
         );
     }
-    
+
     /**
      * DomainSection ::=
      *     'domain' '{'
      *         (AggregateDeclaration | EntityDeclaration | ValueObjectDeclaration | DomainServiceDeclaration)*
      *     '}'
      */
-    private void parseDomainSection(List<AggregateDecl> aggregates, 
-                                     List<ValueObjectDecl> valueObjects,
-                                     List<DomainServiceDecl> domainServices) {
+    private void parseDomainSection(List<AggregateDecl> aggregates,
+                                    List<ValueObjectDecl> valueObjects,
+                                    List<DomainServiceDecl> domainServices,
+                                    List<StateMachineDecl> stateMachines) {
         advance(); // consume 'domain'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'domain'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.AGGREGATE)) {
                 AggregateDecl aggregate = aggregateDeclaration();
@@ -302,15 +313,20 @@ public class DdslParser {
                 if (service != null) {
                     domainServices.add(service);
                 }
+            } else if (check(TokenType.STATE) && checkNext(TokenType.MACHINE)) {
+                StateMachineDecl stateMachine = stateMachineDeclaration();
+                if (stateMachine != null) {
+                    stateMachines.add(stateMachine);
+                }
             } else {
                 error("Expected domain element (Aggregate, Entity, ValueObject, or DomainService)");
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of domain section");
     }
-    
+
     /**
      * AggregateDeclaration ::=
      *     'Aggregate' Identifier '{'
@@ -322,12 +338,12 @@ public class DdslParser {
     private AggregateDecl aggregateDeclaration() {
         SourceSpan span = currentSpan();
         advance(); // consume 'Aggregate'
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected aggregate name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after aggregate name");
-        
+
         // Collect fields, invariants, behaviors, child entities, value objects
         List<FieldDecl> rootFields = new ArrayList<>();
         List<InvariantDecl> invariants = new ArrayList<>();
@@ -336,7 +352,7 @@ public class DdslParser {
         List<ValueObjectDecl> localValueObjects = new ArrayList<>();
         List<MethodDecl> commands = new ArrayList<>();
         IdentityFieldDecl identityField = null;
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
@@ -357,6 +373,9 @@ public class DdslParser {
             } else if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
                 behaviors.add(behavior);
+            } else if (check(TokenType.STATE) && checkNext(TokenType.MACHINE)) {
+                // Aggregate-local state machine declaration (currently parsed and ignored at aggregate level)
+                stateMachineDeclaration();
             } else if (check(TokenType.ENTITY)) {
                 EntityDecl entity = entityDeclaration();
                 childEntities.add(entity);
@@ -393,21 +412,21 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of aggregate");
-        
+
         // Create root entity for the aggregate
         EntityDecl rootEntity = new EntityDecl(
-            span, name, identityField, rootFields, List.of(), List.of(),
-            behaviors, invariants, List.of(), true, null
+                span, name, identityField, rootFields, List.of(), List.of(),
+                behaviors, invariants, List.of(), true, null
         );
-        
+
         return new AggregateDecl(
-            span, name, rootEntity, childEntities, localValueObjects,
-            invariants, behaviors, commands, List.of(), List.of(), null
+                span, name, rootEntity, childEntities, localValueObjects,
+                invariants, behaviors, commands, List.of(), List.of(), null
         );
     }
-    
+
     /**
      * EntityDeclaration ::=
      *     'Entity' Identifier '{'
@@ -419,17 +438,17 @@ public class DdslParser {
     private EntityDecl entityDeclaration() {
         SourceSpan span = currentSpan();
         advance(); // consume 'Entity'
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected entity name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after entity name");
-        
+
         List<FieldDecl> fields = new ArrayList<>();
         List<InvariantDecl> invariants = new ArrayList<>();
         List<BehaviorDecl> behaviors = new ArrayList<>();
         IdentityFieldDecl identityField = null;
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
@@ -452,6 +471,9 @@ public class DdslParser {
                 if (behavior != null) {
                     behaviors.add(behavior);
                 }
+            } else if (check(TokenType.STATE) && checkNext(TokenType.MACHINE)) {
+                // Entity-local state machine declaration (currently parsed and ignored at entity level)
+                stateMachineDeclaration();
             } else if (check(TokenType.AT_SIGN)) {
                 // Leading annotations (e.g. @identity) before a field
                 List<Constraint> leadingConstraints = annotationList();
@@ -480,15 +502,15 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of entity");
-        
+
         return new EntityDecl(
-            span, name, identityField, fields, List.of(), List.of(),
-            behaviors, invariants, List.of(), false, null
+                span, name, identityField, fields, List.of(), List.of(),
+                behaviors, invariants, List.of(), false, null
         );
     }
-    
+
     /**
      * ValueObjectDeclaration ::=
      *     'ValueObject' Identifier '{'
@@ -500,16 +522,16 @@ public class DdslParser {
     private ValueObjectDecl valueObjectDeclaration() {
         SourceSpan span = currentSpan();
         advance(); // consume 'ValueObject'
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected value object name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after value object name");
-        
+
         List<FieldDecl> fields = new ArrayList<>();
         List<InvariantDecl> invariants = new ArrayList<>();
         List<OperationDecl> operations = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
@@ -525,12 +547,12 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of value object");
-        
+
         return new ValueObjectDecl(span, name, fields, List.of(), operations, invariants, List.of(), null);
     }
-    
+
     /**
      * DomainServiceDeclaration ::=
      *     'DomainService' Identifier '{'
@@ -540,15 +562,15 @@ public class DdslParser {
     private DomainServiceDecl domainServiceDeclaration() {
         SourceSpan span = currentSpan();
         advance(); // consume 'DomainService'
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected domain service name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after domain service name");
-        
+
         List<MethodDecl> methods = new ArrayList<>();
         List<BehaviorDecl> behaviors = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
@@ -563,35 +585,35 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of domain service");
-        
+
         return new DomainServiceDecl(span, name, methods, behaviors, List.of(), null);
     }
-    
+
     /**
      * FieldDeclaration ::=
      *     Identifier ':' TypeReference AnnotationList?
      */
     private FieldDecl fieldDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected field name");
         if (nameToken == null) return null;
-        
+
         consume(TokenType.COLON, "Expected ':' after field name");
-        
+
         TypeRef type = typeReference();
         List<Constraint> constraints = annotationList();
-        
+
         return new FieldDecl(
-            span, nameToken.getLexeme(), type, Visibility.PRIVATE,
-            false, type.isNullable(), null, constraints, null
+                span, nameToken.getLexeme(), type, Visibility.PRIVATE,
+                false, type.isNullable(), null, constraints, null
         );
     }
-    
+
     /**
-     * TypeReference ::= 
+     * TypeReference ::=
      *     PrimitiveType
      *     | Identifier  // Domain type
      *     | GenericType
@@ -600,7 +622,7 @@ public class DdslParser {
     private TypeRef typeReference() {
         SourceSpan span = currentSpan();
         String typeName;
-        
+
         if (checkType()) {
             Token typeToken = advance();
             typeName = typeToken.getLexeme();
@@ -611,14 +633,14 @@ public class DdslParser {
             error("Expected type");
             return TypeRef.simple(currentSpan(), "Unknown");
         }
-        
+
         // Handle generic types: List<T>, Set<T>, Map<K,V>
         List<TypeRef> typeArgs = new ArrayList<>();
         TypeRef.CollectionKind collectionKind = null;
-        
+
         if (check(TokenType.LEFT_ANGLE)) {
             advance(); // consume '<'
-            
+
             // Determine collection kind
             collectionKind = switch (typeName.toLowerCase()) {
                 case "list" -> TypeRef.CollectionKind.LIST;
@@ -626,79 +648,79 @@ public class DdslParser {
                 case "map" -> TypeRef.CollectionKind.MAP;
                 default -> null;
             };
-            
+
             do {
                 if (check(TokenType.COMMA)) advance();
                 typeArgs.add(typeReference());
             } while (check(TokenType.COMMA));
-            
+
             consume(TokenType.RIGHT_ANGLE, "Expected '>' after type arguments");
         }
-        
+
         // Handle optional types: Type?
         boolean isNullable = false;
         if (check(TokenType.QUESTION)) {
             advance();
             isNullable = true;
         }
-        
+
         return new TypeRef(span, typeName, typeArgs, isNullable, collectionKind != null, collectionKind);
     }
-    
+
     /**
      * Check if current token is a type keyword.
      */
     private boolean checkType() {
         return check(TokenType.STRING_TYPE) ||
-               check(TokenType.INT_TYPE) ||
-               check(TokenType.DECIMAL_TYPE) ||
-               check(TokenType.BOOLEAN_TYPE) ||
-               check(TokenType.DATETIME_TYPE) ||
-               check(TokenType.UUID_TYPE) ||
-               check(TokenType.LIST_TYPE) ||
-               check(TokenType.SET_TYPE) ||
-               check(TokenType.MAP_TYPE) ||
-               check(TokenType.VOID_TYPE) ||
-               check(TokenType.RESULT);
+                check(TokenType.INT_TYPE) ||
+                check(TokenType.DECIMAL_TYPE) ||
+                check(TokenType.BOOLEAN_TYPE) ||
+                check(TokenType.DATETIME_TYPE) ||
+                check(TokenType.UUID_TYPE) ||
+                check(TokenType.LIST_TYPE) ||
+                check(TokenType.SET_TYPE) ||
+                check(TokenType.MAP_TYPE) ||
+                check(TokenType.VOID_TYPE) ||
+                check(TokenType.RESULT);
     }
-    
+
     /**
      * AnnotationList ::= Annotation*
      */
     private List<Constraint> annotationList() {
         List<Constraint> constraints = new ArrayList<>();
-        
+
         while (check(TokenType.AT_SIGN)) {
             Constraint constraint = annotation();
             if (constraint != null) {
                 constraints.add(constraint);
             }
         }
-        
+
         return constraints;
     }
-    
+
     /**
      * Annotation ::= '@' Identifier ('(' AnnotationArguments ')')?
      */
     private Constraint annotation() {
         SourceSpan span = currentSpan();
         advance(); // consume '@'
-        
+
         if (!check(TokenType.IDENTIFIER) && !checkAnnotationType()) {
             error("Expected annotation name after '@'");
             return null;
         }
-        
+
         Token nameToken = advance();
         String name = nameToken.getLexeme();
         Expr valueExpr = null;
         String message = null;
-        
+
         // Parse annotation arguments if present
         if (check(TokenType.LEFT_PAREN)) {
             advance(); // consume '('
-            
+
             // Parse the argument value
             if (check(TokenType.INTEGER_LITERAL)) {
                 Token valToken = advance();
@@ -713,7 +735,7 @@ public class DdslParser {
                 Token valToken = advance();
                 valueExpr = new LiteralExpr(span, valToken.getBooleanValue(), LiteralExpr.LiteralType.BOOLEAN);
             }
-            
+
             // Handle precision(p, s)
             if (check(TokenType.COMMA)) {
                 advance();
@@ -722,33 +744,33 @@ public class DdslParser {
                     advance();
                 }
             }
-            
+
             consume(TokenType.RIGHT_PAREN, "Expected ')' after annotation arguments");
         }
-        
+
         // Map annotation name to constraint type
         ConstraintType type = mapAnnotationToConstraintType(name);
-        
+
         return new Constraint(span, type, valueExpr, message);
     }
-    
+
     /**
      * Check if current token is an annotation type keyword.
      */
     private boolean checkAnnotationType() {
         return check(TokenType.IDENTITY) ||
-               check(TokenType.REQUIRED) ||
-               check(TokenType.UNIQUE) ||
-               check(TokenType.MIN) ||
-               check(TokenType.MAX) ||
-               check(TokenType.MIN_LENGTH) ||
-               check(TokenType.MAX_LENGTH) ||
-               check(TokenType.PRECISION) ||
-               check(TokenType.DEFAULT) ||
-               check(TokenType.COMPUTED) ||
-               check(TokenType.PATTERN);
+                check(TokenType.REQUIRED) ||
+                check(TokenType.UNIQUE) ||
+                check(TokenType.MIN) ||
+                check(TokenType.MAX) ||
+                check(TokenType.MIN_LENGTH) ||
+                check(TokenType.MAX_LENGTH) ||
+                check(TokenType.PRECISION) ||
+                check(TokenType.DEFAULT) ||
+                check(TokenType.COMPUTED) ||
+                check(TokenType.PATTERN);
     }
-    
+
     /**
      * Map annotation name to constraint type.
      */
@@ -768,28 +790,28 @@ public class DdslParser {
             default -> ConstraintType.CUSTOM;
         };
     }
-    
+
     /**
      * Check if a field has an @identity constraint.
      */
     private boolean hasIdentityConstraint(FieldDecl field) {
         return field.constraints().stream()
-            .anyMatch(c -> c.type() == ConstraintType.IDENTITY);
+                .anyMatch(c -> c.type() == ConstraintType.IDENTITY);
     }
-    
+
     /**
      * Convert a FieldDecl with @identity constraint to IdentityFieldDecl.
      */
     private IdentityFieldDecl toIdentityFieldDecl(FieldDecl field) {
         return new IdentityFieldDecl(
-            field.span(), 
-            field.name(), 
-            field.type(),
-            IdentityFieldDecl.IdentityType.UUID, 
-            IdentityFieldDecl.IdGenerationStrategy.UUID
+                field.span(),
+                field.name(),
+                field.type(),
+                IdentityFieldDecl.IdentityType.UUID,
+                IdentityFieldDecl.IdGenerationStrategy.UUID
         );
     }
-    
+
     /**
      * Convert a BehaviorDecl to a MethodDecl.
      */
@@ -809,21 +831,21 @@ public class DdslParser {
             }
             methodName = sb.toString();
         }
-        
+
         return new MethodDecl(
-            behavior.span(),
-            methodName,
-            null,  // returnType
-            behavior.parameters(),
-            null,  // body
-            Visibility.PUBLIC,
-            false, // isStatic
-            false, // isAbstract
-            MethodDecl.MethodKind.COMMAND,  // kind
-            null   // documentation
+                behavior.span(),
+                methodName,
+                null,  // returnType
+                behavior.parameters(),
+                null,  // body
+                Visibility.PUBLIC,
+                false, // isStatic
+                false, // isAbstract
+                MethodDecl.MethodKind.COMMAND,  // kind
+                null   // documentation
         );
     }
-    
+
     /**
      * InvariantsBlock ::=
      *     'invariants' '{'
@@ -832,10 +854,10 @@ public class DdslParser {
      */
     private List<InvariantDecl> invariantsBlock() {
         List<InvariantDecl> invariants = new ArrayList<>();
-        
+
         advance(); // consume 'invariants'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'invariants'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             int before = current;
             InvariantDecl invariant = invariantRule();
@@ -846,31 +868,31 @@ public class DdslParser {
                 advance(); // skip to avoid infinite loop
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of invariants block");
-        
+
         return invariants;
     }
-    
+
     /**
      * InvariantRule ::= StringLiteral ':' Expression
      */
     private InvariantDecl invariantRule() {
         SourceSpan span = currentSpan();
-        
+
         Token messageToken = consume(TokenType.STRING_LITERAL, "Expected invariant message");
         if (messageToken == null) return null;
-        
+
         String message = messageToken.getStringValue();
         String name = toInvariantName(message);
-        
+
         consume(TokenType.COLON, "Expected ':' after invariant message");
-        
+
         Expr condition = expression();
-        
+
         return new InvariantDecl(span, name, message, condition, null);
     }
-    
+
     /**
      * Convert an invariant message to a method-safe name.
      */
@@ -888,7 +910,7 @@ public class DdslParser {
         }
         return sb.toString();
     }
-    
+
     /**
      * OperationsBlock ::=
      *     'operations' '{'
@@ -897,22 +919,22 @@ public class DdslParser {
      */
     private List<OperationDecl> operationsBlock() {
         List<OperationDecl> operations = new ArrayList<>();
-        
+
         advance(); // consume 'operations'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             OperationDecl operation = operationDeclaration();
             if (operation != null) {
                 operations.add(operation);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of operations block");
-        
+
         return operations;
     }
-    
+
     /**
      * OperationDeclaration ::=
      *     Identifier '(' ParameterList? ')' ':' TypeReference '{'
@@ -922,26 +944,26 @@ public class DdslParser {
      */
     private OperationDecl operationDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected operation name");
         if (nameToken == null) return null;
-        
+
         consume(TokenType.LEFT_PAREN, "Expected '(' after operation name");
-        
+
         List<ParameterDecl> parameters = new ArrayList<>();
         if (!check(TokenType.RIGHT_PAREN)) {
             parameters = parameterList();
         }
-        
+
         consume(TokenType.RIGHT_PAREN, "Expected ')' after parameters");
         consume(TokenType.COLON, "Expected ':' after ')'");
-        
+
         TypeRef returnType = typeReference();
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' for operation body");
-        
+
         Expr returnExpr = null;
-        
+
         // Parse require conditions and return expression
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.REQUIRE)) {
@@ -954,42 +976,45 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of operation");
-        
+
         return new OperationDecl(span, nameToken.getLexeme(), returnType, parameters, returnExpr, null);
     }
-    
+
     // ========== Behavior Parsing ==========
-    
+
     private BehaviorDecl behaviorDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         advance(); // consume 'when'
-        
+
         // Parse natural language phrase
         NaturalLanguagePhrase phrase = parseNaturalLanguagePhrase();
-        
+
         // Parse optional parameters: with parameterList
         List<ParameterDecl> parameters = new ArrayList<>();
         if (check(TokenType.WITH)) {
             advance();
             parameters = parameterList();
         }
-        
+
         consume(TokenType.COLON, "Expected ':' after behavior header");
-        
+
         // Parse clauses
         RequireClause requireClauseVal = null;
+        ErrorAccumulationClause errorAccumulationClauseVal = null;
         GivenClause givenClauseVal = null;
         List<ThenClause> thenClauses = new ArrayList<>();
         EmitClause emitClauseVal = null;
         ReturnClause returnClauseVal = null;
-        
-        while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && 
-               !check(TokenType.INVARIANTS) && !isAtEnd()) {
+
+        while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) &&
+                !check(TokenType.INVARIANTS) && !isAtEnd()) {
             if (check(TokenType.REQUIRE)) {
                 requireClauseVal = requireClause();
+            } else if (check(TokenType.COLLECT)) {
+                errorAccumulationClauseVal = errorAccumulationClause();
             } else if (check(TokenType.GIVEN)) {
                 givenClauseVal = givenClause();
             } else if (check(TokenType.THEN)) {
@@ -1006,43 +1031,43 @@ public class DdslParser {
                 break;
             }
         }
-        
+
         return new BehaviorDecl(
-            span, phrase, parameters, requireClauseVal, givenClauseVal,
-            thenClauses, emitClauseVal, returnClauseVal, null
+                span, phrase, parameters, requireClauseVal, errorAccumulationClauseVal, givenClauseVal,
+                thenClauses, emitClauseVal, returnClauseVal, null
         );
     }
-    
+
     private void parseEventsSection(List<DomainEventDecl> domainEvents) {
         advance(); // consume 'events'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'events'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             DomainEventDecl event = domainEventDeclaration();
             if (event != null) {
                 domainEvents.add(event);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of events section");
     }
-    
+
     private DomainEventDecl domainEventDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.DOMAIN_EVENT)) {
             error("Expected 'DomainEvent'");
             return null;
         }
         advance();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected event name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after event name");
-        
+
         List<FieldDecl> fields = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.METADATA)) {
                 // Skip metadata block for now
@@ -1059,47 +1084,47 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of event");
-        
+
         return new DomainEventDecl(span, name, fields, null, null);
     }
-    
+
     private void parseFactoriesSection(List<FactoryDecl> factories) {
         advance(); // consume 'factories'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'factories'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             FactoryDecl factory = factoryDeclaration();
             if (factory != null) {
                 factories.add(factory);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of factories section");
     }
-    
+
     private FactoryDecl factoryDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.FACTORY)) {
             error("Expected 'Factory'");
             return null;
         }
         advance();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected factory name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after factory name");
-        
+
         // Determine created type from factory name (e.g., OrderFactory -> Order)
         String createdTypeName = name.replace("Factory", "");
         TypeRef producedType = new TypeRef(span, createdTypeName, null, false, false, null);
-        
+
         List<FactoryMethodDecl> creationMethods = new ArrayList<>();
         List<FactoryCreationRuleDecl> creationRules = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.WHEN)) {
                 FactoryCreationRuleDecl rule = factoryCreationRule();
@@ -1111,23 +1136,23 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of factory");
-        
+
         return new FactoryDecl(span, name, producedType, creationMethods, creationRules, null);
     }
-    
+
     private FactoryCreationRuleDecl factoryCreationRule() {
         SourceSpan span = currentSpan();
-        
+
         advance(); // consume 'when'
         consume(TokenType.CREATING, "Expected 'creating' after 'when' in factory");
-        
+
         // Parse: creating EntityType from SourceType with params
         TypeRef entityType = typeReference();
-        
+
         consume(TokenType.FROM, "Expected 'from' after entity type");
-        
+
         TypeRef sourceType = typeReference();
 
         if (check(TokenType.WITH)) {
@@ -1150,44 +1175,44 @@ public class DdslParser {
                 break;
             }
         }
-        
+
         return new FactoryCreationRuleDecl(span, "create", null, description.toString());
     }
-    
+
     private void parseRepositoriesSection(List<RepositoryDecl> repositories) {
         advance(); // consume 'repositories'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'repositories'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             RepositoryDecl repo = repositoryDeclaration();
             if (repo != null) {
                 repositories.add(repo);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of repositories section");
     }
-    
+
     private RepositoryDecl repositoryDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.REPOSITORY)) {
             error("Expected 'Repository'");
             return null;
         }
         advance();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected repository name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.FOR, "Expected 'for' after repository name");
-        
+
         TypeRef aggregateType = typeReference();
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after aggregate type");
-        
+
         List<RepositoryMethodDecl> methods = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             int before = current;
             RepositoryMethodDecl method = repositoryMethod();
@@ -1198,45 +1223,45 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of repository");
-        
+
         return new RepositoryDecl(span, name, aggregateType, methods, null);
     }
-    
+
     private RepositoryMethodDecl repositoryMethod() {
         SourceSpan span = currentSpan();
-        
+
         // Method name can be an identifier or a keyword used as method name (save, remove, add, count, etc.)
         Token nameToken;
-        if (check(TokenType.IDENTIFIER) || check(TokenType.SAVE) || check(TokenType.REMOVE) 
+        if (check(TokenType.IDENTIFIER) || check(TokenType.SAVE) || check(TokenType.REMOVE)
                 || check(TokenType.ADD) || check(TokenType.COUNT)) {
             nameToken = advance();
         } else {
             nameToken = consume(TokenType.IDENTIFIER, "Expected method name");
             if (nameToken == null) return null;
         }
-        
+
         String methodName = nameToken.getLexeme();
-        
+
         consume(TokenType.LEFT_PAREN, "Expected '(' after method name");
-        
+
         List<ParameterDecl> parameters = new ArrayList<>();
         if (!check(TokenType.RIGHT_PAREN)) {
             parameters = parameterList();
         }
-        
+
         consume(TokenType.RIGHT_PAREN, "Expected ')' after parameters");
         consume(TokenType.COLON, "Expected ':' after ')'");
-        
+
         TypeRef returnType = typeReference();
-        
+
         // Determine method type from name
         RepositoryMethodDecl.RepositoryMethodType methodType = determineRepositoryMethodType(methodName);
-        
+
         return new RepositoryMethodDecl(span, methodName, returnType, parameters, methodType, null);
     }
-    
+
     private RepositoryMethodDecl.RepositoryMethodType determineRepositoryMethodType(String name) {
         String lowerName = name.toLowerCase();
         if (lowerName.equals("findbyid") || lowerName.equals("getbyid")) {
@@ -1257,54 +1282,54 @@ public class DdslParser {
             return RepositoryMethodDecl.RepositoryMethodType.CUSTOM;
         }
     }
-    
+
     private void parseSpecificationsSection(List<SpecificationDecl> specifications) {
         advance(); // consume 'specifications'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'specifications'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             SpecificationDecl spec = specificationDeclaration();
             if (spec != null) {
                 specifications.add(spec);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of specifications section");
     }
-    
+
     private SpecificationDecl specificationDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.SPECIFICATION)) {
             error("Expected 'Specification'");
             return null;
         }
         advance();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected specification name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         // Parse optional parameters: given parameterList
         List<ParameterDecl> parameters = new ArrayList<>();
         if (check(TokenType.GIVEN)) {
             advance();
             parameters = parameterList();
         }
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after specification name");
-        
+
         TypeRef targetType = null;
         Expr predicate = null;
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.MATCHES)) {
                 // Parse: matches EntityType where: conditions
                 advance();
                 targetType = typeReference();
-                
+
                 consume(TokenType.WHERE, "Expected 'where' after entity type");
                 consume(TokenType.COLON, "Expected ':' after 'where'");
-                
+
                 // Parse match conditions as a predicate
                 List<Expr> conditions = new ArrayList<>();
                 while (check(TokenType.DASH)) {
@@ -1324,7 +1349,7 @@ public class DdslParser {
                 advance();
                 consume(TokenType.COMBINES, "Expected 'combines' after 'and'");
                 consume(TokenType.COLON, "Expected ':' after 'combines'");
-                
+
                 while (check(TokenType.IDENTIFIER)) {
                     advance(); // skip specification name
                     if (check(TokenType.OR) || check(TokenType.AND)) {
@@ -1336,55 +1361,55 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of specification");
-        
+
         return new SpecificationDecl(span, name, targetType, predicate, parameters, null);
     }
-    
+
     private void parseUseCasesSection(List<ApplicationServiceDecl> services) {
         advance(); // consume 'use-cases'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'use-cases'");
-        
+
         SourceSpan serviceSpan = currentSpan();
         List<UseCaseDecl> useCases = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             UseCaseDecl useCase = useCaseDeclaration();
             if (useCase != null) {
                 useCases.add(useCase);
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of use-cases section");
-        
+
         if (!useCases.isEmpty()) {
             // Create default application service to hold use cases
             ApplicationServiceDecl appService = new ApplicationServiceDecl(
-                serviceSpan, "ApplicationService", useCases, List.of(), null);
+                    serviceSpan, "ApplicationService", useCases, List.of(), null);
             services.add(appService);
         }
     }
-    
+
     private UseCaseDecl useCaseDeclaration() {
         SourceSpan span = currentSpan();
-        
+
         if (!check(TokenType.USE_CASE)) {
             error("Expected 'UseCase'");
             return null;
         }
         advance();
-        
+
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected use case name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
+
         consume(TokenType.LEFT_BRACE, "Expected '{' after use case name");
-        
+
         List<ParameterDecl> inputs = new ArrayList<>();
         TypeRef returnType = null;
         List<BehaviorDecl> behaviors = new ArrayList<>();
         List<UseCaseStepDecl> steps = new ArrayList<>();
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.INPUT)) {
                 advance();
@@ -1403,15 +1428,15 @@ public class DdslParser {
                 advance();
             }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of use case");
-        
+
         return new UseCaseDecl(span, name, inputs, returnType, null, behaviors, steps, null);
     }
-    
+
     private List<ParameterDecl> parseUseCaseInputs() {
         List<ParameterDecl> inputs = new ArrayList<>();
-        
+
         // Input can be a type reference or an inline definition
         if (check(TokenType.IDENTIFIER) && !checkNext(TokenType.LEFT_BRACE)) {
             TypeRef inputType = typeReference();
@@ -1419,8 +1444,8 @@ public class DdslParser {
             inputs.add(new ParameterDecl(inputType.span(), "input", inputType, false, null));
         } else {
             // Inline input definition: TypeName { fields }
-            Token nameToken = consume(TokenType.IDENTIFIER, "Expected input type name");
-            
+            consume(TokenType.IDENTIFIER, "Expected input type name");
+
             if (check(TokenType.LEFT_BRACE)) {
                 advance();
                 while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
@@ -1432,20 +1457,20 @@ public class DdslParser {
                 consume(TokenType.RIGHT_BRACE, "Expected '}' after input definition");
             }
         }
-        
+
         return inputs;
     }
-    
+
     private List<UseCaseStepDecl> parseUseCaseFlowSteps() {
         List<UseCaseStepDecl> steps = new ArrayList<>();
         int stepOrder = 1;
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.REQUIRE) || check(TokenType.GIVEN) || check(TokenType.THEN) || check(TokenType.RETURN)) {
                 SourceSpan stepSpan = currentSpan();
                 String stepType = peek().getLexeme();
                 advance();
-                
+
                 // Determine step type
                 UseCaseStepDecl.StepType type = switch (stepType.toLowerCase()) {
                     case "require" -> UseCaseStepDecl.StepType.VALIDATE;
@@ -1454,48 +1479,52 @@ public class DdslParser {
                     case "return" -> UseCaseStepDecl.StepType.RETURN;
                     default -> UseCaseStepDecl.StepType.EXECUTE;
                 };
-                
+
                 // Skip step details for now
                 skipUntilClauseOrEnd();
-                
+
                 steps.add(new UseCaseStepDecl(stepSpan, stepOrder++, stepType, stepType, type));
             } else {
                 break;
             }
         }
-        
+
         return steps;
     }
-    
+
     // ========== Behavior Parsing ==========
-    
+
+    @SuppressWarnings("unused")
     private BehaviorDecl parseBehavior() {
         SourceSpan span = currentSpan();
-        
+
         advance(); // consume 'when'
-        
+
         // Parse natural language phrase
         NaturalLanguagePhrase phrase = parseNaturalLanguagePhrase();
-        
+
         // Parse optional parameters: with parameterList
         List<ParameterDecl> params = new ArrayList<>();
         if (check(TokenType.WITH)) {
             advance();
             params = parameterList();
         }
-        
+
         consume(TokenType.COLON, "Expected ':' after behavior header");
-        
+
         // Parse clauses
         RequireClause requireClause = null;
+        ErrorAccumulationClause errorAccumulationClause = null;
         GivenClause givenClause = null;
         List<ThenClause> thenClauses = new ArrayList<>();
         EmitClause emitClause = null;
-        
-        while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && 
-               !check(TokenType.INVARIANTS) && !isAtEnd()) {
+
+        while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) &&
+                !check(TokenType.INVARIANTS) && !isAtEnd()) {
             if (check(TokenType.REQUIRE)) {
                 requireClause = requireClause();
+            } else if (check(TokenType.COLLECT)) {
+                errorAccumulationClause = errorAccumulationClause();
             } else if (check(TokenType.GIVEN)) {
                 givenClause = givenClause();
             } else if (check(TokenType.THEN)) {
@@ -1512,40 +1541,36 @@ public class DdslParser {
                 break;
             }
         }
-        
-        return new BehaviorDecl(span, phrase, params, requireClause, givenClause, thenClauses, emitClause, null);
+
+        return new BehaviorDecl(span, phrase, params, requireClause, errorAccumulationClause, givenClause,
+                thenClauses, emitClause, null);
     }
-    
+
+    @SuppressWarnings("unused")
     private OperationDecl parseServiceOperation() {
         SourceSpan span = currentSpan();
-        
+
         advance(); // consume 'when'
-        
+
         NaturalLanguagePhrase phrase = parseNaturalLanguagePhrase();
-        
+
         List<ParameterDecl> params = new ArrayList<>();
         if (check(TokenType.WITH)) {
             advance();
             params = parameterList();
         }
-        
+
         consume(TokenType.COLON, "Expected ':' after service operation header");
-        
-        RequireClause requireClause = null;
-        GivenClause givenClause = null;
-        List<ThenClause> thenClauses = new ArrayList<>();
+
         TypeRef returnType = null;
-        
+
         while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.REQUIRE)) {
-                requireClause = requireClause();
+                requireClause();
             } else if (check(TokenType.GIVEN)) {
-                givenClause = givenClause();
+                givenClause();
             } else if (check(TokenType.THEN)) {
-                ThenClause then = thenClause();
-                if (then != null) {
-                    thenClauses.add(then);
-                }
+                thenClause();
             } else if (check(TokenType.RETURN)) {
                 advance();
                 // Skip return expression for now
@@ -1555,17 +1580,495 @@ public class DdslParser {
                 break;
             }
         }
-        
+
         // Convert phrase to method name
         String methodName = phrase.toMethodName();
-        
+
         return new OperationDecl(span, methodName, returnType, params, null, null);
     }
-    
+
+    // ========== State Machine Parsing ==========
+
+    private StateMachineDecl stateMachineDeclaration() {
+        SourceSpan span = currentSpan();
+        consume(TokenType.STATE, "Expected 'state'");
+        consume(TokenType.MACHINE, "Expected 'machine' after 'state'");
+
+        String name = null;
+        if (check(TokenType.IDENTIFIER) && !checkNext(TokenType.FOR)) {
+            name = advance().getLexeme();
+        }
+
+        consume(TokenType.FOR, "Expected 'for' in state machine declaration");
+        Token forFieldToken = consume(TokenType.IDENTIFIER, "Expected target field/type after 'for'");
+        String forField = forFieldToken != null ? forFieldToken.getLexeme() : "status";
+
+        consume(TokenType.LEFT_BRACE, "Expected '{' after state machine header");
+
+        List<StateDecl> states = new ArrayList<>();
+        List<TransitionRule> transitions = new ArrayList<>();
+        List<GuardRule> guards = new ArrayList<>();
+        List<OnEntryRule> onEntryRules = new ArrayList<>();
+        List<OnExitRule> onExitRules = new ArrayList<>();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            if (check(TokenType.STATES)) {
+                states.addAll(parseStateMachineStatesBlock());
+            } else if (check(TokenType.TRANSITIONS)) {
+                transitions.addAll(parseStateMachineTransitionsBlock());
+            } else if (check(TokenType.GUARDS)) {
+                guards.addAll(parseStateMachineGuardsBlock());
+            } else if (check(TokenType.ON) && checkNext(TokenType.ENTRY)) {
+                onEntryRules.addAll(parseStateMachineOnEntryBlock());
+            } else if (check(TokenType.ON) && checkNext(TokenType.EXIT)) {
+                onExitRules.addAll(parseStateMachineOnExitBlock());
+            } else {
+                advance();
+            }
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expected '}' at end of state machine declaration");
+
+        return new StateMachineDecl(
+                span,
+                name,
+                forField,
+                states,
+                transitions,
+                guards,
+                onEntryRules,
+                onExitRules,
+                null
+        );
+    }
+
+    private List<OnEntryRule> parseStateMachineOnEntryBlock() {
+        consume(TokenType.ON, "Expected 'on' in 'on entry' block");
+        consume(TokenType.ENTRY, "Expected 'entry' after 'on'");
+        consume(TokenType.COLON, "Expected ':' after 'on entry'");
+
+        List<OnEntryRule> rules = new ArrayList<>();
+        while (check(TokenType.DASH)) {
+            SourceSpan ruleSpan = currentSpan();
+            advance(); // consume '-'
+            if (!match(TokenType.ENTERING)) {
+                error("Expected 'entering' in on entry rule");
+                skipStateMachineHookBlock();
+                break;
+            }
+
+            Token stateToken = consume(TokenType.IDENTIFIER, "Expected state name after 'entering'");
+            String stateName = stateToken != null ? stateToken.getLexeme() : "Unknown";
+            consume(TokenType.COLON, "Expected ':' after entering state name");
+
+            List<Stmt> statements = parseStateMachineHookStatements(TokenType.ENTERING);
+            rules.add(OnEntryRule.of(ruleSpan, stateName, statements));
+        }
+
+        return rules;
+    }
+
+    private List<OnExitRule> parseStateMachineOnExitBlock() {
+        consume(TokenType.ON, "Expected 'on' in 'on exit' block");
+        consume(TokenType.EXIT, "Expected 'exit' after 'on'");
+        consume(TokenType.COLON, "Expected ':' after 'on exit'");
+
+        List<OnExitRule> rules = new ArrayList<>();
+        while (check(TokenType.DASH)) {
+            SourceSpan ruleSpan = currentSpan();
+            advance(); // consume '-'
+            if (!match(TokenType.LEAVING)) {
+                error("Expected 'leaving' in on exit rule");
+                skipStateMachineHookBlock();
+                break;
+            }
+
+            Token stateToken = consume(TokenType.IDENTIFIER, "Expected state name after 'leaving'");
+            String stateName = stateToken != null ? stateToken.getLexeme() : "Unknown";
+            consume(TokenType.COLON, "Expected ':' after leaving state name");
+
+            List<Stmt> statements = parseStateMachineHookStatements(TokenType.LEAVING);
+            rules.add(OnExitRule.of(ruleSpan, stateName, statements));
+        }
+
+        return rules;
+    }
+
+    private List<Stmt> parseStateMachineHookStatements(TokenType ruleKeyword) {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (check(TokenType.DASH)) {
+            // Start of next hook rule (e.g. '- entering X:' / '- leaving X:')
+            if (checkNext(ruleKeyword)) {
+                break;
+            }
+
+            SourceSpan stmtSpan = currentSpan();
+            advance(); // consume '-'
+
+            String raw = parseTextUntilHookStatementBoundary(ruleKeyword);
+            if (!raw.isBlank()) {
+                statements.add(new ExpressionStmt(stmtSpan, new VariableExpr(stmtSpan, raw)));
+            }
+        }
+
+        return statements;
+    }
+
+    private String parseTextUntilHookStatementBoundary(TokenType ruleKeyword) {
+        StringBuilder raw = new StringBuilder();
+        while (!isAtEnd() && !isHookStatementBoundary(ruleKeyword)) {
+            if (!raw.isEmpty()) {
+                raw.append(' ');
+            }
+            raw.append(advance().getLexeme());
+        }
+        return raw.toString().trim();
+    }
+
+    private boolean isHookStatementBoundary(TokenType ruleKeyword) {
+        return check(TokenType.RIGHT_BRACE)
+                || check(TokenType.STATES)
+                || check(TokenType.TRANSITIONS)
+                || check(TokenType.GUARDS)
+                || (check(TokenType.ON) && (checkNext(TokenType.ENTRY) || checkNext(TokenType.EXIT)))
+                || (check(TokenType.DASH) && checkNext(ruleKeyword));
+    }
+
+    private List<StateDecl> parseStateMachineStatesBlock() {
+        advance(); // consume 'states'
+        consume(TokenType.COLON, "Expected ':' after 'states'");
+
+        List<StateDecl> states = new ArrayList<>();
+        while (check(TokenType.DASH)) {
+            SourceSpan stateSpan = currentSpan();
+            advance(); // consume '-'
+            Token stateNameToken = consume(TokenType.IDENTIFIER, "Expected state name");
+            String stateName = stateNameToken != null ? stateNameToken.getLexeme() : "Unknown";
+
+            boolean initial = false;
+            boolean fin = false;
+            if (match(TokenType.LEFT_PAREN)) {
+                while (!check(TokenType.RIGHT_PAREN) && !isAtEnd()) {
+                    if (match(TokenType.INITIAL)) {
+                        initial = true;
+                    } else if (match(TokenType.FINAL)) {
+                        fin = true;
+                    } else {
+                        advance();
+                    }
+                    match(TokenType.COMMA);
+                }
+                consume(TokenType.RIGHT_PAREN, "Expected ')' after state modifier");
+            }
+
+            states.add(new StateDecl(stateSpan, stateName, initial, fin));
+        }
+
+        if (states.isEmpty()) {
+            error("State machine states block must declare at least one state");
+        }
+        return states;
+    }
+
+    private List<TransitionRule> parseStateMachineTransitionsBlock() {
+        advance(); // consume 'transitions'
+        consume(TokenType.COLON, "Expected ':' after 'transitions'");
+
+        List<TransitionRule> transitions = new ArrayList<>();
+        while (check(TokenType.DASH)) {
+            SourceSpan tSpan = currentSpan();
+            advance(); // consume '-'
+
+            boolean anySource = false;
+            List<String> sources = new ArrayList<>();
+            if (match(TokenType.ANY)) {
+                anySource = true;
+            } else if (match(TokenType.LEFT_BRACKET)) {
+                do {
+                    Token src = consume(TokenType.IDENTIFIER, "Expected source state in list");
+                    if (src != null) {
+                        sources.add(src.getLexeme());
+                    }
+                } while (match(TokenType.COMMA));
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after source states list");
+            } else {
+                Token src = consume(TokenType.IDENTIFIER, "Expected source state");
+                if (src != null) {
+                    sources.add(src.getLexeme());
+                }
+            }
+
+            consume(TokenType.DASH, "Expected '-' in transition arrow");
+            consume(TokenType.RIGHT_ANGLE, "Expected '>' in transition arrow");
+
+            String targetState;
+            if (match(TokenType.ANY)) {
+                targetState = "any";
+            } else {
+                Token targetToken = consume(TokenType.IDENTIFIER, "Expected target state");
+                targetState = targetToken != null ? targetToken.getLexeme() : "Unknown";
+            }
+
+            consume(TokenType.COLON, "Expected ':' after transition target");
+            TransitionRule.TransitionCondition condition = parseTransitionCondition();
+
+            transitions.add(new TransitionRule(tSpan, sources, anySource, targetState, condition));
+        }
+
+        if (transitions.isEmpty()) {
+            error("State machine transitions block must declare at least one transition");
+        }
+        return transitions;
+    }
+
+    private TransitionRule.TransitionCondition parseTransitionCondition() {
+        if (match(TokenType.ALWAYS)) {
+            return TransitionRule.TransitionCondition.always();
+        }
+        if (match(TokenType.NEVER)) {
+            return TransitionRule.TransitionCondition.never();
+        }
+        if (match(TokenType.ONLY)) {
+            if (match(TokenType.WHEN)) {
+                NaturalLanguageCondition condition = parseConditionUntilStateMachineBoundary();
+                return TransitionRule.TransitionCondition.onlyWhen(condition);
+            }
+            if (match(TokenType.WITHIN)) {
+                Duration duration = parseDuration(currentSpan());
+                consume(TokenType.OF, "Expected 'of' after 'only within <duration>'");
+                String reference = parseTextUntilStateMachineBoundary();
+                return TransitionRule.TransitionCondition.onlyWithin(duration, reference);
+            }
+            return TransitionRule.TransitionCondition.always();
+        }
+        if (match(TokenType.WHEN)) {
+            NaturalLanguageCondition condition = parseConditionUntilStateMachineBoundary();
+            return TransitionRule.TransitionCondition.when(condition);
+        }
+
+        String raw = parseTextUntilStateMachineBoundary();
+        if (!raw.isBlank()) {
+            return TransitionRule.TransitionCondition.when(NaturalLanguageCondition.simple(currentSpan(), raw, null));
+        }
+        return TransitionRule.TransitionCondition.always();
+    }
+
+    private List<GuardRule> parseStateMachineGuardsBlock() {
+        advance(); // consume 'guards'
+        consume(TokenType.COLON, "Expected ':' after 'guards'");
+
+        List<GuardRule> guards = new ArrayList<>();
+        while (check(TokenType.DASH)) {
+            SourceSpan guardSpan = currentSpan();
+            advance(); // consume '-'
+
+            GuardRule.GuardType guardType;
+            if (match(TokenType.CANNOT)) {
+                guardType = GuardRule.GuardType.CANNOT;
+            } else if (match(TokenType.MUST)) {
+                guardType = GuardRule.GuardType.MUST;
+            } else {
+                error("Expected 'cannot' or 'must' in guard rule");
+                break;
+            }
+
+            consume(TokenType.TRANSITION, "Expected 'transition' in guard rule");
+            consume(TokenType.FROM, "Expected 'from' in guard rule");
+            Token fromToken = consume(TokenType.IDENTIFIER, "Expected source state in guard rule");
+            consume(TokenType.TO, "Expected 'to' in guard rule");
+            Token toToken = consume(TokenType.IDENTIFIER, "Expected target state in guard rule");
+
+            NaturalLanguageCondition condition = null;
+            if (match(TokenType.WHEN)) {
+                condition = parseConditionUntilStateMachineBoundary();
+            }
+
+            String fromState = fromToken != null ? fromToken.getLexeme() : "Unknown";
+            String toState = toToken != null ? toToken.getLexeme() : "Unknown";
+
+            guards.add(guardType == GuardRule.GuardType.CANNOT
+                    ? GuardRule.cannot(guardSpan, fromState, toState, condition)
+                    : GuardRule.must(guardSpan, fromState, toState, condition));
+        }
+
+        return guards;
+    }
+
+    private void skipStateMachineHookBlock() {
+        advance(); // on
+        if (check(TokenType.ENTRY) || check(TokenType.EXIT)) {
+            advance();
+        }
+        match(TokenType.COLON);
+
+        while (!isAtEnd() && !check(TokenType.RIGHT_BRACE)
+                && !check(TokenType.STATES) && !check(TokenType.TRANSITIONS)
+                && !check(TokenType.GUARDS) && !(check(TokenType.ON) && (checkNext(TokenType.ENTRY) || checkNext(TokenType.EXIT)))) {
+            advance();
+        }
+    }
+
+    private NaturalLanguageCondition parseConditionUntilStateMachineBoundary() {
+        SourceSpan span = currentSpan();
+        String raw = parseTextUntilStateMachineBoundary();
+        return NaturalLanguageCondition.simple(span, raw, null);
+    }
+
+    private String parseTextUntilStateMachineBoundary() {
+        StringBuilder raw = new StringBuilder();
+        while (!isAtEnd() && !isStateMachineBoundaryToken()) {
+            if (!raw.isEmpty()) {
+                raw.append(' ');
+            }
+            raw.append(advance().getLexeme());
+        }
+        return raw.toString().trim();
+    }
+
+    private boolean isStateMachineBoundaryToken() {
+        return check(TokenType.DASH)
+                || check(TokenType.RIGHT_BRACE)
+                || check(TokenType.STATES)
+                || check(TokenType.TRANSITIONS)
+                || check(TokenType.GUARDS)
+                || (check(TokenType.ON) && (checkNext(TokenType.ENTRY) || checkNext(TokenType.EXIT)));
+    }
+
+    // ========== Error Accumulation Parsing ==========
+
+    private ErrorAccumulationClause errorAccumulationClause() {
+        SourceSpan span = currentSpan();
+        consume(TokenType.COLLECT, "Expected 'collect'");
+
+        if (match(TokenType.ALL)) {
+            consume(TokenType.ERRORS, "Expected 'errors' after 'collect all'");
+            consume(TokenType.COLON, "Expected ':' after 'collect all errors'");
+            List<ErrorAccumulationClause.ValidationRule> rules = parseValidationRules();
+            ErrorAccumulationClause.ReturnErrorsType returnType = parseErrorReturnPolicy();
+            return ErrorAccumulationClause.collectAll(span, rules, returnType);
+        }
+
+        if (match(TokenType.UP)) {
+            consume(TokenType.TO, "Expected 'to' after 'collect up'");
+            int maxErrors = parseIntegerLiteralValue();
+            consume(TokenType.ERRORS, "Expected 'errors' after max error count");
+            consume(TokenType.COLON, "Expected ':' after 'collect up to N errors'");
+            List<ErrorAccumulationClause.ValidationRule> rules = parseValidationRules();
+            ErrorAccumulationClause.ReturnErrorsType returnType = parseErrorReturnPolicy();
+            return ErrorAccumulationClause.collectUpTo(span, maxErrors, rules, returnType);
+        }
+
+        if (match(TokenType.ERRORS)) {
+            consume(TokenType.BY, "Expected 'by' in 'collect errors by group'");
+            consume(TokenType.GROUP, "Expected 'group' in 'collect errors by group'");
+            consume(TokenType.COLON, "Expected ':' after 'collect errors by group'");
+            List<ErrorAccumulationClause.GroupedValidation> groups = parseGroupedValidationRules();
+            ErrorAccumulationClause.ReturnErrorsType returnType = parseErrorReturnPolicy();
+            return ErrorAccumulationClause.collectByGroup(span, groups, returnType);
+        }
+
+        error("Unsupported collect clause syntax");
+        return null;
+    }
+
+    private List<ErrorAccumulationClause.ValidationRule> parseValidationRules() {
+        List<ErrorAccumulationClause.ValidationRule> rules = new ArrayList<>();
+
+        while (check(TokenType.DASH)) {
+            SourceSpan ruleSpan = currentSpan();
+            advance(); // consume '-'
+
+            StringBuilder conditionText = new StringBuilder();
+            while (!isAtEnd() && !check(TokenType.COMMA) && !check(TokenType.DASH)
+                    && !check(TokenType.RETURN) && !check(TokenType.FAIL)
+                    && !check(TokenType.RIGHT_BRACE) && !check(TokenType.WHEN)
+                    && !check(TokenType.THEN) && !check(TokenType.GIVEN) && !check(TokenType.EMIT)) {
+                if (!conditionText.isEmpty()) {
+                    conditionText.append(' ');
+                }
+                conditionText.append(advance().getLexeme());
+            }
+
+            NaturalLanguageCondition condition = NaturalLanguageCondition.simple(
+                    ruleSpan,
+                    conditionText.toString().trim(),
+                    null
+            );
+
+            String message = null;
+            ErrorAccumulationClause.ValidationRule.MessageType messageType =
+                    ErrorAccumulationClause.ValidationRule.MessageType.ERROR;
+
+            if (match(TokenType.COMMA)) {
+                if (match(TokenType.WARNING)) {
+                    messageType = ErrorAccumulationClause.ValidationRule.MessageType.WARNING;
+                } else if (match(TokenType.OTHERWISE)) {
+                    messageType = ErrorAccumulationClause.ValidationRule.MessageType.OTHERWISE;
+                } else if (check(TokenType.IDENTIFIER) && "error".equalsIgnoreCase(peek().getLexeme())) {
+                    advance();
+                    messageType = ErrorAccumulationClause.ValidationRule.MessageType.ERROR;
+                }
+
+                if (check(TokenType.STRING_LITERAL)) {
+                    message = parseStringLiteralValue();
+                }
+            }
+
+            rules.add(new ErrorAccumulationClause.ValidationRule(ruleSpan, condition, message, messageType));
+        }
+
+        return rules;
+    }
+
+    private List<ErrorAccumulationClause.GroupedValidation> parseGroupedValidationRules() {
+        List<ErrorAccumulationClause.GroupedValidation> groups = new ArrayList<>();
+
+        while (check(TokenType.IDENTIFIER)) {
+            SourceSpan groupSpan = currentSpan();
+            String groupName = advance().getLexeme();
+            consume(TokenType.ERRORS, "Expected 'errors' after group name");
+            consume(TokenType.COLON, "Expected ':' after '<group> errors'");
+
+            List<ErrorAccumulationClause.ValidationRule> rules = parseValidationRules();
+            groups.add(new ErrorAccumulationClause.GroupedValidation(groupSpan, groupName, rules));
+        }
+
+        return groups;
+    }
+
+    private ErrorAccumulationClause.ReturnErrorsType parseErrorReturnPolicy() {
+        if (match(TokenType.RETURN)) {
+            if (match(TokenType.ALL)) {
+                consume(TokenType.ERRORS, "Expected 'errors' after 'return all'");
+                return ErrorAccumulationClause.ReturnErrorsType.RETURN_ALL_ERRORS;
+            }
+            if (match(TokenType.ERRORS)) {
+                consume(TokenType.IF, "Expected 'if' in 'return errors if any'");
+                consume(TokenType.ANY, "Expected 'any' in 'return errors if any'");
+                return ErrorAccumulationClause.ReturnErrorsType.RETURN_ERRORS_IF_ANY;
+            }
+        }
+
+        if (match(TokenType.FAIL)) {
+            consume(TokenType.IF, "Expected 'if' in fail policy");
+            if (match(TokenType.ANY)) {
+                consume(TokenType.ERRORS, "Expected 'errors' after 'fail if any'");
+                return ErrorAccumulationClause.ReturnErrorsType.FAIL_IF_ANY_ERRORS;
+            }
+            if (match(TokenType.CRITICAL)) {
+                consume(TokenType.ERRORS, "Expected 'errors' after 'fail if critical'");
+                return ErrorAccumulationClause.ReturnErrorsType.FAIL_IF_CRITICAL;
+            }
+        }
+
+        return ErrorAccumulationClause.ReturnErrorsType.FAIL_IF_ANY_ERRORS;
+    }
+
     private NaturalLanguagePhrase parseNaturalLanguagePhrase() {
         SourceSpan span = currentSpan();
         StringBuilder phraseText = new StringBuilder();
-        
+
         // Consume tokens until we hit 'with' or ':'
         while (!check(TokenType.WITH) && !check(TokenType.COLON) && !isAtEnd()) {
             if (!phraseText.isEmpty()) {
@@ -1574,56 +2077,56 @@ public class DdslParser {
             phraseText.append(peek().getLexeme());
             advance();
         }
-        
+
         return NaturalLanguagePhrase.from(span, phraseText.toString());
     }
-    
+
     private List<ParameterDecl> parameterList() {
         List<ParameterDecl> parameters = new ArrayList<>();
-        
+
         do {
             if (check(TokenType.AND) || check(TokenType.COMMA)) {
                 advance();
             }
-            
+
             SourceSpan paramSpan = currentSpan();
             Token nameToken = consume(TokenType.IDENTIFIER, "Expected parameter name");
             if (nameToken == null) break;
-            
+
             TypeRef type = null;
             if (check(TokenType.AS) || (check(TokenType.COLON) && checkNextIsTypeStart())) {
                 advance();
                 type = typeReference();
             }
-            
+
             if (type == null) {
                 type = new TypeRef(paramSpan, "Object", null, false, false, null);
             }
-            
+
             parameters.add(new ParameterDecl(paramSpan, nameToken.getLexeme(), type, false, null));
-            
+
         } while (check(TokenType.AND) || check(TokenType.COMMA));
-        
+
         return parameters;
     }
-    
+
     // ========== Clause Parsing ==========
-    
+
     private RequireClause requireClause() {
         SourceSpan span = currentSpan();
         advance(); // consume 'require'
-        
+
         consume(TokenType.THAT, "Expected 'that' after 'require'");
         consume(TokenType.COLON, "Expected ':' after 'require that'");
-        
+
         List<RequireClause.RequireCondition> conditions = new ArrayList<>();
-        
+
         while (check(TokenType.DASH)) {
             advance(); // consume '-'
-            
+
             NaturalLanguageCondition condition = parseNaturalLanguageCondition();
             String errorMessage = null;
-            
+
             if (check(TokenType.COMMA)) {
                 advance();
                 consume(TokenType.OTHERWISE, "Expected 'otherwise' after ','");
@@ -1632,24 +2135,24 @@ public class DdslParser {
                     errorMessage = msgToken.getStringValue();
                 }
             }
-            
+
             conditions.add(new RequireClause.RequireCondition(currentSpan(), condition, errorMessage));
         }
-        
+
         return new RequireClause(span, conditions);
     }
-    
+
     private NaturalLanguageCondition parseNaturalLanguageCondition() {
         SourceSpan span = currentSpan();
-        
+
         // Collect all tokens until end of condition
         List<Token> condTokens = new ArrayList<>();
         StringBuilder conditionText = new StringBuilder();
-        
-        while (!check(TokenType.COMMA) && !check(TokenType.DASH) && 
-               !check(TokenType.GIVEN) && !check(TokenType.THEN) && 
-               !check(TokenType.REQUIRE) && !check(TokenType.RIGHT_BRACE) && 
-               !check(TokenType.COLON) && !isAtEnd()) {
+
+        while (!check(TokenType.COMMA) && !check(TokenType.DASH) &&
+                !check(TokenType.GIVEN) && !check(TokenType.THEN) &&
+                !check(TokenType.REQUIRE) && !check(TokenType.RIGHT_BRACE) &&
+                !check(TokenType.COLON) && !isAtEnd()) {
             condTokens.add(peek());
             if (!conditionText.isEmpty()) {
                 conditionText.append(" ");
@@ -1657,13 +2160,13 @@ public class DdslParser {
             conditionText.append(peek().getLexeme());
             advance();
         }
-        
+
         String rawText = conditionText.toString();
-        
+
         // Try to classify the condition based on token patterns
         return classifyCondition(span, rawText, condTokens);
     }
-    
+
     /**
      * Classify a natural language condition from its tokens.
      * Patterns recognized:
@@ -1686,37 +2189,37 @@ public class DdslParser {
         if (tokens.isEmpty()) {
             return NaturalLanguageCondition.simple(span, rawText, null);
         }
-        
+
         // Find the 'is' token position
         int isPos = findToken(tokens, TokenType.IS);
-        
+
         if (isPos >= 1) {
             String subject = buildText(tokens, 0, isPos);
             int afterIs = isPos + 1;
-            
+
             // "X is not ..."
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.NOT) {
                 int afterNot = afterIs + 1;
-                
+
                 // "X is not empty"
                 if (afterNot < tokens.size() && tokens.get(afterNot).getType() == TokenType.EMPTY) {
                     return NaturalLanguageCondition.collectionEmpty(span, rawText, subject, false);
                 }
-                
+
                 // "X is not <value>" → NOT_EQUAL comparison
                 if (afterNot < tokens.size()) {
                     Expr leftExpr = new VariableExpr(span, subject);
                     Expr rightExpr = buildValueExpr(span, tokens, afterNot);
                     return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                        NaturalLanguageCondition.ComparisonOperator.NOT_EQUAL, rightExpr);
+                            NaturalLanguageCondition.ComparisonOperator.NOT_EQUAL, rightExpr);
                 }
             }
-            
+
             // "X is empty"
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.EMPTY) {
                 return NaturalLanguageCondition.collectionEmpty(span, rawText, subject, true);
             }
-            
+
             // "X is greater than Y"
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.GREATER) {
                 int thanPos = afterIs + 1;
@@ -1724,10 +2227,10 @@ public class DdslParser {
                     Expr leftExpr = new VariableExpr(span, subject);
                     Expr rightExpr = buildValueExpr(span, tokens, thanPos + 1);
                     return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                        NaturalLanguageCondition.ComparisonOperator.GREATER_THAN, rightExpr);
+                            NaturalLanguageCondition.ComparisonOperator.GREATER_THAN, rightExpr);
                 }
             }
-            
+
             // "X is less than Y"
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.LESS) {
                 int thanPos = afterIs + 1;
@@ -1735,10 +2238,10 @@ public class DdslParser {
                     Expr leftExpr = new VariableExpr(span, subject);
                     Expr rightExpr = buildValueExpr(span, tokens, thanPos + 1);
                     return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                        NaturalLanguageCondition.ComparisonOperator.LESS_THAN, rightExpr);
+                            NaturalLanguageCondition.ComparisonOperator.LESS_THAN, rightExpr);
                 }
             }
-            
+
             // "X is at least Y" or "X is at most Y"
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.AT) {
                 int nextPos = afterIs + 1;
@@ -1748,17 +2251,17 @@ public class DdslParser {
                         Expr leftExpr = new VariableExpr(span, subject);
                         Expr rightExpr = buildValueExpr(span, tokens, nextPos + 1);
                         return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                            NaturalLanguageCondition.ComparisonOperator.AT_LEAST, rightExpr);
+                                NaturalLanguageCondition.ComparisonOperator.AT_LEAST, rightExpr);
                     } else if (nextLex.equals("most")) {
                         Expr leftExpr = new VariableExpr(span, subject);
                         Expr rightExpr = buildValueExpr(span, tokens, nextPos + 1);
                         return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                            NaturalLanguageCondition.ComparisonOperator.AT_MOST, rightExpr);
+                                NaturalLanguageCondition.ComparisonOperator.AT_MOST, rightExpr);
                     }
                 }
             }
-            
-            // "X is one of [...]" → STATE_ONE_OF  
+
+            // "X is one of [...]" → STATE_ONE_OF
             if (afterIs < tokens.size() && tokens.get(afterIs).getType() == TokenType.ONE) {
                 int ofPos = afterIs + 1;
                 if (ofPos < tokens.size() && tokens.get(ofPos).getType() == TokenType.OF) {
@@ -1766,14 +2269,14 @@ public class DdslParser {
                     for (int i = ofPos + 1; i < tokens.size(); i++) {
                         Token t = tokens.get(i);
                         if (t.getType() == TokenType.LEFT_BRACKET || t.getType() == TokenType.RIGHT_BRACKET
-                            || t.getType() == TokenType.COMMA) continue;
+                                || t.getType() == TokenType.COMMA) continue;
                         values.add(t.getLexeme());
                     }
                     Expr leftExpr = new VariableExpr(span, subject);
                     return NaturalLanguageCondition.stateOneOf(span, rawText, leftExpr, values);
                 }
             }
-            
+
             // "X is <value>" → STATE_IS (for string literals) or COMPARISON (EQUAL)
             if (afterIs < tokens.size()) {
                 Expr leftExpr = new VariableExpr(span, subject);
@@ -1782,27 +2285,27 @@ public class DdslParser {
                     return NaturalLanguageCondition.state(span, rawText, leftExpr, rightExpr);
                 }
                 return NaturalLanguageCondition.comparison(span, rawText, leftExpr,
-                    NaturalLanguageCondition.ComparisonOperator.EQUAL, rightExpr);
+                        NaturalLanguageCondition.ComparisonOperator.EQUAL, rightExpr);
             }
         }
-        
+
         // "X exists in system"
         int existsPos = findToken(tokens, TokenType.EXISTS);
         if (existsPos >= 1) {
             String subject = buildText(tokens, 0, existsPos);
             return NaturalLanguageCondition.existence(span, rawText, subject, true);
         }
-        
+
         // "X does not exist"
         int doesPos = findToken(tokens, TokenType.DOES);
         if (doesPos >= 1 && doesPos + 2 < tokens.size()
-            && tokens.get(doesPos + 1).getType() == TokenType.NOT
-            && (tokens.get(doesPos + 2).getType() == TokenType.EXISTS
+                && tokens.get(doesPos + 1).getType() == TokenType.NOT
+                && (tokens.get(doesPos + 2).getType() == TokenType.EXISTS
                 || tokens.get(doesPos + 2).getLexeme().equalsIgnoreCase("exist"))) {
             String subject = buildText(tokens, 0, doesPos);
             return NaturalLanguageCondition.existence(span, rawText, subject, false);
         }
-        
+
         // "all X have Y" → UNIVERSAL
         if (tokens.get(0).getType() == TokenType.ALL && tokens.size() >= 4) {
             int havePos = findToken(tokens, TokenType.HAVE);
@@ -1812,7 +2315,7 @@ public class DdslParser {
                 return NaturalLanguageCondition.universal(span, rawText, collection, property, null);
             }
         }
-        
+
         // "any X has Y" → EXISTENTIAL
         if (tokens.get(0).getType() == TokenType.ANY && tokens.size() >= 4) {
             int hasPos = findToken(tokens, TokenType.HAS);
@@ -1822,7 +2325,7 @@ public class DdslParser {
                 return NaturalLanguageCondition.existential(span, rawText, collection, property, null);
             }
         }
-        
+
         // "no X has Y" → NEGATED_EXISTENTIAL
         if (tokens.get(0).getType() == TokenType.NO && tokens.size() >= 4) {
             int hasPos = findToken(tokens, TokenType.HAS);
@@ -1832,27 +2335,27 @@ public class DdslParser {
                 return NaturalLanguageCondition.negatedExistential(span, rawText, collection, property, null);
             }
         }
-        
+
         // "X has been Y" → HAS_BEEN
         int hasPos = findToken(tokens, TokenType.HAS);
-        if (hasPos >= 1 && hasPos + 1 < tokens.size() 
-            && tokens.get(hasPos + 1).getType() == TokenType.BEEN) {
+        if (hasPos >= 1 && hasPos + 1 < tokens.size()
+                && tokens.get(hasPos + 1).getType() == TokenType.BEEN) {
             String subject = buildText(tokens, 0, hasPos);
             String participle = buildText(tokens, hasPos + 2, tokens.size());
             return NaturalLanguageCondition.hasBeen(span, rawText, subject, participle);
         }
-        
+
         // Fallback: SIMPLE
         return NaturalLanguageCondition.simple(span, rawText, null);
     }
-    
+
     private int findToken(List<Token> tokens, TokenType type) {
         for (int i = 0; i < tokens.size(); i++) {
             if (tokens.get(i).getType() == type) return i;
         }
         return -1;
     }
-    
+
     private String buildText(List<Token> tokens, int from, int to) {
         StringBuilder sb = new StringBuilder();
         for (int i = from; i < to && i < tokens.size(); i++) {
@@ -1861,7 +2364,7 @@ public class DdslParser {
         }
         return sb.toString();
     }
-    
+
     private Expr buildValueExpr(SourceSpan span, List<Token> tokens, int from) {
         if (from >= tokens.size()) {
             return new VariableExpr(span, "null");
@@ -1881,25 +2384,25 @@ public class DdslParser {
             }
         };
     }
-    
+
     private GivenClause givenClause() {
         SourceSpan span = currentSpan();
         advance(); // consume 'given'
-        
+
         consume(TokenType.COLON, "Expected ':' after 'given'");
-        
+
         List<GivenClause.GivenStatement> statements = new ArrayList<>();
-        
+
         while (check(TokenType.DASH)) {
             advance(); // consume '-'
-            
+
             SourceSpan stmtSpan = currentSpan();
             Token identToken = consume(TokenType.IDENTIFIER, "Expected identifier");
             if (identToken == null) continue;
-            
+
             GivenClause.GivenStatement.GivenStatementType type = GivenClause.GivenStatement.GivenStatementType.AS;
             Expr expr = null;
-            
+
             if (check(TokenType.CREATED)) {
                 advance();
                 consume(TokenType.FROM, "Expected 'from' after 'created'");
@@ -1927,42 +2430,42 @@ public class DdslParser {
                 // Default: identifier as expression
                 expr = expression();
             }
-            
+
             if (expr != null) {
                 statements.add(new GivenClause.GivenStatement(stmtSpan, identToken.getLexeme(), type, expr));
             }
         }
-        
+
         return new GivenClause(span, statements);
     }
-    
+
     private ThenClause thenClause() {
         SourceSpan span = currentSpan();
         advance(); // consume 'then'
-        
+
         consume(TokenType.COLON, "Expected ':' after 'then'");
-        
+
         List<ThenClause.ThenStatement> statements = new ArrayList<>();
-        
+
         while (check(TokenType.DASH)) {
             ThenClause.ThenStatement statement = parseThenStatement();
             if (statement != null) {
                 statements.add(statement);
             }
         }
-        
+
         return new ThenClause(span, statements);
     }
-    
+
     private ThenClause.ThenStatement parseThenStatement() {
         SourceSpan span = currentSpan();
-        
+
         advance(); // consume '-'
-        
+
         ThenClause.ThenStatement.ThenStatementType type = ThenClause.ThenStatement.ThenStatementType.SET;
         String target = null;
         Expr value = null;
-        
+
         if (check(TokenType.SET)) {
             advance();
             type = ThenClause.ThenStatement.ThenStatementType.SET;
@@ -2029,17 +2532,17 @@ public class DdslParser {
             value = expression();
             type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
         }
-        
+
         return ThenClause.ThenStatement.simple(span, type, target, value);
     }
-    
+
     private ThenClause.ThenStatement parseConditionalStatement() {
         SourceSpan span = currentSpan();
         advance(); // consume 'if'
-        
+
         NaturalLanguageCondition condition = parseNaturalLanguageCondition();
         consume(TokenType.COLON, "Expected ':' after condition");
-        
+
         List<ThenClause.ThenStatement> thenStatements = new ArrayList<>();
         while (check(TokenType.DASH)) {
             ThenClause.ThenStatement stmt = parseThenStatement();
@@ -2047,7 +2550,7 @@ public class DdslParser {
                 thenStatements.add(stmt);
             }
         }
-        
+
         List<ThenClause.ThenStatement> elseStatements = new ArrayList<>();
         if (check(TokenType.OTHERWISE)) {
             advance();
@@ -2059,26 +2562,26 @@ public class DdslParser {
                 }
             }
         }
-        
+
         return ThenClause.ThenStatement.ifStatement(span, condition, thenStatements, List.of(), elseStatements);
     }
-    
+
     private ThenClause.ThenStatement parseLoopStatement() {
         SourceSpan span = currentSpan();
         advance(); // consume 'for'
-        
+
         consume(TokenType.EACH, "Expected 'each' after 'for'");
-        
+
         Token itemToken = consume(TokenType.IDENTIFIER, "Expected loop variable name");
         String itemName = itemToken != null ? itemToken.getLexeme() : "item";
-        
+
         consume(TokenType.IN, "Expected 'in' after loop variable");
-        
+
         Token collectionToken = consume(TokenType.IDENTIFIER, "Expected collection name");
         String collectionName = collectionToken != null ? collectionToken.getLexeme() : "collection";
-        
+
         consume(TokenType.COLON, "Expected ':' after collection");
-        
+
         List<ThenClause.ThenStatement> bodyStatements = new ArrayList<>();
         while (check(TokenType.DASH)) {
             ThenClause.ThenStatement stmt = parseThenStatement();
@@ -2086,32 +2589,32 @@ public class DdslParser {
                 bodyStatements.add(stmt);
             }
         }
-        
+
         return ThenClause.ThenStatement.forEach(span, itemName, collectionName, bodyStatements);
     }
-    
+
     private EmitClause emitClause() {
         SourceSpan span = currentSpan();
         advance(); // consume 'emit'
-        
+
         Token eventNameToken = consume(TokenType.IDENTIFIER, "Expected event name");
         String eventName = eventNameToken != null ? eventNameToken.getLexeme() : "";
-        
+
         // Consume 'event' if present
         if (check(TokenType.EVENT)) {
             advance();
         }
-        
+
         List<String> eventArgs = new ArrayList<>();
         List<EmitClause.EventPropertyMapping> propertyMappings = new ArrayList<>();
-        
+
         // Parse optional property mappings
         if (check(TokenType.WITH)) {
             advance();
-            
+
             if (check(TokenType.COLON)) {
                 consume(TokenType.COLON, "Expected ':' after 'with'");
-                
+
                 while (check(TokenType.DASH)) {
                     advance();
                     Token propToken = consume(TokenType.IDENTIFIER, "Expected property name");
@@ -2122,7 +2625,7 @@ public class DdslParser {
                         }
                         Expr value = expression();
                         propertyMappings.add(new EmitClause.EventPropertyMapping(
-                            currentSpan(), propToken.getLexeme(), value));
+                                currentSpan(), propToken.getLexeme(), value));
                     }
                 }
             } else {
@@ -2138,14 +2641,14 @@ public class DdslParser {
                 } while (check(TokenType.AND) || check(TokenType.COMMA));
             }
         }
-        
+
         return new EmitClause(span, eventName, eventArgs, propertyMappings);
     }
-    
+
     private ReturnClause returnClause() {
         SourceSpan span = currentSpan();
         advance(); // consume 'return'
-        
+
         // Check for success/failure
         if (check(TokenType.SUCCESS)) {
             advance();
@@ -2168,17 +2671,17 @@ public class DdslParser {
             }
             return ReturnClause.failure(span, message);
         }
-        
+
         // Check for object construction: return TypeName with:
         Token typeToken = consume(TokenType.IDENTIFIER, "Expected return type");
         String entityType = typeToken != null ? typeToken.getLexeme() : "";
-        
+
         if (check(TokenType.WITH)) {
             consume(TokenType.WITH, "Expected 'with' after return type");
             consume(TokenType.COLON, "Expected ':' after 'with'");
-            
+
             List<ReturnClause.PropertyInitialization> properties = new ArrayList<>();
-            
+
             while (check(TokenType.DASH)) {
                 advance();
                 Token propToken = consume(TokenType.IDENTIFIER, "Expected property name");
@@ -2189,92 +2692,156 @@ public class DdslParser {
                     } else if (check(TokenType.AS)) {
                         advance();
                     }
-                    
+
                     Expr value = expression();
                     properties.add(new ReturnClause.PropertyInitialization(
-                        currentSpan(), propToken.getLexeme(), value));
+                            currentSpan(), propToken.getLexeme(), value));
                 }
             }
-            
+
             return ReturnClause.object(span, entityType, properties);
         }
-        
+
         // Simple expression return
         return ReturnClause.expression(span, new VariableExpr(span, entityType));
     }
-    
+
     // ========== Expression Parsing ==========
-    
+
     private Expr expression() {
+        if (check(TokenType.MATCH)) {
+            return parseMatchExpression(currentSpan());
+        }
         return orExpression();
     }
-    
+
     private Expr orExpression() {
         Expr expr = andExpression();
-        
+
         while (check(TokenType.OR)) {
             advance();
             Expr right = andExpression();
             expr = new BinaryExpr(currentSpan(), expr, BinaryExpr.BinaryOperator.OR, right);
         }
-        
+
         return expr;
     }
-    
+
     private Expr andExpression() {
         Expr expr = comparisonExpression();
-        
+
         while (check(TokenType.AND)) {
             advance();
             Expr right = comparisonExpression();
             expr = new BinaryExpr(currentSpan(), expr, BinaryExpr.BinaryOperator.AND, right);
         }
-        
+
         return expr;
     }
-    
+
     private Expr comparisonExpression() {
         Expr expr = additiveExpression();
-        
-        while (check(TokenType.IS) || check(TokenType.EQUALS) || 
-               check(TokenType.GT) || check(TokenType.LT) ||
-               check(TokenType.GTE) || check(TokenType.LTE) ||
-               check(TokenType.NEQ) || check(TokenType.EQ) ||
-               check(TokenType.EXCEEDS)) {
-            
+
+        while (true) {
+            Expr extended = parseExtendedPostfixExpression(expr);
+            if (extended != null) {
+                expr = extended;
+                continue;
+            }
+
+            if (!(check(TokenType.IS) || check(TokenType.EQUALS) ||
+                    check(TokenType.GT) || check(TokenType.LT) ||
+                    check(TokenType.GTE) || check(TokenType.LTE) ||
+                    check(TokenType.NEQ) || check(TokenType.EQ) ||
+                    check(TokenType.EXCEEDS))) {
+                break;
+            }
+
             SourceSpan opSpan = currentSpan();
-            
+
             // Special case: "is [not] empty" — unary predicate, no right-hand expression
             if (check(TokenType.IS)) {
                 int saved = current;
                 advance(); // consume IS
-                
+
                 if (check(TokenType.NOT) && checkNext(TokenType.EMPTY)) {
                     advance(); // consume NOT
                     advance(); // consume EMPTY
                     expr = new UnaryExpr(opSpan, UnaryExpr.UnaryOperator.NOT,
-                        new MethodCallExpr(opSpan, expr, "isEmpty", List.of()));
+                            new MethodCallExpr(opSpan, expr, "isEmpty", List.of()));
                     continue;
                 }
-                
+
                 if (check(TokenType.EMPTY)) {
                     advance(); // consume EMPTY
                     expr = new MethodCallExpr(opSpan, expr, "isEmpty", List.of());
                     continue;
                 }
-                
+
                 // Not a special case, backtrack to let parseComparisonOperator handle it
                 current = saved;
             }
-            
+
             BinaryExpr.BinaryOperator op = parseComparisonOperator();
             Expr right = additiveExpression();
             expr = new BinaryExpr(currentSpan(), expr, op, right);
         }
-        
+
         return expr;
     }
-    
+
+    /**
+     * Parse postfix/natural-language extensions that start after a subject expression.
+     *
+     * Examples:
+     *   createdAt is before now
+     *   email contains "@"
+     *   customer satisfies ActiveCustomer
+     *   orders where status is Confirmed
+     *   orders grouped by status
+     */
+    private Expr parseExtendedPostfixExpression(Expr subject) {
+        SourceSpan span = currentSpan();
+        int saved = current;
+
+        TemporalExpr temporal = parseTemporalExpression(span, subject);
+        if (temporal != null) {
+            return temporal;
+        }
+        current = saved;
+
+        StringCondition stringCondition = parseStringCondition(span, subject);
+        if (stringCondition != null) {
+            return stringCondition;
+        }
+        current = saved;
+
+        StringOperation stringOperation = parseStringOperation(span, subject);
+        if (stringOperation != null) {
+            return stringOperation;
+        }
+        current = saved;
+
+        SpecificationCondition specificationCondition = parseSpecificationCondition(span, subject);
+        if (specificationCondition != null) {
+            return specificationCondition;
+        }
+        current = saved;
+
+        if (check(TokenType.WHERE)) {
+            return parseCollectionFilter(span, subject);
+        }
+        current = saved;
+
+        CollectionGroupBy groupBy = parseCollectionGroupBy(span, subject);
+        if (groupBy != null) {
+            return groupBy;
+        }
+        current = saved;
+
+        return null;
+    }
+
     private BinaryExpr.BinaryOperator parseComparisonOperator() {
         if (check(TokenType.IS)) {
             advance();
@@ -2342,17 +2909,17 @@ public class DdslParser {
             advance();
             return BinaryExpr.BinaryOperator.GREATER_THAN;
         }
-        
+
         return BinaryExpr.BinaryOperator.EQUALS;
     }
-    
+
     private Expr additiveExpression() {
         Expr expr = multiplicativeExpression();
-        
+
         while (check(TokenType.PLUS) || check(TokenType.PLUS_SYMBOL) ||
-               check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) ||
-               (check(TokenType.DASH) && !isDashListBullet())) {
-            
+                check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) ||
+                (check(TokenType.DASH) && !isDashListBullet())) {
+
             BinaryExpr.BinaryOperator op;
             if (check(TokenType.PLUS) || check(TokenType.PLUS_SYMBOL)) {
                 advance();
@@ -2361,14 +2928,14 @@ public class DdslParser {
                 advance();
                 op = BinaryExpr.BinaryOperator.SUBTRACT;
             }
-            
+
             Expr right = multiplicativeExpression();
             expr = new BinaryExpr(currentSpan(), expr, op, right);
         }
-        
+
         return expr;
     }
-    
+
     /**
      * Determine if a DASH token is a list bullet rather than a minus sign.
      * A dash is a list bullet if it's followed by a then-statement keyword,
@@ -2380,20 +2947,20 @@ public class DdslParser {
         if (current + 1 >= tokens.size()) return false;
         TokenType next = tokens.get(current + 1).getType();
         return next == TokenType.SET || next == TokenType.CHANGE ||
-               next == TokenType.CALCULATE || next == TokenType.CREATE ||
-               next == TokenType.ADD || next == TokenType.REMOVE ||
-               next == TokenType.SAVE || next == TokenType.RECORD ||
-               next == TokenType.IF || next == TokenType.FOR ||
-               next == TokenType.ENABLE || next == TokenType.DISABLE ||
-               next == TokenType.IDENTIFIER;
+                next == TokenType.CALCULATE || next == TokenType.CREATE ||
+                next == TokenType.ADD || next == TokenType.REMOVE ||
+                next == TokenType.SAVE || next == TokenType.RECORD ||
+                next == TokenType.IF || next == TokenType.FOR ||
+                next == TokenType.ENABLE || next == TokenType.DISABLE ||
+                next == TokenType.IDENTIFIER;
     }
-    
+
     private Expr multiplicativeExpression() {
         Expr expr = unaryExpression();
-        
+
         while (check(TokenType.TIMES) || check(TokenType.STAR) ||
-               check(TokenType.DIVIDED) || check(TokenType.SLASH)) {
-            
+                check(TokenType.DIVIDED) || check(TokenType.SLASH)) {
+
             BinaryExpr.BinaryOperator op;
             if (check(TokenType.TIMES) || check(TokenType.STAR)) {
                 advance();
@@ -2403,48 +2970,48 @@ public class DdslParser {
                 if (check(TokenType.BY)) advance();
                 op = BinaryExpr.BinaryOperator.DIVIDE;
             }
-            
+
             Expr right = unaryExpression();
             expr = new BinaryExpr(currentSpan(), expr, op, right);
         }
-        
+
         return expr;
     }
-    
+
     private Expr unaryExpression() {
         if (check(TokenType.NOT)) {
             advance();
             Expr expr = unaryExpression();
             return new UnaryExpr(currentSpan(), UnaryExpr.UnaryOperator.NOT, expr);
         }
-        
-        if (check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) || 
-            (check(TokenType.DASH) && !isDashListBullet())) {
+
+        if (check(TokenType.MINUS) || check(TokenType.MINUS_SYMBOL) ||
+                (check(TokenType.DASH) && !isDashListBullet())) {
             advance();
             Expr expr = unaryExpression();
             return new UnaryExpr(currentSpan(), UnaryExpr.UnaryOperator.NEGATE, expr);
         }
-        
+
         return callExpression();
     }
-    
+
     private Expr callExpression() {
         Expr expr = primaryExpression();
-        
+
         while (true) {
             if (check(TokenType.LEFT_PAREN)) {
                 advance();
                 List<Expr> arguments = new ArrayList<>();
-                
+
                 if (!check(TokenType.RIGHT_PAREN)) {
                     do {
                         if (check(TokenType.COMMA)) advance();
                         arguments.add(expression());
                     } while (check(TokenType.COMMA));
                 }
-                
+
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after arguments");
-                
+
                 if (expr instanceof FieldAccessExpr fa) {
                     expr = new MethodCallExpr(currentSpan(), fa.object(), fa.fieldName(), arguments);
                 } else if (expr instanceof VariableExpr var) {
@@ -2457,7 +3024,7 @@ public class DdslParser {
                 expr = new FieldAccessExpr(currentSpan(), expr, name);
             } else if (check(TokenType.LEFT_BRACKET)) {
                 advance();
-                Expr index = expression();
+                expression();
                 consume(TokenType.RIGHT_BRACKET, "Expected ']' after index");
                 // Use IndexExpr or just FieldAccess for now
                 expr = new FieldAccessExpr(currentSpan(), expr, "[index]");
@@ -2465,49 +3032,73 @@ public class DdslParser {
                 break;
             }
         }
-        
+
         return expr;
     }
-    
+
     private Expr primaryExpression() {
         SourceSpan span = currentSpan();
-        
+
+        if (check(TokenType.MATCH)) {
+            return parseMatchExpression(span);
+        }
+
+        if (check(TokenType.SUM) || check(TokenType.COUNT) ||
+                check(TokenType.MAXIMUM) || check(TokenType.MINIMUM) ||
+                check(TokenType.AVERAGE)) {
+            int saved = current;
+            CollectionAggregation agg = parseCollectionAggregation(span);
+            if (agg != null) {
+                return agg;
+            }
+            current = saved;
+        }
+
+        if (check(TokenType.ALL)) {
+            int saved = current;
+            CollectionFlatten flatten = parseCollectionFlatten(span);
+            if (flatten != null) {
+                return flatten;
+            }
+            current = saved;
+        }
+
         // Literals
         if (check(TokenType.INTEGER_LITERAL)) {
             Token token = advance();
             return new LiteralExpr(span, token.getLiteral(), LiteralExpr.LiteralType.INTEGER);
         }
-        
+
         if (check(TokenType.DECIMAL_LITERAL)) {
             Token token = advance();
             return new LiteralExpr(span, token.getLiteral(), LiteralExpr.LiteralType.DECIMAL);
         }
-        
+
         if (check(TokenType.STRING_LITERAL)) {
             Token token = advance();
             return new LiteralExpr(span, token.getStringValue(), LiteralExpr.LiteralType.STRING);
         }
-        
+
         if (check(TokenType.TRUE)) {
             advance();
             return new LiteralExpr(span, true, LiteralExpr.LiteralType.BOOLEAN);
         }
-        
+
         if (check(TokenType.FALSE)) {
             advance();
             return new LiteralExpr(span, false, LiteralExpr.LiteralType.BOOLEAN);
         }
-        
+
         if (check(TokenType.NULL)) {
             advance();
             return new NullExpr(span);
         }
-        
+
         if (check(TokenType.NOW)) {
             advance();
             return new MethodCallExpr(span, null, "now", List.of());
         }
-        
+
         if (check(TokenType.NEW)) {
             advance();
             if (check(TokenType.GENERATED)) {
@@ -2515,7 +3106,7 @@ public class DdslParser {
             }
             Token typeToken = consume(TokenType.IDENTIFIER, "Expected type after 'new'");
             String typeName = typeToken != null ? typeToken.getLexeme() : "";
-            
+
             List<Expr> args = new ArrayList<>();
             if (check(TokenType.LEFT_PAREN)) {
                 advance();
@@ -2527,11 +3118,11 @@ public class DdslParser {
                 }
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after constructor arguments");
             }
-            
+
             TypeRef type = new TypeRef(span, typeName, null, false, false, null);
             return new NewInstanceExpr(span, type, args);
         }
-        
+
         // Collection aggregation: sum of, count of
         if (check(TokenType.SUM)) {
             advance();
@@ -2539,14 +3130,14 @@ public class DdslParser {
             Expr collection = expression();
             return new MethodCallExpr(span, collection, "sum", List.of());
         }
-        
+
         if (check(TokenType.COUNT)) {
             advance();
             consume(TokenType.OF, "Expected 'of' after 'count'");
             Expr collection = expression();
             return new MethodCallExpr(span, collection, "count", List.of());
         }
-        
+
         // Collection quantifiers: all items have, any item has
         if (check(TokenType.ALL)) {
             advance();
@@ -2554,10 +3145,10 @@ public class DdslParser {
             consume(TokenType.HAVE, "Expected 'have' after collection");
             Expr condition = expression();
             return new MethodCallExpr(span,
-                new VariableExpr(span, collToken != null ? collToken.getLexeme() : "items"),
-                "allMatch", List.of(condition));
+                    new VariableExpr(span, collToken != null ? collToken.getLexeme() : "items"),
+                    "allMatch", List.of(condition));
         }
-        
+
         if (check(TokenType.ANY)) {
             advance();
             Token collToken = consume(TokenType.IDENTIFIER, "Expected collection name");
@@ -2565,10 +3156,10 @@ public class DdslParser {
             else consume(TokenType.HAVE, "Expected 'has/have' after collection");
             Expr condition = expression();
             return new MethodCallExpr(span,
-                new VariableExpr(span, collToken != null ? collToken.getLexeme() : "items"),
-                "anyMatch", List.of(condition));
+                    new VariableExpr(span, collToken != null ? collToken.getLexeme() : "items"),
+                    "anyMatch", List.of(condition));
         }
-        
+
         // Parenthesized expression
         if (check(TokenType.LEFT_PAREN)) {
             advance();
@@ -2576,46 +3167,46 @@ public class DdslParser {
             consume(TokenType.RIGHT_PAREN, "Expected ')' after expression");
             return expr;
         }
-        
+
         // List literal
         if (check(TokenType.LEFT_BRACKET)) {
             advance();
             List<Expr> elements = new ArrayList<>();
-            
+
             if (!check(TokenType.RIGHT_BRACKET)) {
                 do {
                     if (check(TokenType.COMMA)) advance();
                     elements.add(expression());
                 } while (check(TokenType.COMMA));
             }
-            
+
             consume(TokenType.RIGHT_BRACKET, "Expected ']' after list elements");
             return new ListExpr(span, elements);
         }
-        
+
         // Identifier
         if (check(TokenType.IDENTIFIER)) {
             Token token = advance();
             return new VariableExpr(span, token.getLexeme());
         }
-        
+
         // Handle natural language tokens as identifiers
-        if (peek().getType().isComparisonPredicate() || 
-            peek().getType().isCollectionPredicate()) {
+        if (peek().getType().isComparisonPredicate() ||
+                peek().getType().isCollectionPredicate()) {
             Token token = advance();
             return new VariableExpr(span, token.getLexeme());
         }
-        
+
         error("Expected expression, got: " + peek().getLexeme());
         return new NullExpr(span);
     }
-    
+
     // ========== Extended Expression Parsing ==========
     // Temporal, String, Collection, Specification, and Match expressions
-    
+
     /**
      * Parse a temporal expression from the token stream.
-     * 
+     *
      * Syntax:
      *   expression is before/after/on anchor
      *   expression is within last/next duration
@@ -2627,59 +3218,79 @@ public class DdslParser {
             TemporalAnchor anchor = parseTemporalAnchor(span);
             return new TemporalComparison(span, subject, TemporalComparison.TemporalComparisonOp.IS_BEFORE, anchor);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.AFTER)) {
             TemporalAnchor anchor = parseTemporalAnchor(span);
             return new TemporalComparison(span, subject, TemporalComparison.TemporalComparisonOp.IS_AFTER, anchor);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.ON)) {
             TemporalAnchor anchor = parseTemporalAnchor(span);
             return new TemporalComparison(span, subject, TemporalComparison.TemporalComparisonOp.IS_ON, anchor);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.WITHIN, TokenType.LAST)) {
             Duration duration = parseDuration(span);
             return new TemporalRange(span, subject, TemporalRange.RangeType.WITHIN_LAST, duration, null, null);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.WITHIN, TokenType.NEXT)) {
             Duration duration = parseDuration(span);
             return new TemporalRange(span, subject, TemporalRange.RangeType.WITHIN_NEXT, duration, null, null);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.BETWEEN)) {
             TemporalAnchor start = parseTemporalAnchor(span);
             consume(TokenType.AND, "Expected 'and' in between clause");
             TemporalAnchor end = parseTemporalAnchor(span);
-            return TemporalRange.betweenAnchors(span, subject, start, end);
+            Expr startExpr = temporalAnchorToExpr(span, start);
+            Expr endExpr = temporalAnchorToExpr(span, end);
+            return TemporalRange.between(span, subject, startExpr, endExpr);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.MORE, TokenType.THAN)) {
             Duration duration = parseDuration(span);
             TemporalRelative.RelativeDirection direction = parseTemporalDirection();
             return new TemporalRelative(span, subject, TemporalRelative.RelativeOp.MORE_THAN, duration, direction);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.LESS, TokenType.THAN)) {
             Duration duration = parseDuration(span);
             TemporalRelative.RelativeDirection direction = parseTemporalDirection();
             return new TemporalRelative(span, subject, TemporalRelative.RelativeOp.LESS_THAN, duration, direction);
         }
-        
+
         if (matchSequence(TokenType.OCCURRED, TokenType.BEFORE)) {
             Expr other = null; // Would parse another expression
             return new TemporalSequence(span, subject, TemporalSequence.SequenceOp.OCCURRED_BEFORE, other);
         }
-        
+
         if (matchSequence(TokenType.OCCURRED, TokenType.AFTER)) {
             Expr other = null; // Would parse another expression
             return new TemporalSequence(span, subject, TemporalSequence.SequenceOp.OCCURRED_AFTER, other);
         }
-        
+
         return null;
     }
-    
+
+    private Expr temporalAnchorToExpr(SourceSpan span, TemporalAnchor anchor) {
+        if (anchor == null) {
+            return new MethodCallExpr(span, null, "now", List.of());
+        }
+        if (anchor.expression() != null) {
+            return anchor.expression();
+        }
+        return switch (anchor.type()) {
+            case NOW -> new MethodCallExpr(span, null, "now", List.of());
+            case TODAY -> new VariableExpr(span, "today");
+            case YESTERDAY -> new VariableExpr(span, "yesterday");
+            case TOMORROW -> new VariableExpr(span, "tomorrow");
+            case AGO -> new VariableExpr(span, "nowMinusDuration");
+            case FROM_NOW -> new VariableExpr(span, "nowPlusDuration");
+            default -> new MethodCallExpr(span, null, "now", List.of());
+        };
+    }
+
     private TemporalAnchor parseTemporalAnchor(SourceSpan span) {
         if (match(TokenType.NOW)) {
             return TemporalAnchor.now(span);
@@ -2702,19 +3313,45 @@ public class DdslParser {
                 return TemporalAnchor.fromNow(span, duration);
             }
         }
-        
+
+        // Fallback: treat upcoming expression as an anchor expression.
+        if (check(TokenType.IDENTIFIER) || check(TokenType.TODAY) || check(TokenType.NOW)) {
+            Expr expr = parseTemporalAnchorExpression(span);
+            if (expr != null) {
+                return TemporalAnchor.expression(span, expr);
+            }
+        }
+
         return null;
     }
-    
+
+    private Expr parseTemporalAnchorExpression(SourceSpan span) {
+        if (!check(TokenType.IDENTIFIER)) {
+            return null;
+        }
+
+        StringBuilder path = new StringBuilder(advance().getLexeme());
+        while (check(TokenType.IDENTIFIER) && !isTemporalBoundaryToken()) {
+            path.append(" ").append(advance().getLexeme());
+        }
+        return new VariableExpr(span, path.toString());
+    }
+
+    private boolean isTemporalBoundaryToken() {
+        return check(TokenType.AND) || check(TokenType.DASH) || check(TokenType.COMMA)
+                || check(TokenType.RIGHT_BRACE) || check(TokenType.WHEN) || check(TokenType.THEN)
+                || check(TokenType.GIVEN) || check(TokenType.RETURN) || check(TokenType.EMIT);
+    }
+
     private Duration parseDuration(SourceSpan span) {
         int amount = 0;
         Duration.DurationUnit unit = Duration.DurationUnit.DAYS;
-        
+
         if (check(TokenType.INTEGER_LITERAL)) {
             Token amountToken = advance();
             amount = Integer.parseInt(amountToken.getLexeme());
         }
-        
+
         if (match(TokenType.SECONDS)) unit = Duration.DurationUnit.SECONDS;
         else if (match(TokenType.MINUTES)) unit = Duration.DurationUnit.MINUTES;
         else if (match(TokenType.HOURS)) unit = Duration.DurationUnit.HOURS;
@@ -2722,10 +3359,10 @@ public class DdslParser {
         else if (match(TokenType.WEEKS)) unit = Duration.DurationUnit.WEEKS;
         else if (match(TokenType.MONTHS)) unit = Duration.DurationUnit.MONTHS;
         else if (match(TokenType.YEARS)) unit = Duration.DurationUnit.YEARS;
-        
+
         return Duration.of(span, amount, unit);
     }
-    
+
     private TemporalRelative.RelativeDirection parseTemporalDirection() {
         if (match(TokenType.AGO)) {
             return TemporalRelative.RelativeDirection.AGO;
@@ -2735,10 +3372,10 @@ public class DdslParser {
         }
         return TemporalRelative.RelativeDirection.AGO;
     }
-    
+
     /**
      * Parse a string condition from the token stream.
-     * 
+     *
      * Syntax:
      *   expression contains "text"
      *   expression starts with "prefix"
@@ -2753,36 +3390,36 @@ public class DdslParser {
             String value = parseStringLiteralValue();
             return StringCondition.contains(span, subject, value);
         }
-        
+
         if (matchSequence(TokenType.STARTS, TokenType.WITH)) {
             String value = parseStringLiteralValue();
             return StringCondition.startsWith(span, subject, value);
         }
-        
+
         if (matchSequence(TokenType.ENDS, TokenType.WITH)) {
             String value = parseStringLiteralValue();
             return StringCondition.endsWith(span, subject, value);
         }
-        
+
         if (match(TokenType.MATCHES)) {
             String pattern = parseStringLiteralValue();
             return StringCondition.matches(span, subject, pattern);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.EMPTY)) {
             return StringCondition.isEmpty(span, subject);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.BLANK)) {
             return StringCondition.isBlank(span, subject);
         }
-        
+
         if (matchSequence(TokenType.HAS, TokenType.VALID)) {
             StringCondition.FormatType formatType = parseFormatType();
             consume(TokenType.FORMAT, "Expected 'format' after format type");
             return StringCondition.hasValidFormat(span, subject, formatType);
         }
-        
+
         if (matchSequence(TokenType.HAS, TokenType.LENGTH)) {
             if (matchSequence(TokenType.GREATER, TokenType.THAN)) {
                 int value = parseIntegerLiteralValue();
@@ -2805,13 +3442,13 @@ public class DdslParser {
                 return StringCondition.hasLengthExactly(span, subject, value);
             }
         }
-        
+
         return null;
     }
-    
+
     /**
      * Parse a string operation (transformation).
-     * 
+     *
      * Syntax:
      *   expression to uppercase/lowercase
      *   expression trimmed
@@ -2830,56 +3467,83 @@ public class DdslParser {
                 return StringOperation.toLowercase(span, subject);
             }
         }
-        
+
         if (match(TokenType.TRUNCATED)) {
             consume(TokenType.TO, "Expected 'to' after 'truncated'");
             int length = parseIntegerLiteralValue();
             match(TokenType.CHARACTERS); // Optional
             return StringOperation.truncatedTo(span, subject, length);
         }
-        
+
         if (match(TokenType.CONCATENATED)) {
             consume(TokenType.WITH, "Expected 'with' after 'concatenated'");
             String suffix = parseStringLiteralValue();
             return StringOperation.concatenatedWith(span, subject, suffix);
         }
-        
+
         if (match(TokenType.REPLACED)) {
             String target = parseStringLiteralValue();
             consume(TokenType.WITH, "Expected 'with' in replace operation");
             String replacement = parseStringLiteralValue();
             return StringOperation.replaced(span, subject, target, replacement);
         }
-        
+
         if (match(TokenType.FIRST)) {
             int n = parseIntegerLiteralValue();
             match(TokenType.CHARACTERS);
             return StringOperation.firstNCharacters(span, subject, n);
         }
-        
+
         if (match(TokenType.LAST)) {
             int n = parseIntegerLiteralValue();
             match(TokenType.CHARACTERS);
             return StringOperation.lastNCharacters(span, subject, n);
         }
-        
+
         return null;
     }
-    
+
     private StringCondition.FormatType parseFormatType() {
-        if (match(TokenType.EMAIL)) return StringCondition.FormatType.EMAIL;
-        if (match(TokenType.PHONE)) return StringCondition.FormatType.PHONE_NUMBER;
         if (match(TokenType.URL)) return StringCondition.FormatType.URL;
         if (match(TokenType.UUID_TYPE)) return StringCondition.FormatType.UUID;
         if (match(TokenType.DATETIME_TYPE)) return StringCondition.FormatType.DATE;
         if (match(TokenType.NUMERIC)) return StringCondition.FormatType.NUMERIC;
         if (match(TokenType.ALPHANUMERIC)) return StringCondition.FormatType.ALPHANUMERIC;
+
+        if (check(TokenType.IDENTIFIER)) {
+            String format = advance().getLexeme().toLowerCase();
+            if ("email".equals(format)) {
+                return StringCondition.FormatType.EMAIL;
+            }
+            if ("phone".equals(format)) {
+                if (check(TokenType.IDENTIFIER) && "number".equalsIgnoreCase(peek().getLexeme())) {
+                    advance();
+                }
+                return StringCondition.FormatType.PHONE_NUMBER;
+            }
+            if ("url".equals(format)) {
+                return StringCondition.FormatType.URL;
+            }
+            if ("uuid".equals(format)) {
+                return StringCondition.FormatType.UUID;
+            }
+            if ("date".equals(format) || "datetime".equals(format)) {
+                return StringCondition.FormatType.DATE;
+            }
+            if ("numeric".equals(format)) {
+                return StringCondition.FormatType.NUMERIC;
+            }
+            if ("alphanumeric".equals(format)) {
+                return StringCondition.FormatType.ALPHANUMERIC;
+            }
+        }
+
         return StringCondition.FormatType.ALPHANUMERIC;
     }
-    
+
     /**
      * Parse a collection aggregation expression.
-     * 
+     *
      * Syntax:
      *   sum of collection property where condition
      *   count of collection where condition
@@ -2887,19 +3551,19 @@ public class DdslParser {
      */
     public CollectionAggregation parseCollectionAggregation(SourceSpan span) {
         CollectionAggregation.AggregationType type = null;
-        
+
         if (match(TokenType.SUM)) type = CollectionAggregation.AggregationType.SUM;
         else if (match(TokenType.COUNT)) type = CollectionAggregation.AggregationType.COUNT;
         else if (match(TokenType.MAXIMUM)) type = CollectionAggregation.AggregationType.MAXIMUM;
         else if (match(TokenType.MINIMUM)) type = CollectionAggregation.AggregationType.MINIMUM;
         else if (match(TokenType.AVERAGE)) type = CollectionAggregation.AggregationType.AVERAGE;
         else return null;
-        
+
         consume(TokenType.OF, "Expected 'of' after aggregation type");
-        
+
         // Parse collection identifier
         Expr collection = parseSimpleIdentifierExpr(span);
-        
+
         // Parse optional property path (for sum, max, min, avg)
         String property = null;
         if (type != CollectionAggregation.AggregationType.COUNT) {
@@ -2907,33 +3571,33 @@ public class DdslParser {
                 property = parsePropertyPath();
             }
         }
-        
+
         // Parse optional where clause
         NaturalLanguageCondition where = null;
         if (match(TokenType.WHERE)) {
             where = parseWhereConditionExtended(span);
         }
-        
+
         return new CollectionAggregation(span, type, collection, property, where);
     }
-    
+
     /**
      * Parse a collection filter chain.
-     * 
+     *
      * Syntax:
      *   collection where condition
      *   collection where condition1 where condition2
      */
     public CollectionFilter parseCollectionFilter(SourceSpan span, Expr collection) {
         List<NaturalLanguageCondition> conditions = new ArrayList<>();
-        
+
         while (match(TokenType.WHERE)) {
             NaturalLanguageCondition condition = parseWhereConditionExtended(span);
             if (condition != null) {
                 conditions.add(condition);
             }
         }
-        
+
         String ofTheirProperty = null;
         if (match(TokenType.OF)) {
             if (peek().getLexeme().equalsIgnoreCase("their")) {
@@ -2941,13 +3605,13 @@ public class DdslParser {
                 ofTheirProperty = parsePropertyPath();
             }
         }
-        
+
         return new CollectionFilter(span, collection, conditions, ofTheirProperty);
     }
-    
+
     /**
      * Parse a collection flatten expression.
-     * 
+     *
      * Syntax:
      *   all property across collection
      *   all property from collection
@@ -2956,9 +3620,9 @@ public class DdslParser {
         if (!match(TokenType.ALL)) {
             return null;
         }
-        
+
         String property = parsePropertyPath();
-        
+
         CollectionFlatten.FlattenType type;
         if (match(TokenType.ACROSS)) {
             type = CollectionFlatten.FlattenType.ACROSS;
@@ -2967,20 +3631,20 @@ public class DdslParser {
         } else {
             return null;
         }
-        
+
         Expr collection = parseSimpleIdentifierExpr(span);
-        
+
         NaturalLanguageCondition where = null;
         if (match(TokenType.WHERE)) {
             where = parseWhereConditionExtended(span);
         }
-        
+
         return new CollectionFlatten(span, property, collection, where, type);
     }
-    
+
     /**
      * Parse a collection group by expression.
-     * 
+     *
      * Syntax:
      *   collection grouped by property
      *   count of collection grouped by property
@@ -2989,15 +3653,15 @@ public class DdslParser {
         if (!matchSequence(TokenType.GROUPED, TokenType.BY)) {
             return null;
         }
-        
+
         String groupByProperty = parsePropertyPath();
-        
+
         return CollectionGroupBy.simple(span, collection, groupByProperty);
     }
-    
+
     /**
      * Parse a specification condition.
-     * 
+     *
      * Syntax:
      *   expression satisfies SpecificationRef
      *   expression does not satisfy SpecificationRef
@@ -3009,33 +3673,33 @@ public class DdslParser {
             SpecificationCondition.SpecificationRef spec = parseSpecificationRef();
             return SpecificationCondition.satisfies(span, subject, spec);
         }
-        
+
         if (matchSequence(TokenType.DOES, TokenType.NOT, TokenType.SATISFIES)) {
             SpecificationCondition.SpecificationRef spec = parseSpecificationRef();
             return SpecificationCondition.doesNotSatisfy(span, subject, spec);
         }
-        
+
         if (match(TokenType.MATCHES)) {
             SpecificationCondition.SpecificationRef spec = parseSpecificationRef();
             return SpecificationCondition.matches(span, subject, spec);
         }
-        
+
         if (matchSequence(TokenType.IS, TokenType.ELIGIBLE, TokenType.FOR)) {
             SpecificationCondition.SpecificationRef spec = parseSpecificationRef();
             return SpecificationCondition.isEligibleFor(span, subject, spec);
         }
-        
+
         return null;
     }
-    
+
     private SpecificationCondition.SpecificationRef parseSpecificationRef() {
         if (match(TokenType.NOT)) {
             SpecificationCondition.SpecificationRef inner = parseSpecificationRef();
             return new SpecificationCondition.SpecificationRef.Negation(inner);
         }
-        
+
         String name = advance().getLexeme();
-        
+
         // Check for parameterized spec
         List<Expr> args = new ArrayList<>();
         if (match(TokenType.LEFT_PAREN)) {
@@ -3048,35 +3712,35 @@ public class DdslParser {
             }
             consume(TokenType.RIGHT_PAREN, "Expected ')' after spec arguments");
         }
-        
+
         SpecificationCondition.SpecificationRef ref = args.isEmpty()
-            ? new SpecificationCondition.SpecificationRef.Simple(name)
-            : new SpecificationCondition.SpecificationRef.Parameterized(name, args);
-        
+                ? new SpecificationCondition.SpecificationRef.Simple(name)
+                : new SpecificationCondition.SpecificationRef.Parameterized(name, args);
+
         // Check for composite
         if (match(TokenType.AND)) {
             SpecificationCondition.SpecificationRef right = parseSpecificationRef();
             return new SpecificationCondition.SpecificationRef.Composite(
-                ref, 
-                SpecificationCondition.SpecificationRef.Composite.CompositeType.AND, 
-                right
+                    ref,
+                    SpecificationCondition.SpecificationRef.Composite.CompositeType.AND,
+                    right
             );
         }
         if (match(TokenType.OR)) {
             SpecificationCondition.SpecificationRef right = parseSpecificationRef();
             return new SpecificationCondition.SpecificationRef.Composite(
-                ref, 
-                SpecificationCondition.SpecificationRef.Composite.CompositeType.OR, 
-                right
+                    ref,
+                    SpecificationCondition.SpecificationRef.Composite.CompositeType.OR,
+                    right
             );
         }
-        
+
         return ref;
     }
-    
+
     /**
      * Parse a match expression.
-     * 
+     *
      * Syntax:
      *   match expression
      *     value1: result1
@@ -3087,63 +3751,117 @@ public class DdslParser {
         if (!match(TokenType.MATCH)) {
             return null;
         }
-        
-        Expr subject = parseSimpleIdentifierExpr(span);
+
+        Expr subject = parseExpressionUntil(TokenType.WITH);
+        consume(TokenType.WITH, "Expected 'with' in match expression");
+        consume(TokenType.COLON, "Expected ':' after 'match ... with'");
+
         List<MatchExpr.MatchCase> cases = new ArrayList<>();
         MatchExpr.MatchCase defaultCase = null;
-        
+
         // Parse cases until we see something that isn't a case
         while (check(TokenType.DASH) || check(TokenType.IDENTIFIER) || check(TokenType.DEFAULT)) {
             match(TokenType.DASH); // Optional list marker
-            
+
             MatchExpr.CasePattern pattern;
             if (match(TokenType.DEFAULT)) {
                 pattern = new MatchExpr.CasePattern.DefaultPattern();
             } else if (match(TokenType.NULL)) {
                 pattern = new MatchExpr.CasePattern.NullValue();
+            } else if (match(TokenType.LEFT_BRACKET)) {
+                List<String> values = new ArrayList<>();
+                while (!check(TokenType.RIGHT_BRACKET) && !isAtEnd()) {
+                    if (check(TokenType.COMMA)) {
+                        advance();
+                        continue;
+                    }
+                    values.add(advance().getLexeme());
+                }
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after match value list");
+                pattern = new MatchExpr.CasePattern.MultipleValues(values);
             } else {
                 String value = advance().getLexeme();
                 pattern = MatchExpr.CasePattern.SingleValue.of(value);
             }
-            
+
+            NaturalLanguageCondition guard = null;
+            if (match(TokenType.WHEN)) {
+                guard = parseConditionUntil(TokenType.COLON);
+            }
+
             consume(TokenType.COLON, "Expected ':' after match pattern");
-            
+
             // Parse result expression
             Expr result = expression();
-            
+
             MatchExpr.MatchCase matchCase = new MatchExpr.MatchCase(
-                span, 
-                pattern, 
-                null, // No guard
-                new MatchExpr.MatchCaseBody.ExpressionBody(result)
+                    span,
+                    pattern,
+                    guard,
+                    new MatchExpr.MatchCaseBody.ExpressionBody(result)
             );
-            
+
             if (pattern instanceof MatchExpr.CasePattern.DefaultPattern) {
                 defaultCase = matchCase;
             } else {
                 cases.add(matchCase);
             }
         }
-        
+
         return new MatchExpr(span, subject, cases, defaultCase);
     }
-    
+
+    private Expr parseExpressionUntil(TokenType stopToken) {
+        SourceSpan span = currentSpan();
+        int saved = current;
+        StringBuilder rawText = new StringBuilder();
+
+        while (!check(stopToken) && !isAtEnd()) {
+            if (!rawText.isEmpty()) {
+                rawText.append(" ");
+            }
+            rawText.append(advance().getLexeme());
+        }
+
+        String text = rawText.toString().trim();
+        if (text.isEmpty()) {
+            current = saved;
+            return new NullExpr(span);
+        }
+
+        return new VariableExpr(span, text);
+    }
+
+    private NaturalLanguageCondition parseConditionUntil(TokenType stopToken) {
+        SourceSpan span = currentSpan();
+        StringBuilder rawText = new StringBuilder();
+
+        while (!check(stopToken) && !isAtEnd()) {
+            if (!rawText.isEmpty()) {
+                rawText.append(" ");
+            }
+            rawText.append(advance().getLexeme());
+        }
+
+        return NaturalLanguageCondition.simple(span, rawText.toString().trim(), null);
+    }
+
     // Extended expression helper methods
-    
+
     private NaturalLanguageCondition parseWhereConditionExtended(SourceSpan span) {
         StringBuilder rawText = new StringBuilder();
         List<Token> conditionTokens = new ArrayList<>();
-        
-        while (!check(TokenType.WHERE) && !check(TokenType.GROUPED) && 
-               !check(TokenType.NEWLINE) && !isAtEnd()) {
+
+        while (!check(TokenType.WHERE) && !check(TokenType.GROUPED) &&
+                !check(TokenType.NEWLINE) && !isAtEnd()) {
             Token token = advance();
             rawText.append(token.getLexeme()).append(" ");
             conditionTokens.add(token);
         }
-        
+
         return NaturalLanguageCondition.simple(span, rawText.toString().trim(), null);
     }
-    
+
     private Expr parseSimpleIdentifierExpr(SourceSpan span) {
         if (check(TokenType.IDENTIFIER)) {
             Token token = advance();
@@ -3151,7 +3869,7 @@ public class DdslParser {
         }
         return new NullExpr(span);
     }
-    
+
     private String parsePropertyPath() {
         StringBuilder path = new StringBuilder();
         if (check(TokenType.IDENTIFIER)) {
@@ -3162,7 +3880,7 @@ public class DdslParser {
         }
         return path.toString();
     }
-    
+
     private String parseStringLiteralValue() {
         if (check(TokenType.STRING_LITERAL)) {
             String literal = advance().getLexeme();
@@ -3174,14 +3892,14 @@ public class DdslParser {
         }
         return "";
     }
-    
+
     private int parseIntegerLiteralValue() {
         if (check(TokenType.INTEGER_LITERAL)) {
             return Integer.parseInt(advance().getLexeme());
         }
         return 0;
     }
-    
+
     private boolean match(TokenType type) {
         if (check(type)) {
             advance();
@@ -3189,7 +3907,7 @@ public class DdslParser {
         }
         return false;
     }
-    
+
     private boolean matchSequence(TokenType... types) {
         int savedPosition = current;
         for (TokenType type : types) {
@@ -3201,31 +3919,31 @@ public class DdslParser {
         }
         return true;
     }
-    
+
     // ========== Helper Methods ==========
-    
+
     private boolean isAtEnd() {
         return peek().getType() == TokenType.EOF;
     }
-    
+
     private Token peek() {
         return tokens.get(current);
     }
-    
+
     private Token previous() {
         return tokens.get(current - 1);
     }
-    
+
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().getType() == type;
     }
-    
+
     private boolean checkNext(TokenType type) {
         if (current + 1 >= tokens.size()) return false;
         return tokens.get(current + 1).getType() == type;
     }
-    
+
     /**
      * Check if the next token (current + 1) is a valid type start.
      * Used by parameterList() to disambiguate ':' as type annotation vs. behavior header colon.
@@ -3234,52 +3952,53 @@ public class DdslParser {
         if (current + 1 >= tokens.size()) return false;
         TokenType next = tokens.get(current + 1).getType();
         return next == TokenType.IDENTIFIER ||
-               next == TokenType.STRING_TYPE || next == TokenType.INT_TYPE ||
-               next == TokenType.DECIMAL_TYPE || next == TokenType.BOOLEAN_TYPE ||
-               next == TokenType.DATETIME_TYPE || next == TokenType.UUID_TYPE ||
-               next == TokenType.LIST_TYPE || next == TokenType.SET_TYPE ||
-               next == TokenType.MAP_TYPE || next == TokenType.VOID_TYPE ||
-               next == TokenType.RESULT;
+                next == TokenType.STRING_TYPE || next == TokenType.INT_TYPE ||
+                next == TokenType.DECIMAL_TYPE || next == TokenType.BOOLEAN_TYPE ||
+                next == TokenType.DATETIME_TYPE || next == TokenType.UUID_TYPE ||
+                next == TokenType.LIST_TYPE || next == TokenType.SET_TYPE ||
+                next == TokenType.MAP_TYPE || next == TokenType.VOID_TYPE ||
+                next == TokenType.RESULT;
     }
-    
+
     private Token advance() {
         if (!isAtEnd()) current++;
         return previous();
     }
-    
+
     private Token consume(TokenType type, String message) {
         if (check(type)) return advance();
-        
+
         error(message + ", got '" + peek().getLexeme() + "'");
         return null;
     }
-    
+
     private void error(String message) {
         errors.add(new ParseError(message, currentSpan()));
     }
-    
+
     private SourceSpan currentSpan() {
         Token token = peek();
         return SourceSpan.at(sourceName, token.getLine(), token.getColumn());
     }
-    
+
+    @SuppressWarnings("unused")
     private SourceLocation currentLocation() {
         Token token = peek();
         return new SourceLocation(sourceName, token.getLine(), token.getColumn());
     }
-    
+
     /**
      * Skip tokens until we hit a clause keyword or end of block.
      */
     private void skipUntilClauseOrEnd() {
-        while (!isAtEnd() && 
-               !check(TokenType.REQUIRE) && !check(TokenType.GIVEN) && 
-               !check(TokenType.THEN) && !check(TokenType.RETURN) &&
-               !check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE)) {
+        while (!isAtEnd() &&
+                !check(TokenType.REQUIRE) && !check(TokenType.GIVEN) &&
+                !check(TokenType.THEN) && !check(TokenType.RETURN) &&
+                !check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE)) {
             advance();
         }
     }
-    
+
     /**
      * Skip a block (balanced braces).
      */
@@ -3291,7 +4010,7 @@ public class DdslParser {
             advance();
         }
     }
-    
+
     /**
      * Source location record for error reporting.
      * Local definition to avoid dependency on deleted core package.
@@ -3301,56 +4020,56 @@ public class DdslParser {
             return new SourceSpan(sourceFile, line, column, line, column);
         }
     }
-    
+
     /**
      * Represents a parse error.
      */
     public static class ParseError {
         private final String message;
         private final SourceSpan span;
-        
+
         public ParseError(String message, SourceSpan span) {
             this.message = message;
             this.span = span;
         }
-        
+
         public ParseError(String message, SourceLocation location) {
             this.message = message;
             this.span = location.toSpan();
         }
-        
+
         public String getMessage() {
             return message;
         }
-        
+
         public String message() {
             return message;
         }
-        
+
         public SourceSpan getSpan() {
             return span;
         }
-        
+
         public SourceSpan location() {
             return span;
         }
-        
+
         public int line() {
             return span != null ? span.startLine() : 0;
         }
-        
+
         public int column() {
             return span != null ? span.startColumn() : 0;
         }
-        
+
         public SourceLocation getLocation() {
             return new SourceLocation(span.fileName(), span.startLine(), span.startColumn());
         }
-        
+
         @Override
         public String toString() {
             return String.format("[%s:%d:%d] Parse error: %s",
-                span.fileName(), span.startLine(), span.startColumn(), message);
+                    span.fileName(), span.startLine(), span.startColumn(), message);
         }
 
     }
