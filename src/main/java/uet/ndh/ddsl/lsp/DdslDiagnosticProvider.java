@@ -47,13 +47,13 @@ public class DdslDiagnosticProvider {
         
         // Phase 3: Semantic analysis (would require full AST)
         // diagnostics.addAll(getSemanticDiagnostics(content));
-        
+
         // Phase 4: DDD best practices (warnings)
         diagnostics.addAll(getDddBestPracticeDiagnostics(content));
         
         return diagnostics;
     }
-    
+
     /**
      * Get lexical (scanning) diagnostics.
      */

@@ -128,8 +128,10 @@ public class AggregateTranslator {
             classBuilder.addField(buildIdentityField(root.identity()));
         }
         
-        // Add regular fields
+        // Add regular fields (skip identity field - already added above)
+        String identityName = root.identity() != null ? root.identity().name() : null;
         for (FieldDecl field : root.fields()) {
+            if (identityName != null && identityName.equals(field.name())) continue;
             classBuilder.addField(buildField(field));
         }
         
@@ -153,13 +155,14 @@ public class AggregateTranslator {
             }
         }
         
-        // Add behavior methods using ExpressionTranslator
-        for (BehaviorDecl behavior : root.behaviors()) {
-            classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
-        }
-        
-        // Also add behaviors from aggregate level
+        // Add behavior methods using ExpressionTranslator (deduplicate root/aggregate overlap)
+        List<BehaviorDecl> mergedBehaviors = new ArrayList<>(root.behaviors());
         for (BehaviorDecl behavior : aggregate.behaviors()) {
+            if (!mergedBehaviors.contains(behavior)) {
+                mergedBehaviors.add(behavior);
+            }
+        }
+        for (BehaviorDecl behavior : mergedBehaviors) {
             classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
         }
         
@@ -199,8 +202,10 @@ public class AggregateTranslator {
             classBuilder.addField(buildIdentityField(entity.identity()));
         }
         
-        // Add regular fields
+        // Add regular fields (skip identity field - already added above)
+        String identityName = entity.identity() != null ? entity.identity().name() : null;
         for (FieldDecl field : entity.fields()) {
+            if (identityName != null && identityName.equals(field.name())) continue;
             classBuilder.addField(buildField(field));
         }
         
@@ -365,8 +370,10 @@ public class AggregateTranslator {
             constructor.addStatement("this.$N = $N", root.identity().name(), root.identity().name());
         }
         
-        // Add field parameters
+        // Add field parameters (skip identity field - already added above)
+        String identityName = root.identity() != null ? root.identity().name() : null;
         for (FieldDecl field : root.fields()) {
+            if (identityName != null && identityName.equals(field.name())) continue;
             TypeName fieldType = typeMapper.mapType(field.type());
             constructor.addParameter(fieldType, field.name());
             constructor.addStatement("this.$N = $N", field.name(), field.name());
@@ -385,7 +392,9 @@ public class AggregateTranslator {
             constructor.addStatement("this.$N = $N", entity.identity().name(), entity.identity().name());
         }
         
+        String identityName = entity.identity() != null ? entity.identity().name() : null;
         for (FieldDecl field : entity.fields()) {
+            if (identityName != null && identityName.equals(field.name())) continue;
             TypeName fieldType = typeMapper.mapType(field.type());
             constructor.addParameter(fieldType, field.name());
             constructor.addStatement("this.$N = $N", field.name(), field.name());

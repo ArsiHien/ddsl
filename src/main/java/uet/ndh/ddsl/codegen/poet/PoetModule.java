@@ -79,6 +79,11 @@ public class PoetModule {
     public List<CodeArtifact> generateFromModel(DomainModel model) {
         List<CodeArtifact> artifacts = new ArrayList<>();
 
+        if (!hasGeneratableDeclarations(model)) {
+            log.info("No generatable declarations found in domain model");
+            return artifacts;
+        }
+
         // Generate shared scaffolding (AggregateRoot, Entity, ValueObject, DomainEvent, etc.)
         artifacts.addAll(scaffoldGenerator.generateBaseScaffolding(typeMapper.getBasePackage()));
         
@@ -139,6 +144,21 @@ public class PoetModule {
         
         log.info("Generated {} artifacts from domain model", artifacts.size());
         return artifacts;
+    }
+
+    private boolean hasGeneratableDeclarations(DomainModel model) {
+        for (var boundedContext : model.boundedContexts()) {
+            if (!boundedContext.aggregates().isEmpty()
+                || !boundedContext.valueObjects().isEmpty()
+                || !boundedContext.domainEvents().isEmpty()
+                || !boundedContext.domainServices().isEmpty()
+                || !boundedContext.repositories().isEmpty()
+                || !boundedContext.specifications().isEmpty()
+                || !boundedContext.stateMachines().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean containsStateMachineFeatures(DomainModel model) {

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
+import uet.ndh.ddsl.analysis.validator.BehaviorSemanticValidator;
 import uet.ndh.ddsl.parser.DdslParser;
 import uet.ndh.ddsl.parser.ParseException;
 
@@ -17,8 +18,8 @@ import java.util.List;
  * <b>MCP Tool — validateDSL</b>
  * <p>
  * Exposed as a Spring AI {@code @Tool} and auto-registered with the MCP Server.
- * Performs <b>parser-only</b> validation — catches syntax errors via the
- * hand-written recursive descent parser.
+ * Performs syntax validation and lightweight semantic validation
+ * (behavior-scoped identifier checks).
  *
  * @see DdslParser
  */
@@ -55,13 +56,20 @@ public class DdslValidationTool {
         // ── Parse phase (syntax validation) ─────────────────────────────
         try {
             var parser = new DdslParser(code, "<input>");
-            parser.parse();
+            var model = parser.parse();
 
             // Check for collected errors (parser may not throw but still record errors)
             if (parser.hasErrors()) {
                 for (var error : parser.getErrors()) {
                     result.errors.add(formatParseError(error));
                 }
+            } else {
+                // Semantic pass: undefined identifiers in behavior scopes.
+                var behaviorSemanticValidator = new BehaviorSemanticValidator();
+                model.accept(behaviorSemanticValidator);
+                behaviorSemanticValidator.errors().forEach(d ->
+                        result.errors.add(formatSemanticError(d))
+                );
             }
         } catch (ParseException e) {
             for (var parseError : e.getErrors()) {
@@ -90,6 +98,17 @@ public class DdslValidationTool {
         }
         if (error instanceof String s) return s;
         return error.toString();
+    }
+
+    private String formatSemanticError(uet.ndh.ddsl.analysis.validator.Diagnostic diagnostic) {
+        if (diagnostic == null) {
+            return "Semantic error";
+        }
+        int line = diagnostic.location() != null ? diagnostic.location().startLine() : 0;
+        int col = diagnostic.location() != null ? diagnostic.location().startColumn() : 0;
+        String ruleId = diagnostic.ruleId() != null ? diagnostic.ruleId() : "SEM";
+        return String.format("Semantic error [%s] at line %d, col %d: %s",
+                ruleId, line, col, diagnostic.message());
     }
 
     private String toJson(ValidationResult result) {
