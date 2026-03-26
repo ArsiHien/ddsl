@@ -3,6 +3,7 @@ package uet.ndh.ddsl.ast.model;
 import uet.ndh.ddsl.ast.AstNode;
 import uet.ndh.ddsl.ast.SourceSpan;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
@@ -26,6 +27,7 @@ public record BoundedContextDecl(
     String name,
     List<ModuleDecl> modules,
     List<AggregateDecl> aggregates,
+    List<EnumDecl> enums,
     List<ValueObjectDecl> valueObjects,
     List<DomainServiceDecl> domainServices,
     List<DomainEventDecl> domainEvents,
@@ -40,6 +42,7 @@ public record BoundedContextDecl(
     public BoundedContextDecl {
         modules = modules != null ? List.copyOf(modules) : List.of();
         aggregates = aggregates != null ? List.copyOf(aggregates) : List.of();
+        enums = enums != null ? List.copyOf(enums) : List.of();
         valueObjects = valueObjects != null ? List.copyOf(valueObjects) : List.of();
         domainServices = domainServices != null ? List.copyOf(domainServices) : List.of();
         domainEvents = domainEvents != null ? List.copyOf(domainEvents) : List.of();

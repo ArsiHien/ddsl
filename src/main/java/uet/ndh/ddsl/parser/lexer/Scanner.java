@@ -59,6 +59,8 @@ public class Scanner {
         
         // Domain model keywords
         KEYWORDS.put("Aggregate", TokenType.AGGREGATE);
+        KEYWORDS.put("Enum", TokenType.ENUM);
+        KEYWORDS.put("enum", TokenType.ENUM);
         KEYWORDS.put("Entity", TokenType.ENTITY);
         KEYWORDS.put("ValueObject", TokenType.VALUE_OBJECT);
         KEYWORDS.put("value-object", TokenType.VALUE_OBJECT);

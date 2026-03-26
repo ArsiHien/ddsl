@@ -7,6 +7,7 @@ import uet.ndh.ddsl.ast.model.BoundedContextDecl;
 import uet.ndh.ddsl.ast.model.ModuleDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
@@ -63,7 +64,8 @@ public class SymbolResolver extends TreeWalkingVisitor<Void> {
         return kind == Symbol.SymbolKind.ENTITY ||
                kind == Symbol.SymbolKind.VALUE_OBJECT ||
                kind == Symbol.SymbolKind.DOMAIN_EVENT ||
-               kind == Symbol.SymbolKind.AGGREGATE;
+               kind == Symbol.SymbolKind.AGGREGATE ||
+               kind == Symbol.SymbolKind.ENUM;
     }
     
     @Override
@@ -99,6 +101,13 @@ public class SymbolResolver extends TreeWalkingVisitor<Void> {
         super.visitAggregate(decl);
         symbolTable.exitScope();
         
+        return null;
+    }
+
+    @Override
+    public Void visitEnum(EnumDecl decl) {
+        defineSymbol(decl.name(), Symbol.SymbolKind.ENUM, decl,
+                     Symbol.TypeInfo.simple(decl.name()));
         return null;
     }
     

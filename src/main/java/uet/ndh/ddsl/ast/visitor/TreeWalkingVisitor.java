@@ -19,6 +19,7 @@ import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.ModuleDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
@@ -65,6 +66,9 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
         }
         for (var aggregate : decl.aggregates()) {
             result = aggregateResult(result, aggregate.accept(this));
+        }
+        for (EnumDecl enumDecl : decl.enums()) {
+            result = aggregateResult(result, enumDecl.accept(this));
         }
         return result;
     }

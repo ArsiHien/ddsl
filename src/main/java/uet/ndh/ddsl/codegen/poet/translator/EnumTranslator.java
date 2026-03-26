@@ -146,14 +146,13 @@ public class EnumTranslator {
             String constantName = toEnumConstant(value);
             enumBuilder.addEnumConstant(constantName);
         }
+
+        if (values.isEmpty()) {
+            enumBuilder.addEnumConstant("UNSPECIFIED");
+        }
         
         // Add fromString factory method
         enumBuilder.addMethod(generateFromStringMethod(enumName, values));
-        
-        // Add toDisplayString method
-        enumBuilder.addField(String.class, "displayName", Modifier.PRIVATE, Modifier.FINAL);
-        enumBuilder.addMethod(generateConstructorWithDisplayName());
-        enumBuilder.addMethod(generateToDisplayStringMethod());
         
         TypeSpec enumSpec = enumBuilder.build();
         JavaFile javaFile = JavaFile.builder(packageName, enumSpec)
@@ -183,10 +182,19 @@ public class EnumTranslator {
     }
     
     private String toEnumConstant(String name) {
+        if (name == null || name.isBlank()) {
+            return "UNSPECIFIED";
+        }
+
+        String normalized = name.trim().replace(' ', '_').replace('-', '_');
+        if (normalized.matches("[A-Z][A-Z0-9_]*")) {
+            return normalized;
+        }
+
         // Convert camelCase or PascalCase to SCREAMING_SNAKE_CASE
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
             if (Character.isUpperCase(c) && i > 0) {
                 result.append('_');
             }
@@ -194,8 +202,6 @@ public class EnumTranslator {
         }
         // Also handle spaces and hyphens
         return result.toString()
-                .replace(' ', '_')
-                .replace('-', '_')
                 .replaceAll("_+", "_");
     }
     
@@ -270,21 +276,6 @@ public class EnumTranslator {
         method.endControlFlow();
         
         return method.build();
-    }
-    
-    private MethodSpec generateConstructorWithDisplayName() {
-        return MethodSpec.constructorBuilder()
-                .addParameter(String.class, "displayName")
-                .addStatement("this.displayName = displayName")
-                .build();
-    }
-    
-    private MethodSpec generateToDisplayStringMethod() {
-        return MethodSpec.methodBuilder("toDisplayString")
-                .addModifiers(Modifier.PUBLIC)
-                .returns(String.class)
-                .addStatement("return displayName")
-                .build();
     }
     
     private String capitalize(String s) {

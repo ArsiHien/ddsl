@@ -43,6 +43,9 @@ public enum TokenType {
     
     /** Aggregate root declaration */
     AGGREGATE,
+
+    /** Enum declaration */
+    ENUM,
     
     /** Entity declaration */
     ENTITY,

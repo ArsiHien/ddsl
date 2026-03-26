@@ -24,6 +24,7 @@ import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.ModuleDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
@@ -51,6 +52,8 @@ public interface AstVisitor<R> {
     R visitModule(ModuleDecl decl);
     
     R visitAggregate(AggregateDecl decl);
+
+    R visitEnum(EnumDecl decl);
     
     R visitEntity(EntityDecl decl);
     

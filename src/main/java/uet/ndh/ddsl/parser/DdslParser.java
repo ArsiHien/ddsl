@@ -52,6 +52,7 @@ import uet.ndh.ddsl.ast.model.ModuleDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.entity.IdentityFieldDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryCreationRuleDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
@@ -239,6 +240,7 @@ public class DdslParser {
         
         List<ModuleDecl> modules = new ArrayList<>();
         List<AggregateDecl> aggregates = new ArrayList<>();
+        List<EnumDecl> enums = new ArrayList<>();
         List<ValueObjectDecl> valueObjects = new ArrayList<>();
         List<DomainServiceDecl> domainServices = new ArrayList<>();
         List<DomainEventDecl> domainEvents = new ArrayList<>();
@@ -256,7 +258,7 @@ public class DdslParser {
                 consume(TokenType.LEFT_BRACE, "Expected '{' after 'ubiquitous-language'");
                 skipBlock();
             } else if (check(TokenType.DOMAIN)) {
-                parseDomainSection(aggregates, valueObjects, domainServices, stateMachines);
+                parseDomainSection(aggregates, enums, valueObjects, domainServices, stateMachines);
             } else if (check(TokenType.EVENTS)) {
                 parseEventsSection(domainEvents);
             } else if (check(TokenType.FACTORIES)) {
@@ -276,7 +278,7 @@ public class DdslParser {
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of bounded context");
         
         return new BoundedContextDecl(
-            span, name, modules, aggregates, valueObjects, domainServices,
+            span, name, modules, aggregates, enums, valueObjects, domainServices,
             domainEvents, repositories, factories, stateMachines, specifications, applicationServices, null
         );
     }
@@ -288,6 +290,7 @@ public class DdslParser {
      *     '}'
      */
     private void parseDomainSection(List<AggregateDecl> aggregates,
+                                     List<EnumDecl> enums,
                                      List<ValueObjectDecl> valueObjects,
                                      List<DomainServiceDecl> domainServices,
                                      List<StateMachineDecl> stateMachines) {
@@ -295,7 +298,12 @@ public class DdslParser {
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'domain'");
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-            if (check(TokenType.AGGREGATE)) {
+            if (check(TokenType.ENUM)) {
+                EnumDecl enumDecl = enumDeclaration();
+                if (enumDecl != null) {
+                    enums.add(enumDecl);
+                }
+            } else if (check(TokenType.AGGREGATE)) {
                 AggregateDecl aggregate = aggregateDeclaration();
                 if (aggregate != null) {
                     aggregates.add(aggregate);
@@ -325,6 +333,40 @@ public class DdslParser {
         }
         
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of domain section");
+    }
+
+    /**
+     * EnumDeclaration ::=
+     *     'Enum' Identifier '{'
+     *         ('-'? Identifier) (',' Identifier)*
+     *     '}'
+     */
+    private EnumDecl enumDeclaration() {
+        SourceSpan span = currentSpan();
+        advance(); // consume Enum/enum keyword
+
+        Token nameToken = consume(TokenType.IDENTIFIER, "Expected enum name");
+        String name = nameToken != null ? nameToken.getLexeme() : "UnknownEnum";
+
+        consume(TokenType.LEFT_BRACE, "Expected '{' after enum name");
+
+        List<String> values = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            if (check(TokenType.DASH) || check(TokenType.COMMA) || check(TokenType.COLON)) {
+                advance();
+                continue;
+            }
+
+            Token valueToken = consumeIdentifierLike("Expected enum value");
+            if (valueToken != null) {
+                values.add(valueToken.getLexeme());
+            } else {
+                advance();
+            }
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expected '}' at end of enum declaration");
+        return new EnumDecl(span, name, values, null);
     }
     
     /**

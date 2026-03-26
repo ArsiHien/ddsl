@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
@@ -96,6 +97,11 @@ public class PoetModule {
             for (AggregateDecl aggregate : boundedContext.aggregates()) {
                 artifacts.addAll(generateAggregate(aggregate));
             }
+
+            // Generate first-class enum declarations
+            for (EnumDecl enumDecl : boundedContext.enums()) {
+                artifacts.add(generateEnumDecl(enumDecl));
+            }
             
             // Generate standalone value objects
             for (ValueObjectDecl valueObject : boundedContext.valueObjects()) {
@@ -149,6 +155,7 @@ public class PoetModule {
     private boolean hasGeneratableDeclarations(DomainModel model) {
         for (var boundedContext : model.boundedContexts()) {
             if (!boundedContext.aggregates().isEmpty()
+                || !boundedContext.enums().isEmpty()
                 || !boundedContext.valueObjects().isEmpty()
                 || !boundedContext.domainEvents().isEmpty()
                 || !boundedContext.domainServices().isEmpty()
@@ -295,6 +302,14 @@ public class PoetModule {
         log.debug("Generating entity: {}", entity.name());
         return entityTranslator.translate(entity);
     }
+
+    /**
+     * Generate a first-class enum declaration.
+     */
+    public CodeArtifact generateEnumDecl(EnumDecl enumDecl) {
+        log.debug("Generating enum declaration: {}", enumDecl.name());
+        return enumTranslator.translateValuesToEnum(enumDecl.name(), enumDecl.values(), enumDecl.documentation());
+    }
     
     /**
      * Generate a value object.
@@ -427,6 +442,10 @@ public class PoetModule {
             }
             
             // Register standalone types
+            for (EnumDecl enumDecl : boundedContext.enums()) {
+                typeMapper.registerDomainType(enumDecl.name(), standaloneModelPackage);
+            }
+
             for (ValueObjectDecl vo : boundedContext.valueObjects()) {
                 typeMapper.registerDomainType(vo.name(), standaloneModelPackage);
             }

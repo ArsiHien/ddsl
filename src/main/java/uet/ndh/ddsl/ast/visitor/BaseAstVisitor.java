@@ -23,6 +23,7 @@ import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.ModuleDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
@@ -69,6 +70,11 @@ public abstract class BaseAstVisitor<R> implements AstVisitor<R> {
     
     @Override
     public R visitAggregate(AggregateDecl decl) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitEnum(EnumDecl decl) {
         return defaultResult();
     }
     

@@ -18,6 +18,7 @@ public record Symbol(
         BOUNDED_CONTEXT,
         MODULE,
         AGGREGATE,
+        ENUM,
         ENTITY,
         VALUE_OBJECT,
         DOMAIN_SERVICE,
