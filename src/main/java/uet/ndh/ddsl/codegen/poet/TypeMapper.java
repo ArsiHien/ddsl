@@ -82,8 +82,8 @@ public class TypeMapper {
     
     private final String basePackage;
     private final Map<String, String> domainTypePackages;
-    // Maps field names to their declared type names (e.g. "guest" → "GuestProfile")
-    private final Map<String, String> fieldTypeMap;
+    // Maps field names to their declared type refs (e.g. "guest" → GuestProfile, "items" → List<OrderItem>)
+    private final Map<String, TypeRef> fieldTypeMap;
     
     public TypeMapper(String basePackage) {
         this.basePackage = normalizeBasePackage(basePackage);
@@ -110,12 +110,12 @@ public class TypeMapper {
     }
     
     /**
-     * Register a field name → type name mapping from the enclosing entity/aggregate.
+     * Register a field name → type mapping from the enclosing entity/aggregate.
      * Used to resolve untyped behavior parameters by matching against field declarations.
-     * For example: field "guest: GuestProfile" registers "guest" → "GuestProfile".
+     * For example: field "guest: GuestProfile" registers "guest" → GuestProfile.
      */
-    public void registerFieldType(String fieldName, String typeName) {
-        fieldTypeMap.put(fieldName, typeName);
+    public void registerFieldType(String fieldName, TypeRef typeRef) {
+        fieldTypeMap.put(fieldName, typeRef);
     }
     
     /**
@@ -151,6 +151,10 @@ public class TypeMapper {
      * Map a simple type name to TypeName.
      */
     public TypeName mapSimpleType(String typeName) {
+        if ("Decimal".equals(typeName)) {
+            return ClassName.get(BigDecimal.class);
+        }
+
         // Check primitives first
         if (PRIMITIVE_TYPES.containsKey(typeName)) {
             return PRIMITIVE_TYPES.get(typeName);
@@ -296,8 +300,10 @@ public class TypeMapper {
         // 1. Check field-to-type mappings first (highest priority)
         // e.g. field "guest: GuestProfile" → param "guest" resolves to GuestProfile
         if (fieldTypeMap.containsKey(paramName)) {
-            String fieldTypeName = fieldTypeMap.get(paramName);
-            return mapSimpleType(fieldTypeName);
+            TypeRef fieldType = fieldTypeMap.get(paramName);
+            if (fieldType != null) {
+                return mapType(fieldType);
+            }
         }
         
         // 2. Capitalize first letter: "roomType" → "RoomType"

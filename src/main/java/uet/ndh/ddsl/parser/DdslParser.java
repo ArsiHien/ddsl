@@ -38,6 +38,7 @@ import uet.ndh.ddsl.ast.expr.TemporalExpr;
 import uet.ndh.ddsl.ast.expr.TemporalRange;
 import uet.ndh.ddsl.ast.expr.TemporalRelative;
 import uet.ndh.ddsl.ast.expr.TemporalSequence;
+import uet.ndh.ddsl.ast.expr.ThisExpr;
 import uet.ndh.ddsl.ast.expr.UnaryExpr;
 import uet.ndh.ddsl.ast.expr.VariableExpr;
 import uet.ndh.ddsl.ast.expr.temporal.Duration;
@@ -2707,11 +2708,34 @@ public class DdslParser {
             target = targetToken != null ? targetToken.getLexeme() : "";
             consume(TokenType.TO, "Expected 'to' after identifier");
             Token repoToken = consumeIdentifierLike("Expected repository name");
-            value = new VariableExpr(currentSpan(), repoToken != null ? repoToken.getLexeme() : "repository");
+            String repositoryName = repoToken != null ? repoToken.getLexeme() : "repository";
+            Expr repositoryRef = new VariableExpr(currentSpan(), repositoryName);
+            Expr entityRef = new VariableExpr(currentSpan(), target);
+            value = new MethodCallExpr(currentSpan(), repositoryRef, "save", List.of(entityRef));
+            target = null;
         } else if (check(TokenType.IF)) {
             return parseConditionalStatement();
         } else if (check(TokenType.FOR)) {
             return parseLoopStatement();
+        } else if (checkIdentifierLike() && "execute".equalsIgnoreCase(peek().getLexeme())) {
+            return parseExecuteCallStatement(span);
+        } else if (checkIdentifierLike() && "call".equalsIgnoreCase(peek().getLexeme())) {
+            int callStart = current;
+            ThenClause.ThenStatement externalCall = parseExternalCallStatement(span);
+            if (externalCall != null) {
+                return externalCall;
+            }
+            current = callStart;
+            advance(); // consume 'call'
+            type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
+            value = expression();
+        } else if (checkIdentifierLike()) {
+            ThenClause.ThenStatement naturalCall = parseNaturalMethodCallStatement(span);
+            if (naturalCall != null) {
+                return naturalCall;
+            }
+            value = expression();
+            type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
         } else {
             // Try to parse as method call or expression
             value = expression();
@@ -2719,6 +2743,239 @@ public class DdslParser {
         }
         
         return ThenClause.ThenStatement.simple(span, type, target, value);
+    }
+
+    private ThenClause.ThenStatement parseExecuteCallStatement(SourceSpan span) {
+        advance(); // consume 'execute'
+
+        List<String> phraseTokens = parsePhraseTokensUntilWithOrBoundary();
+
+        String methodName = toCamelCasePhrase(phraseTokens);
+        if (methodName.isBlank()) {
+            error("Expected logic name after 'execute'");
+            return null;
+        }
+
+        List<Expr> args = parseCallArguments();
+        Expr callExpr = new MethodCallExpr(span, new ThisExpr(span), methodName, args);
+        return ThenClause.ThenStatement.simple(
+                span,
+                ThenClause.ThenStatement.ThenStatementType.METHOD_CALL,
+                null,
+                callExpr
+        );
+    }
+
+    private ThenClause.ThenStatement parseExternalCallStatement(SourceSpan span) {
+        advance(); // consume 'call'
+
+        Token serviceToken = consumeIdentifierLike("Expected service/repository name after 'call'");
+        if (serviceToken == null) {
+            return null;
+        }
+
+        if (!check(TokenType.TO)) {
+            // Keep compatibility with previously-supported explicit Java-like calls: call receiver.method(args)
+            return null;
+        }
+        advance(); // consume 'to'
+
+        List<String> actionTokens = parsePhraseTokensUntilWithOrBoundary();
+
+        String methodName = toCamelCasePhrase(actionTokens);
+        if (methodName.isBlank()) {
+            error("Expected action after 'to' in call statement");
+            return null;
+        }
+
+        String receiverName = decapitalize(serviceToken.getLexeme());
+        Expr receiverExpr = new VariableExpr(span, receiverName);
+        List<Expr> args = parseCallArguments();
+        Expr callExpr = new MethodCallExpr(span, receiverExpr, methodName, args);
+
+        return ThenClause.ThenStatement.simple(
+                span,
+                ThenClause.ThenStatement.ThenStatementType.METHOD_CALL,
+                null,
+                callExpr
+        );
+    }
+
+    private List<Expr> parseCallArguments() {
+        List<Expr> args = new ArrayList<>();
+        if (check(TokenType.WITH)) {
+            advance();
+        } else {
+            return args;
+        }
+
+        while (!isAtEnd() && !isThenStatementBoundary(peek().getType())) {
+            if (check(TokenType.COMMA) || check(TokenType.AND)) {
+                advance();
+                continue;
+            }
+
+            if (checkIdentifierLike()) {
+                Token arg = advance();
+                args.add(new VariableExpr(currentSpan(), arg.getLexeme()));
+                continue;
+            }
+
+            if (check(TokenType.STRING_LITERAL)
+                || check(TokenType.INTEGER_LITERAL)
+                || check(TokenType.DECIMAL_LITERAL)
+                || check(TokenType.TRUE)
+                || check(TokenType.FALSE)
+                || check(TokenType.NULL)) {
+                args.add(primaryExpression());
+                continue;
+            }
+            break;
+        }
+
+        return args;
+    }
+
+    private List<String> parsePhraseTokensUntilWithOrBoundary() {
+        List<String> words = new ArrayList<>();
+        while (!isAtEnd() && !isThenStatementBoundary(peek().getType())) {
+            if (check(TokenType.WITH)) {
+                break;
+            }
+            if (check(TokenType.COMMA) || check(TokenType.AND)) {
+                break;
+            }
+
+            if (isWordLikeForPhrase(peek())) {
+                words.add(advance().getLexeme());
+                continue;
+            }
+            break;
+        }
+        return words;
+    }
+
+    private boolean isWordLikeForPhrase(Token token) {
+        if (token == null || token.getLexeme() == null || token.getLexeme().isBlank()) {
+            return false;
+        }
+        String lexeme = token.getLexeme();
+        if (token.getType() == TokenType.STRING_LITERAL
+            || token.getType() == TokenType.INTEGER_LITERAL
+            || token.getType() == TokenType.DECIMAL_LITERAL
+            || token.getType() == TokenType.TRUE
+            || token.getType() == TokenType.FALSE
+            || token.getType() == TokenType.NULL) {
+            return false;
+        }
+        return lexeme.matches("[A-Za-z_][A-Za-z0-9_\\-]*");
+    }
+
+    private String toCamelCasePhrase(List<String> words) {
+        if (words == null || words.isEmpty()) {
+            return "";
+        }
+
+        List<String> normalized = words.stream()
+                .filter(w -> w != null && !w.isBlank())
+                .map(w -> w.replaceAll("[^A-Za-z0-9]", ""))
+                .filter(w -> !w.isBlank())
+                .toList();
+
+        if (normalized.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder out = new StringBuilder(normalized.getFirst().toLowerCase());
+        for (int i = 1; i < normalized.size(); i++) {
+            String w = normalized.get(i);
+            out.append(Character.toUpperCase(w.charAt(0)));
+            if (w.length() > 1) {
+                out.append(w.substring(1).toLowerCase());
+            }
+        }
+        return out.toString();
+    }
+
+    private String decapitalize(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        if (value.length() == 1) {
+            return value.toLowerCase();
+        }
+        return Character.toLowerCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private ThenClause.ThenStatement parseNaturalMethodCallStatement(SourceSpan span) {
+        if (!checkIdentifierLike()) {
+            return null;
+        }
+
+        int start = current;
+        Token methodToken = consumeIdentifierLike("Expected method name");
+        if (methodToken == null) {
+            return null;
+        }
+
+        // Explicit invocation form is delegated to expression parser:
+        // service.notify(customer), notify(customer), this.notify(customer)
+        if (check(TokenType.DOT) || check(TokenType.LEFT_PAREN)) {
+            current = start;
+            Expr callExpr = expression();
+            return ThenClause.ThenStatement.simple(
+                span,
+                ThenClause.ThenStatement.ThenStatementType.METHOD_CALL,
+                null,
+                callExpr
+            );
+        }
+
+        String methodName = methodToken.getLexeme();
+        List<Expr> arguments = new ArrayList<>();
+
+        while (!isAtEnd() && !isThenStatementBoundary(peek().getType())) {
+            if (check(TokenType.WITH) || check(TokenType.AND) || check(TokenType.COMMA)) {
+                advance();
+                continue;
+            }
+
+            if (checkIdentifierLike()) {
+                Token arg = advance();
+                arguments.add(new VariableExpr(currentSpan(), arg.getLexeme()));
+                continue;
+            }
+
+            if (check(TokenType.STRING_LITERAL)
+                || check(TokenType.INTEGER_LITERAL)
+                || check(TokenType.DECIMAL_LITERAL)
+                || check(TokenType.TRUE)
+                || check(TokenType.FALSE)
+                || check(TokenType.NULL)) {
+                arguments.add(primaryExpression());
+                continue;
+            }
+
+            break;
+        }
+
+        Expr callExpr = new MethodCallExpr(span, null, methodName, arguments);
+        return ThenClause.ThenStatement.simple(
+            span,
+            ThenClause.ThenStatement.ThenStatementType.METHOD_CALL,
+            null,
+            callExpr
+        );
+    }
+
+    private boolean isThenStatementBoundary(TokenType tokenType) {
+        return tokenType == TokenType.DASH
+            || tokenType == TokenType.EMIT
+            || tokenType == TokenType.RETURN
+            || tokenType == TokenType.RIGHT_BRACE
+            || tokenType == TokenType.OTHERWISE
+            || tokenType == TokenType.THEN
+            || tokenType == TokenType.WHEN;
     }
     
     private ThenClause.ThenStatement parseConditionalStatement() {
@@ -3204,7 +3461,7 @@ public class DdslParser {
                 }
             } else if (check(TokenType.DOT)) {
                 advance();
-                Token nameToken = consume(TokenType.IDENTIFIER, "Expected property name after '.'");
+                Token nameToken = consumeIdentifierLike("Expected property name after '.'");
                 String name = nameToken != null ? nameToken.getLexeme() : "";
                 expr = new FieldAccessExpr(currentSpan(), expr, name);
             } else if (check(TokenType.LEFT_BRACKET) && isIndexableExpression(expr)) {
@@ -4259,7 +4516,7 @@ public class DdslParser {
      * as field/property identifiers.
      */
     private boolean checkIdentifierLike() {
-        return check(TokenType.IDENTIFIER) || check(TokenType.ITEMS);
+        return check(TokenType.IDENTIFIER) || check(TokenType.ITEMS) || check(TokenType.SAVE);
     }
 
     private Token consumeIdentifierLike(String message) {

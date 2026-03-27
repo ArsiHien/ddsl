@@ -24,19 +24,23 @@ import uet.ndh.ddsl.ast.expr.TemporalRange;
 import uet.ndh.ddsl.ast.expr.TemporalRelative;
 import uet.ndh.ddsl.ast.expr.TemporalSequence;
 import uet.ndh.ddsl.ast.expr.TernaryExpr;
+import uet.ndh.ddsl.ast.expr.ThisExpr;
 import uet.ndh.ddsl.ast.expr.UnaryExpr;
 import uet.ndh.ddsl.ast.expr.VariableExpr;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.member.ParameterDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.visitor.TreeWalkingVisitor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,6 +54,8 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
 
     private static final String UNDEFINED_TARGET_RULE_ID = "SEM001";
     private static final String UNDEFINED_IDENTIFIER_RULE_ID = "SEM108";
+    private static final String UNDEFINED_METHOD_RULE_ID = "SEM202";
+    private static final String METHOD_ARITY_MISMATCH_RULE_ID = "SEM204";
 
     private static final Set<String> RESERVED_WORDS = Set.of(
             "a", "all", "an", "and", "any", "as", "at", "before", "after", "ago",
@@ -68,8 +74,16 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
     private final Set<String> emittedDiagnosticKeys = new HashSet<>();
     private OwnerContext currentOwner;
 
-    private record OwnerContext(String kind, String name, Set<String> fieldTargets) {
+        private record OwnerContext(
+            String kind,
+            String name,
+            Set<String> fieldTargets,
+            Map<String, Integer> localMethodArities,
+            Map<String, Map<String, Integer>> receiverMethodArities
+        ) {
     }
+
+        private final Map<String, Map<String, Integer>> boundedContextReceiverMethodArities = new HashMap<>();
 
     public List<Diagnostic> diagnostics() {
         return List.copyOf(diagnostics);
@@ -85,6 +99,10 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
 
     @Override
     public Void visitBoundedContext(uet.ndh.ddsl.ast.model.BoundedContextDecl decl) {
+        boundedContextReceiverMethodArities.clear();
+        indexReceiverMethods(decl.repositories());
+        indexReceiverMethodsForServices(decl.domainServices());
+
         for (var module : decl.modules()) {
             module.accept(this);
         }
@@ -109,8 +127,21 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         if (decl.root() != null) {
             fieldTargets.addAll(collectEntityFieldTargets(decl.root()));
         }
+
+        Map<String, Integer> localMethods = new HashMap<>();
+        if (decl.root() != null) {
+            collectBehaviorArities(decl.root().behaviors(), localMethods);
+        }
+        collectBehaviorArities(decl.behaviors(), localMethods);
+
         OwnerContext previous = currentOwner;
-        currentOwner = new OwnerContext("Aggregate", decl.name(), fieldTargets);
+        currentOwner = new OwnerContext(
+                "Aggregate",
+                decl.name(),
+                fieldTargets,
+                Map.copyOf(localMethods),
+                copyReceiverMethodIndex()
+        );
         try {
             return super.visitAggregate(decl);
         } finally {
@@ -121,7 +152,15 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
     @Override
     public Void visitEntity(EntityDecl decl) {
         OwnerContext previous = currentOwner;
-        currentOwner = new OwnerContext("Entity", decl.name(), collectEntityFieldTargets(decl));
+        Map<String, Integer> localMethods = new HashMap<>();
+        collectBehaviorArities(decl.behaviors(), localMethods);
+        currentOwner = new OwnerContext(
+                "Entity",
+                decl.name(),
+                collectEntityFieldTargets(decl),
+                Map.copyOf(localMethods),
+                copyReceiverMethodIndex()
+        );
         try {
             return super.visitEntity(decl);
         } finally {
@@ -138,8 +177,22 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
             }
         }
 
+        Map<String, Integer> localMethods = new HashMap<>();
+        collectBehaviorArities(decl.behaviors(), localMethods);
+        for (var method : decl.methods()) {
+            if (method != null && method.name() != null && !method.name().isBlank()) {
+                localMethods.put(method.name(), method.parameters() != null ? method.parameters().size() : 0);
+            }
+        }
+
         OwnerContext previous = currentOwner;
-        currentOwner = new OwnerContext("DomainService", decl.name(), fieldTargets);
+        currentOwner = new OwnerContext(
+                "DomainService",
+                decl.name(),
+                fieldTargets,
+                Map.copyOf(localMethods),
+                copyReceiverMethodIndex()
+        );
         try {
             return super.visitDomainService(decl);
         } finally {
@@ -278,6 +331,7 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         }
 
         validateExpressionReferences(stmt.expression(), scopeTargets, stmt.span(), "then expression");
+        validateMethodCallSemantics(stmt.expression(), scopeTargets, stmt.span());
         validateConditionReferences(stmt.condition(), scopeTargets, stmt.span(), "then condition");
 
         // Nested structures
@@ -522,6 +576,10 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
             return;
         }
 
+        if (currentOwner != null && resolveReceiverMethods(trimmed) != null) {
+            return;
+        }
+
         for (String identifier : extractIdentifierCandidates(trimmed)) {
             if (!scopeTargets.contains(identifier) && !isEquivalentToScopedName(identifier, scopeTargets)) {
                 addDiagnosticOnce(
@@ -578,6 +636,176 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         if (emittedDiagnosticKeys.add(dedupeKey)) {
             diagnostics.add(Diagnostic.error(location, message, ruleId));
         }
+    }
+
+    private void validateMethodCallSemantics(Expr expression, Set<String> scopeTargets, uet.ndh.ddsl.ast.SourceSpan location) {
+        if (!(expression instanceof MethodCallExpr callExpr) || currentOwner == null) {
+            return;
+        }
+
+        int providedArgCount = callExpr.arguments() != null ? callExpr.arguments().size() : 0;
+
+        if (!callExpr.hasReceiver()) {
+            Integer expectedArity = currentOwner.localMethodArities().get(callExpr.methodName());
+            if (expectedArity == null) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' not found in scope of %s '%s'."
+                                .formatted(callExpr.methodName(), currentOwner.kind(), currentOwner.name()),
+                        UNDEFINED_METHOD_RULE_ID
+                );
+                return;
+            }
+
+            if (!expectedArity.equals(providedArgCount)) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' expects %d argument(s), got %d."
+                                .formatted(callExpr.methodName(), expectedArity, providedArgCount),
+                        METHOD_ARITY_MISMATCH_RULE_ID
+                );
+            }
+            return;
+        }
+
+        if (callExpr.receiver() instanceof ThisExpr) {
+            Integer expectedArity = currentOwner.localMethodArities().get(callExpr.methodName());
+            if (expectedArity == null) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' not found in scope of %s '%s'."
+                                .formatted(callExpr.methodName(), currentOwner.kind(), currentOwner.name()),
+                        UNDEFINED_METHOD_RULE_ID
+                );
+                return;
+            }
+
+            if (!expectedArity.equals(providedArgCount)) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' expects %d argument(s), got %d."
+                                .formatted(callExpr.methodName(), expectedArity, providedArgCount),
+                        METHOD_ARITY_MISMATCH_RULE_ID
+                );
+            }
+            return;
+        }
+
+        if (callExpr.receiver() instanceof VariableExpr receiverVar) {
+            String receiverName = receiverVar.name();
+            Map<String, Integer> methods = resolveReceiverMethods(receiverName);
+            if (methods == null) {
+                return; // receiver scope is validated elsewhere by identifier checks
+            }
+
+            Integer expectedArity = methods.get(callExpr.methodName());
+            if (expectedArity == null) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' not found on receiver '%s'."
+                                .formatted(callExpr.methodName(), receiverName),
+                        UNDEFINED_METHOD_RULE_ID
+                );
+                return;
+            }
+
+            if (!expectedArity.equals(providedArgCount)) {
+                addDiagnosticOnce(
+                        location,
+                        "Method '%s' on '%s' expects %d argument(s), got %d."
+                                .formatted(callExpr.methodName(), receiverName, expectedArity, providedArgCount),
+                        METHOD_ARITY_MISMATCH_RULE_ID
+                );
+            }
+        }
+    }
+
+    private void collectBehaviorArities(List<BehaviorDecl> behaviors, Map<String, Integer> sink) {
+        for (BehaviorDecl behavior : behaviors) {
+            if (behavior != null && behavior.getName() != null && !behavior.getName().isBlank()) {
+                sink.put(behavior.getName(), behavior.parameters() != null ? behavior.parameters().size() : 0);
+            }
+        }
+    }
+
+    private void indexReceiverMethods(List<RepositoryDecl> repositories) {
+        for (RepositoryDecl repository : repositories) {
+            if (repository == null || repository.name() == null || repository.name().isBlank()) {
+                continue;
+            }
+            Map<String, Integer> methodArities = new HashMap<>();
+            for (var method : repository.methods()) {
+                if (method != null && method.name() != null && !method.name().isBlank()) {
+                    methodArities.put(method.name(), method.parameters() != null ? method.parameters().size() : 0);
+                }
+            }
+
+            registerReceiverMethodArities(repository.name(), methodArities);
+            registerReceiverMethodArities(decapitalize(repository.name()), methodArities);
+        }
+    }
+
+    private void indexReceiverMethodsForServices(List<DomainServiceDecl> services) {
+        for (DomainServiceDecl service : services) {
+            if (service == null || service.name() == null || service.name().isBlank()) {
+                continue;
+            }
+
+            Map<String, Integer> methodArities = new HashMap<>();
+            collectBehaviorArities(service.behaviors(), methodArities);
+            for (var method : service.methods()) {
+                if (method != null && method.name() != null && !method.name().isBlank()) {
+                    methodArities.put(method.name(), method.parameters() != null ? method.parameters().size() : 0);
+                }
+            }
+
+            registerReceiverMethodArities(service.name(), methodArities);
+            registerReceiverMethodArities(decapitalize(service.name()), methodArities);
+        }
+    }
+
+    private void registerReceiverMethodArities(String receiverName, Map<String, Integer> methods) {
+        if (receiverName == null || receiverName.isBlank()) {
+            return;
+        }
+        boundedContextReceiverMethodArities.put(receiverName, Map.copyOf(methods));
+    }
+
+    private Map<String, Map<String, Integer>> copyReceiverMethodIndex() {
+        Map<String, Map<String, Integer>> copy = new HashMap<>();
+        for (var entry : boundedContextReceiverMethodArities.entrySet()) {
+            copy.put(entry.getKey(), Map.copyOf(entry.getValue()));
+        }
+        return Map.copyOf(copy);
+    }
+
+    private Map<String, Integer> resolveReceiverMethods(String receiverName) {
+        if (receiverName == null || receiverName.isBlank()) {
+            return null;
+        }
+
+        Map<String, Integer> methods = currentOwner.receiverMethodArities().get(receiverName);
+        if (methods != null) {
+            return methods;
+        }
+
+        String normalized = normalizeName(receiverName);
+        for (var entry : currentOwner.receiverMethodArities().entrySet()) {
+            if (normalizeName(entry.getKey()).equals(normalized)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private String decapitalize(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        if (value.length() == 1) {
+            return value.toLowerCase();
+        }
+        return Character.toLowerCase(value.charAt(0)) + value.substring(1);
     }
 
     private boolean requiresTargetResolution(ThenClause.ThenStatement.ThenStatementType type) {

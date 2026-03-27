@@ -110,7 +110,7 @@ public class EntityTranslator {
         typeMapper.clearFieldTypes();
         for (FieldDecl field : entity.fields()) {
             if (field.type() != null) {
-                typeMapper.registerFieldType(field.name(), field.type().name());
+                typeMapper.registerFieldType(field.name(), field.type());
             }
         }
 

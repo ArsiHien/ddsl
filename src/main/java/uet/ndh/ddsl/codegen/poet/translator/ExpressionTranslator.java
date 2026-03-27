@@ -12,6 +12,7 @@ import uet.ndh.ddsl.ast.visitor.BaseAstVisitor;
 import uet.ndh.ddsl.codegen.poet.TypeMapper;
 
 import javax.lang.model.element.Modifier;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -58,6 +59,7 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     private static final ClassName COLLECTORS = ClassName.get(Collectors.class);
     private static final ClassName INSTANT = ClassName.get(Instant.class);
     private static final ClassName CHRONO_UNIT = ClassName.get(ChronoUnit.class);
+    private static final ClassName BIG_DECIMAL = ClassName.get(BigDecimal.class);
     
     public ExpressionTranslator(TypeMapper typeMapper) {
         this.typeMapper = typeMapper;
@@ -497,6 +499,21 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     }
     
     private CodeBlock translateInvokeStatement(ThenClause.ThenStatement statement) {
+        // Legacy AST fallback for parsed forms like: save order to orderRepository
+        // (older parser versions represented repository in expression and entity in target)
+        if (statement.expression() instanceof VariableExpr repositoryVar
+                && statement.target() != null
+                && !statement.target().isBlank()) {
+            return CodeBlock.of("$N.save($N);\n", repositoryVar.name(), statement.target());
+        }
+
+        if (statement.expression() == null) {
+            if (statement.target() != null && !statement.target().isBlank()) {
+                return CodeBlock.of("$N();\n", statement.target());
+            }
+            return CodeBlock.of("// TODO: unresolved method call\n");
+        }
+
         CodeBlock expression = translateExpression(statement.expression());
         return CodeBlock.of("$L;\n", expression);
     }
@@ -1079,6 +1096,62 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         if (raw == null || raw.isBlank()) {
             return CodeBlock.of("true");
         }
+
+        // Try built-in format validation phrase: "email is valid EMAIL format"
+        if (raw.matches(".+ is valid [A-Z_ ]+ format")) {
+            String[] sides = raw.split(" is valid ", 2);
+            String targetName = sides[0].trim();
+            String formatLabel = sides[1].replace(" format", "").trim().replace(' ', '_');
+            try {
+                StringCondition.FormatType formatType = StringCondition.FormatType.valueOf(formatLabel);
+                return generateFormatValidation(CodeBlock.of("this.$N", targetName), formatType);
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to other best-effort patterns
+            }
+        }
+
+        // Try negative built-in format phrase: "email is not valid EMAIL format"
+        if (raw.matches(".+ is not valid [A-Z_ ]+ format")) {
+            String[] sides = raw.split(" is not valid ", 2);
+            String targetName = sides[0].trim();
+            String formatLabel = sides[1].replace(" format", "").trim().replace(' ', '_');
+            try {
+                StringCondition.FormatType formatType = StringCondition.FormatType.valueOf(formatLabel);
+                return CodeBlock.of("!($L)", generateFormatValidation(CodeBlock.of("this.$N", targetName), formatType));
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to other best-effort patterns
+            }
+        }
+
+        // Try symbolic comparison: "amount > 0", "total <= 100.5"
+        if (raw.matches("[a-zA-Z_][a-zA-Z0-9_]*\\s*(==|!=|>=|<=|>|<)\\s*.+")) {
+            String[] parts = raw.split("\\s*(==|!=|>=|<=|>|<)\\s*", 2);
+            java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("[a-zA-Z_][a-zA-Z0-9_]*\\s*(==|!=|>=|<=|>|<)\\s*.+")
+                .matcher(raw);
+            if (parts.length == 2 && matcher.matches()) {
+                String left = parts[0].trim();
+                String op = matcher.group(1);
+                String rightRaw = parts[1].trim();
+
+                TypeName leftType = resolveTypeByName(left);
+                if (isBigDecimalType(leftType)) {
+                    CodeBlock rightOperand = toBigDecimalOperandFromRaw(rightRaw);
+                    return switch (op) {
+                        case ">" -> CodeBlock.of("this.$N.compareTo($L) > 0", left, rightOperand);
+                        case "<" -> CodeBlock.of("this.$N.compareTo($L) < 0", left, rightOperand);
+                        case ">=" -> CodeBlock.of("this.$N.compareTo($L) >= 0", left, rightOperand);
+                        case "<=" -> CodeBlock.of("this.$N.compareTo($L) <= 0", left, rightOperand);
+                        case "==" -> CodeBlock.of("this.$N.compareTo($L) == 0", left, rightOperand);
+                        case "!=" -> CodeBlock.of("this.$N.compareTo($L) != 0", left, rightOperand);
+                        default -> CodeBlock.of("true");
+                    };
+                }
+
+                CodeBlock rightOperand = renderSimpleOperand(rightRaw);
+                return CodeBlock.of("this.$N $L $L", left, op, rightOperand);
+            }
+        }
         
         // Try "X is not null" pattern
         if (raw.matches("\\w+ is not null")) {
@@ -1113,7 +1186,12 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
         // String operations
         if (raw.contains(" matches ")) {
             String[] parts = raw.split(" matches ", 2);
-            return CodeBlock.of("$N.matches($L)", parts[0].trim(), parts[1].trim());
+            String target = parts[0].trim();
+            String candidate = parts[1].trim();
+            if (isQuotedLiteral(candidate)) {
+                return CodeBlock.of("$N.matches($S)", target, unquote(candidate));
+            }
+            return CodeBlock.of("$N.matches($L)", target, candidate);
         }
         if (raw.contains(" contains ")) {
             String[] parts = raw.split(" contains ", 2);
@@ -1269,6 +1347,31 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     }
     
     private CodeBlock translateComparisonCondition(NaturalLanguageCondition condition) {
+        String rawText = condition.rawText();
+        if (rawText != null && rawText.matches(".+ is valid [A-Z_ ]+ format")) {
+            String[] sides = rawText.split(" is valid ", 2);
+            String targetName = sides[0].trim();
+            String formatLabel = sides[1].replace(" format", "").trim().replace(' ', '_');
+            try {
+                StringCondition.FormatType formatType = StringCondition.FormatType.valueOf(formatLabel);
+                return generateFormatValidation(CodeBlock.of("this.$N", targetName), formatType);
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to standard comparison handling
+            }
+        }
+
+        if (rawText != null && rawText.matches(".+ is not valid [A-Z_ ]+ format")) {
+            String[] sides = rawText.split(" is not valid ", 2);
+            String targetName = sides[0].trim();
+            String formatLabel = sides[1].replace(" format", "").trim().replace(' ', '_');
+            try {
+                StringCondition.FormatType formatType = StringCondition.FormatType.valueOf(formatLabel);
+                return CodeBlock.of("!($L)", generateFormatValidation(CodeBlock.of("this.$N", targetName), formatType));
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to standard comparison handling
+            }
+        }
+
         String operator = mapComparisonOperator(condition.comparisonOperator());
         CodeBlock rightValue = condition.rightExpression() != null 
             ? translateExpression(condition.rightExpression()) 
@@ -1291,6 +1394,21 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             if (condition.rightExpression() instanceof NullExpr) {
                 return CodeBlock.of("this.$N $L null", left.name(), operator);
             }
+
+            TypeName leftType = resolveTypeByName(left.name());
+            if (isBigDecimalType(leftType) && supportsOrderedComparison(condition.comparisonOperator())) {
+                CodeBlock rightOperand = toBigDecimalOperand(condition.rightExpression(), rightValue);
+                return switch (condition.comparisonOperator()) {
+                    case GREATER_THAN -> CodeBlock.of("this.$N.compareTo($L) > 0", left.name(), rightOperand);
+                    case LESS_THAN -> CodeBlock.of("this.$N.compareTo($L) < 0", left.name(), rightOperand);
+                    case AT_LEAST -> CodeBlock.of("this.$N.compareTo($L) >= 0", left.name(), rightOperand);
+                    case AT_MOST -> CodeBlock.of("this.$N.compareTo($L) <= 0", left.name(), rightOperand);
+                    case EQUAL -> CodeBlock.of("this.$N.compareTo($L) == 0", left.name(), rightOperand);
+                    case NOT_EQUAL -> CodeBlock.of("this.$N.compareTo($L) != 0", left.name(), rightOperand);
+                    default -> CodeBlock.of("this.$N $L $L", left.name(), operator, rightValue);
+                };
+            }
+
             if (isLikelySymbolicConstant(condition.rightExpression())) {
                 String symbolic = ((VariableExpr) condition.rightExpression()).name();
                 if (condition.comparisonOperator() == NaturalLanguageCondition.ComparisonOperator.EQUAL) {
@@ -1395,6 +1513,76 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             case AT_MOST -> "<=";
             case WITHIN -> "/* within */";
         };
+    }
+
+    private boolean supportsOrderedComparison(NaturalLanguageCondition.ComparisonOperator operator) {
+        return operator == NaturalLanguageCondition.ComparisonOperator.GREATER_THAN
+            || operator == NaturalLanguageCondition.ComparisonOperator.LESS_THAN
+            || operator == NaturalLanguageCondition.ComparisonOperator.AT_LEAST
+            || operator == NaturalLanguageCondition.ComparisonOperator.AT_MOST
+            || operator == NaturalLanguageCondition.ComparisonOperator.EQUAL
+            || operator == NaturalLanguageCondition.ComparisonOperator.NOT_EQUAL;
+    }
+
+    private TypeName resolveTypeByName(String symbolName) {
+        if (symbolName == null || symbolName.isBlank()) {
+            return null;
+        }
+        TypeName paramType = currentBehaviorParamTypes.get(symbolName);
+        if (paramType != null) {
+            return paramType;
+        }
+        return typeMapper.tryResolveParamType(symbolName);
+    }
+
+    private boolean isBigDecimalType(TypeName typeName) {
+        return typeName != null && typeName.equals(BIG_DECIMAL);
+    }
+
+    private CodeBlock toBigDecimalOperand(Expr rawExpr, CodeBlock translatedExpr) {
+        if (rawExpr instanceof LiteralExpr literal && literal.value() instanceof Number number) {
+            return CodeBlock.of("new $T($S)", BIG_DECIMAL, number.toString());
+        }
+        if (rawExpr != null && isBigDecimalType(resolveExpressionType(rawExpr))) {
+            return translatedExpr;
+        }
+        return CodeBlock.of("new $T(String.valueOf($L))", BIG_DECIMAL, translatedExpr);
+    }
+
+    private CodeBlock toBigDecimalOperandFromRaw(String raw) {
+        String candidate = raw != null ? raw.trim() : "0";
+        if (candidate.matches("-?\\d+(\\.\\d+)?")) {
+            return CodeBlock.of("new $T($S)", BIG_DECIMAL, candidate);
+        }
+        if (isQuotedLiteral(candidate)) {
+            return CodeBlock.of("new $T($S)", BIG_DECIMAL, unquote(candidate));
+        }
+        return CodeBlock.of("new $T(String.valueOf($N))", BIG_DECIMAL, candidate);
+    }
+
+    private CodeBlock renderSimpleOperand(String raw) {
+        String candidate = raw != null ? raw.trim() : "null";
+        if (isQuotedLiteral(candidate)) {
+            return CodeBlock.of("$S", unquote(candidate));
+        }
+        if (candidate.matches("-?\\d+(\\.\\d+)?")
+            || "true".equalsIgnoreCase(candidate)
+            || "false".equalsIgnoreCase(candidate)
+            || "null".equalsIgnoreCase(candidate)) {
+            return CodeBlock.of("$L", candidate);
+        }
+        return CodeBlock.of("$N", candidate);
+    }
+
+    private boolean isQuotedLiteral(String value) {
+        return value != null && value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"");
+    }
+
+    private String unquote(String value) {
+        if (!isQuotedLiteral(value)) {
+            return value;
+        }
+        return value.substring(1, value.length() - 1);
     }
     
     // =================================================================================

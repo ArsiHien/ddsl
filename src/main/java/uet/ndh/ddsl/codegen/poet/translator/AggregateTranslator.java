@@ -2,20 +2,27 @@ package uet.ndh.ddsl.codegen.poet.translator;
 
 import com.palantir.javapoet.*;
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
+import uet.ndh.ddsl.ast.behavior.clause.ThenClause;
 import uet.ndh.ddsl.ast.common.Constraint;
+import uet.ndh.ddsl.ast.expr.Expr;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.entity.IdentityFieldDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
+import uet.ndh.ddsl.ast.expr.MethodCallExpr;
+import uet.ndh.ddsl.ast.expr.VariableExpr;
+import uet.ndh.ddsl.ast.expr.ThisExpr;
 import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.poet.TypeMapper;
 
 import javax.lang.model.element.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -134,6 +141,13 @@ public class AggregateTranslator {
             if (identityName != null && identityName.equals(field.name())) continue;
             classBuilder.addField(buildField(field));
         }
+
+        // Add inferred external-call dependencies (service/repository receivers)
+        Map<String, TypeName> inferredDependencies = inferExternalReceiverDependencies(aggregate, root);
+        for (Map.Entry<String, TypeName> dep : inferredDependencies.entrySet()) {
+            classBuilder.addField(FieldSpec.builder(dep.getValue(), dep.getKey(), Modifier.PRIVATE, Modifier.FINAL)
+                    .build());
+        }
         
         // Add domain events collection
         ClassName domainEventInterface = typeMapper.getDomainEventInterface();
@@ -144,14 +158,14 @@ public class AggregateTranslator {
         classBuilder.addField(eventsField);
         
         // Add constructor
-        classBuilder.addMethod(buildAggregateConstructor(root));
+        classBuilder.addMethod(buildAggregateConstructor(root, inferredDependencies));
         
         // Register field types for behavior parameter resolution
         // e.g. field "guest: GuestProfile" allows param "guest" to resolve to GuestProfile
         typeMapper.clearFieldTypes();
         for (FieldDecl field : root.fields()) {
             if (field.type() != null) {
-                typeMapper.registerFieldType(field.name(), field.type().name());
+                typeMapper.registerFieldType(field.name(), field.type());
             }
         }
         
@@ -180,6 +194,12 @@ public class AggregateTranslator {
         // Add getId() method for AggregateRoot interface
         if (root.identity() != null) {
             classBuilder.addMethod(buildGetIdMethod(root.identity()));
+        }
+
+        // Add getters for non-identity fields (identity is exposed via getId())
+        for (FieldDecl field : root.fields()) {
+            if (identityName != null && identityName.equals(field.name())) continue;
+            classBuilder.addMethod(buildGetter(field));
         }
         
         return JavaFile.builder(packageName, classBuilder.build())
@@ -359,7 +379,7 @@ public class AggregateTranslator {
         return builder.build();
     }
     
-    private MethodSpec buildAggregateConstructor(EntityDecl root) {
+    private MethodSpec buildAggregateConstructor(EntityDecl root, Map<String, TypeName> inferredDependencies) {
         MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC);
         
@@ -378,8 +398,86 @@ public class AggregateTranslator {
             constructor.addParameter(fieldType, field.name());
             constructor.addStatement("this.$N = $N", field.name(), field.name());
         }
+
+        for (Map.Entry<String, TypeName> dep : inferredDependencies.entrySet()) {
+            constructor.addParameter(dep.getValue(), dep.getKey());
+            constructor.addStatement("this.$N = $N", dep.getKey(), dep.getKey());
+        }
         
         return constructor.build();
+    }
+
+    private Map<String, TypeName> inferExternalReceiverDependencies(AggregateDecl aggregate, EntityDecl root) {
+        Map<String, TypeName> deps = new LinkedHashMap<>();
+
+        List<BehaviorDecl> mergedBehaviors = new ArrayList<>(root.behaviors());
+        for (BehaviorDecl behavior : aggregate.behaviors()) {
+            if (!mergedBehaviors.contains(behavior)) {
+                mergedBehaviors.add(behavior);
+            }
+        }
+
+        for (BehaviorDecl behavior : mergedBehaviors) {
+            for (ThenClause thenClause : behavior.thenClauses()) {
+                for (ThenClause.ThenStatement stmt : thenClause.statements()) {
+                    collectExternalReceiversFromThenStatement(stmt, deps);
+                }
+            }
+        }
+
+        return deps;
+    }
+
+    private void collectExternalReceiversFromThenStatement(ThenClause.ThenStatement statement,
+                                                           Map<String, TypeName> deps) {
+        collectExternalReceiversFromExpr(statement.expression(), deps);
+
+        for (ThenClause.ThenStatement nested : statement.nestedStatements()) {
+            collectExternalReceiversFromThenStatement(nested, deps);
+        }
+        for (ThenClause.ThenStatement nested : statement.elseStatements()) {
+            collectExternalReceiversFromThenStatement(nested, deps);
+        }
+        for (ThenClause.ThenStatement.ElseIfBranch elseIf : statement.elseIfBranches()) {
+            for (ThenClause.ThenStatement nested : elseIf.statements()) {
+                collectExternalReceiversFromThenStatement(nested, deps);
+            }
+        }
+    }
+
+    private void collectExternalReceiversFromExpr(Expr expr, Map<String, TypeName> deps) {
+        if (!(expr instanceof MethodCallExpr callExpr) || !callExpr.hasReceiver()) {
+            return;
+        }
+
+        if (callExpr.receiver() instanceof ThisExpr) {
+            return;
+        }
+
+        if (callExpr.receiver() instanceof VariableExpr receiverVar) {
+            String receiverName = receiverVar.name();
+            if (receiverName == null || receiverName.isBlank() || "this".equals(receiverName)) {
+                return;
+            }
+            deps.putIfAbsent(receiverName, inferDependencyType(receiverName));
+        }
+    }
+
+    private TypeName inferDependencyType(String receiverName) {
+        String className = capitalize(receiverName);
+        String lower = receiverName.toLowerCase();
+        if (lower.endsWith("service")) {
+            return ClassName.get(typeMapper.getBasePackage() + ".service", className);
+        }
+        if (lower.endsWith("repository")) {
+            return ClassName.get(typeMapper.getBasePackage() + ".repository", className);
+        }
+        return ClassName.get(Object.class);
+    }
+
+    private String capitalize(String value) {
+        if (value == null || value.isBlank()) return value;
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
     
     private MethodSpec buildEntityConstructor(EntityDecl entity) {
@@ -457,6 +555,17 @@ public class AggregateTranslator {
             .addAnnotation(Override.class)
             .returns(idType)
             .addStatement("return this.$N", identity.name())
+            .build();
+    }
+
+    private MethodSpec buildGetter(FieldDecl field) {
+        TypeName fieldType = typeMapper.mapType(field.type());
+        String getterName = "get" + capitalize(field.name());
+
+        return MethodSpec.methodBuilder(getterName)
+            .addModifiers(Modifier.PUBLIC)
+            .returns(fieldType)
+            .addStatement("return this.$N", field.name())
             .build();
     }
     
