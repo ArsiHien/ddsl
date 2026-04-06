@@ -4,8 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.WorkspaceService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import uet.ndh.ddsl.lsp.core.DdslCommandIds;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -67,20 +66,37 @@ public class DdslWorkspaceService implements WorkspaceService {
         
         return CompletableFuture.supplyAsync(() -> {
             switch (command) {
-                case "ddsl.compile" -> {
+                case DdslCommandIds.COMPILE -> {
                     // Trigger compilation
                     server.logMessage(MessageType.Info, "Compiling DDSL specification...");
                     return "Compilation started";
                 }
-                case "ddsl.validate" -> {
+                case DdslCommandIds.VALIDATE -> {
                     // Trigger validation
                     server.logMessage(MessageType.Info, "Validating DDSL specification...");
                     return "Validation started";
                 }
-                case "ddsl.generateCode" -> {
+                case DdslCommandIds.GENERATE_CODE -> {
                     // Trigger code generation
                     server.logMessage(MessageType.Info, "Generating code from DDSL...");
                     return "Code generation started";
+                }
+                case DdslCommandIds.CONVERT_TO_ENTITY -> {
+                    server.logMessage(MessageType.Info, "Refactor: Convert ValueObject to Entity");
+                    return "Refactor command accepted";
+                }
+                case DdslCommandIds.EXTRACT_VALUE_OBJECT,
+                     DdslCommandIds.EXTRACT_TO_VALUE_OBJECT -> {
+                    server.logMessage(MessageType.Info, "Refactor: Extract ValueObject");
+                    return "Refactor command accepted";
+                }
+                case DdslCommandIds.GENERATE_INVARIANTS -> {
+                    server.logMessage(MessageType.Info, "Source action: Generate invariants block");
+                    return "Source action accepted";
+                }
+                case DdslCommandIds.GENERATE_OPERATIONS -> {
+                    server.logMessage(MessageType.Info, "Source action: Generate operations block");
+                    return "Source action accepted";
                 }
                 default -> {
                     log.warn("Unknown command: {}", command);

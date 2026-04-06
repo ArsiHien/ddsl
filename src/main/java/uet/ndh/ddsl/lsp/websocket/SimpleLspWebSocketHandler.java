@@ -5,17 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.*;
 import org.eclipse.lsp4j.services.LanguageClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import uet.ndh.ddsl.lsp.DdslLanguageServer;
+import uet.ndh.ddsl.lsp.core.DdslLanguageServerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Simple WebSocket handler for LSP communication.
@@ -47,7 +46,7 @@ public class SimpleLspWebSocketHandler extends TextWebSocketHandler {
         log.info("LSP WebSocket connection established: {}", session.getId());
         
         // Create language server and client proxy
-        DdslLanguageServer server = new DdslLanguageServer();
+        DdslLanguageServer server = DdslLanguageServerFactory.createEmbedded();
         WebSocketLanguageClient client = new WebSocketLanguageClient(session, gson);
         server.connect(client);
         

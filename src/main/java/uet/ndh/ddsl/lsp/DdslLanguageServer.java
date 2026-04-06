@@ -3,8 +3,8 @@ package uet.ndh.ddsl.lsp;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import uet.ndh.ddsl.lsp.core.DdslCommandIds;
+import uet.ndh.ddsl.lsp.core.ExitHandler;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +30,8 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
 
+    private final ExitHandler exitHandler;
+
     /** The client proxy for sending notifications/requests to the editor */
     private LanguageClient client;
     
@@ -46,6 +48,11 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
     private boolean shutdownReceived = false;
     
     public DdslLanguageServer() {
+        this(ExitHandler.noOp());
+    }
+
+    public DdslLanguageServer(ExitHandler exitHandler) {
+        this.exitHandler = exitHandler;
         this.textDocumentService = new DdslTextDocumentService(this);
         this.workspaceService = new DdslWorkspaceService(this);
     }
@@ -67,7 +74,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         log.info("Initializing DDSL Language Server...");
         log.info("Client info: {}", params.getClientInfo());
-        log.info("Root URI: {}", params.getRootUri());
+        log.info("Workspace folders: {}", params.getWorkspaceFolders());
         
         // Build server capabilities
         serverCapabilities = new ServerCapabilities();
@@ -127,6 +134,10 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
             CodeActionKind.Source
         ));
         serverCapabilities.setCodeActionProvider(codeActionOptions);
+
+        // Execute command: allows command-based code actions and server commands.
+        ExecuteCommandOptions executeCommandOptions = new ExecuteCommandOptions(DdslCommandIds.ALL);
+        serverCapabilities.setExecuteCommandProvider(executeCommandOptions);
         
         // Build result
         InitializeResult result = new InitializeResult(serverCapabilities);
@@ -166,8 +177,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
     @Override
     public void exit() {
         log.info("DDSL Language Server exiting");
-        // Exit with 0 if shutdown was received, 1 otherwise
-        System.exit(shutdownReceived ? 0 : 1);
+        exitHandler.exit(shutdownReceived);
     }
     
     @Override

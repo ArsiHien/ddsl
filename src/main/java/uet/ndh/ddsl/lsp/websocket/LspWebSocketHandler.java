@@ -8,6 +8,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import uet.ndh.ddsl.lsp.DdslLanguageServer;
+import uet.ndh.ddsl.lsp.core.DdslLanguageServerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class LspWebSocketHandler extends TextWebSocketHandler {
         log.info("LSP WebSocket connection established: {}", session.getId());
 
         // Create a new language server instance for this session
-        DdslLanguageServer server = new DdslLanguageServer();
+        DdslLanguageServer server = DdslLanguageServerFactory.createEmbedded();
 
         // Create piped streams for communication
         PipedInputStream serverInput = new PipedInputStream();
@@ -77,8 +78,6 @@ public class LspWebSocketHandler extends TextWebSocketHandler {
 
         // Create session holder
         LspSession lspSession = new LspSession(
-                server,
-                launcher,
                 clientOutput,
                 clientInput,
                 session
@@ -140,21 +139,15 @@ public class LspWebSocketHandler extends TextWebSocketHandler {
      * Holds the state for an LSP session.
      */
     private static class LspSession {
-        private final DdslLanguageServer server;
-        private final Launcher<LanguageClient> launcher;
         private final OutputStream clientOutput;
         private final InputStream clientInput;
         private final WebSocketSession webSocketSession;
         private final ExecutorService executor;
         private volatile boolean running = true;
 
-        LspSession(DdslLanguageServer server,
-                   Launcher<LanguageClient> launcher,
-                   OutputStream clientOutput,
+        LspSession(OutputStream clientOutput,
                    InputStream clientInput,
                    WebSocketSession webSocketSession) {
-            this.server = server;
-            this.launcher = launcher;
             this.clientOutput = clientOutput;
             this.clientInput = clientInput;
             this.webSocketSession = webSocketSession;

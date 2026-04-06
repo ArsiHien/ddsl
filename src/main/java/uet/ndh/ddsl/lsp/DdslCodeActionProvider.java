@@ -2,6 +2,7 @@ package uet.ndh.ddsl.lsp;
 
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import uet.ndh.ddsl.lsp.core.DdslCommandIds;
 
 import java.util.*;
 
@@ -127,7 +128,7 @@ public class DdslCodeActionProvider {
         // For now, we'll use a command that the client can execute
         Command command = new Command();
         command.setTitle("Convert to Entity");
-        command.setCommand("ddsl.convertToEntity");
+        command.setCommand(DdslCommandIds.CONVERT_TO_ENTITY);
         command.setArguments(List.of(uri, diagnostic.getRange()));
         
         action.setCommand(command);
@@ -147,7 +148,7 @@ public class DdslCodeActionProvider {
         // This requires user interaction to select fields
         Command command = new Command();
         command.setTitle("Extract ValueObject");
-        command.setCommand("ddsl.extractValueObject");
+        command.setCommand(DdslCommandIds.EXTRACT_VALUE_OBJECT);
         command.setArguments(List.of(uri, diagnostic.getRange()));
         
         action.setCommand(command);
@@ -165,7 +166,7 @@ public class DdslCodeActionProvider {
         
         Command command = new Command();
         command.setTitle("Extract to ValueObject");
-        command.setCommand("ddsl.extractToValueObject");
+        command.setCommand(DdslCommandIds.EXTRACT_TO_VALUE_OBJECT);
         command.setArguments(List.of(uri, range));
         
         action.setCommand(command);
@@ -183,7 +184,7 @@ public class DdslCodeActionProvider {
         
         Command command = new Command();
         command.setTitle("Generate Invariants");
-        command.setCommand("ddsl.generateInvariants");
+        command.setCommand(DdslCommandIds.GENERATE_INVARIANTS);
         command.setArguments(List.of(uri));
         
         action.setCommand(command);
@@ -201,7 +202,7 @@ public class DdslCodeActionProvider {
         
         Command command = new Command();
         command.setTitle("Generate Operations");
-        command.setCommand("ddsl.generateOperations");
+        command.setCommand(DdslCommandIds.GENERATE_OPERATIONS);
         command.setArguments(List.of(uri));
         
         action.setCommand(command);

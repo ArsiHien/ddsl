@@ -45,6 +45,10 @@ A complete Language Server Protocol (LSP) implementation for the Domain-Driven S
 
 ## Architecture
 
+Current transports:
+- WebSocket: `ws://localhost:8080/lsp` (Monaco/browser)
+- STDIO: `uet.ndh.ddsl.lsp.stdio.DdslStdioLanguageServerMain` (VSCode native LSP)
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Monaco Editor (React)                     │
@@ -252,6 +256,16 @@ curl -X POST http://localhost:8080/api/lsp/tokenize \
 - `workspace/didChangeWatchedFiles`
 - `workspace/symbol`
 - `workspace/executeCommand`
+
+### Execute Command IDs
+- `ddsl.compile`
+- `ddsl.validate`
+- `ddsl.generateCode`
+- `ddsl.convertToEntity`
+- `ddsl.extractValueObject`
+- `ddsl.extractToValueObject`
+- `ddsl.generateInvariants`
+- `ddsl.generateOperations`
 
 ## Semantic Token Types
 
