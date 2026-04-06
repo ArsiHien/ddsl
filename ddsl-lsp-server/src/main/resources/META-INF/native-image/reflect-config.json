@@ -1,0 +1,38 @@
+[
+  {
+    "name": "org.eclipse.lsp4j.jsonrpc.messages.RequestMessage",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.eclipse.lsp4j.jsonrpc.messages.Either",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "uet.ndh.ddsl.ast.model.DomainModel",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "uet.ndh.ddsl.ast.model.BoundedContextDecl",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "uet.ndh.ddsl.codegen.CodeArtifact",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  }
+]

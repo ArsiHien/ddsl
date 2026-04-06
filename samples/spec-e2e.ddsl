@@ -1,0 +1,90 @@
+BoundedContext SpecE2E {
+
+    domain {
+        state machine for OrderStatus {
+            states:
+                - Pending (initial)
+                - Confirmed
+                - Shipped
+                - Delivered (final)
+                - Cancelled (final)
+
+            transitions:
+                - Pending -> Confirmed: when payment received
+                - Confirmed -> Shipped: when inventory reserved
+                - Shipped -> Delivered: always
+                - [Pending, Confirmed] -> Cancelled: always
+                - Delivered -> Cancelled: never
+
+            guards:
+                - cannot transition from Confirmed to Cancelled when shippedAt is present
+
+            on entry:
+                - entering Confirmed:
+                    - record confirmedAt as now
+                - entering Cancelled:
+                    - record cancelledAt as now
+
+            on exit:
+                - leaving Pending:
+                    - record pendingExitedAt as now
+        }
+
+        Aggregate Order {
+            orderId: UUID @identity
+            status: String
+            customerTier: String
+            customerEmail: String
+            customerPhone: String
+            createdAt: DateTime
+            lastUpdated: DateTime
+            dueDate: DateTime
+            totalAmount: Decimal
+            items: List<String>
+            orders: List<Order>
+            products: List<Product>
+
+            operations {
+                when validating order with customerEmail and customerPhone and orders and products:
+                require that:
+                    - createdAt is before now
+                    - lastUpdated is more than 30 days ago
+                    - dueDate is between today and 30 days from now
+                    - customerEmail has valid email format
+                    - customerPhone has valid phone number format
+                    - customerEmail contains "@"
+                    - customerEmail matches "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+                    - customerEmail has length between 5 and 100
+                given:
+                    - discountRate as match customerTier with:
+                        GOLD when totalAmount is greater than 1000: 0.20
+                        GOLD: 0.15
+                        SILVER: 0.10
+                        [BRONZE, BASIC]: 0.05
+                        default: 0.00
+                    - confirmedTotal as sum of orders totalAmount where status is Confirmed
+                    - allOrderItems as all items across orders
+                    - revenueByCategory as sum of products price grouped by category
+                collect all errors:
+                    - orderId is present, otherwise "Order ID is required"
+                    - items is not empty, otherwise "Items are required"
+                fail if any errors
+                then:
+                    - set status to "CONFIRMED"
+            }
+        }
+
+        ValueObject Product {
+            price: Decimal
+            category: String
+        }
+    }
+
+    specifications {
+        Specification ActiveCustomer {
+            matches customers where:
+                - customer status is Active
+                - customer account is not suspended
+        }
+    }
+}

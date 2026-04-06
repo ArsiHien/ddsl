@@ -1,0 +1,326 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Hotel Booking System — BROKEN DDSL (for LLM Agent syntax-fix testing)
+//
+// This file contains INTENTIONAL syntax errors covering every common
+// mistake category. An LLM agent should be able to fix ALL of them and
+// produce output equivalent to hotel-booking.ddsl.
+//
+// Error categories exercised:
+//   1. "is" instead of ":"  (field declarations)
+//   2. "-" (dash) instead of ":"
+//   3. snake_case field names instead of camelCase
+//   4. Lowercase type names (string, uuid, int, boolean, datetime, decimal)
+//   5. Annotation after type instead of before name (@identity placement)
+//   6. "required" / "mandatory" without @ prefix
+//   7. "min N" / "max N" without @ or parens
+//   8. Natural-language field descriptions instead of formal syntax
+//   9. Missing "when" keyword in behaviors
+//  10. Missing "that" after "require"
+//  11. Missing "then" before "set"
+//  12. Missing "event" after "emit"
+//  13. Compressed behaviors (comma-separated instead of clauses)
+//  14. Space-separated multi-word field names
+//  15. "text" instead of "String", "number" instead of "Int"
+//  16. "yes/no flag" instead of "Boolean"
+//  17. "collection of" / "list of" in natural language
+//  18. "up to N characters" instead of @maxLength(N)
+//  19. "cannot be negative" instead of @min(0)
+//  20. "at least N" instead of @min(N)
+// ═══════════════════════════════════════════════════════════════════════════
+
+BoundedContext HotelBooking {
+
+    ubiquitous-language {
+        // Reservation: A booking of one or more rooms by a guest for a date range.
+        // Room:        A physical accommodation unit with a type and rate.
+        // Guest:       A person who makes or holds a reservation.
+        // Stay:        The period a guest occupies a room.
+    }
+
+    domain {
+
+        // ── Aggregate: Reservation ──────────────────────────────────────
+        // Errors: "is" syntax, snake_case, lowercase types, annotation placement,
+        //         natural-language constraints, missing keywords in behaviors
+
+        Aggregate Reservation {
+            reservation_id is uuid identity
+            guest is GuestProfile
+            check_in is datetime, mandatory
+            check_out is datetime, mandatory
+            room_assignments is a list of RoomAssignment
+            total_cost is Money
+            reservation_status is text
+            special_requests - text
+            created_at - datetime
+            updated_at - datetime
+
+            Entity RoomAssignment {
+                assignment_id: uuid identity
+                room_number is text, required
+                room_type is text, required
+                nightly_rate is a number with decimals, cannot be negative
+                guest_count is a whole number, at least 1, max 4
+            }
+
+            invariants {
+                "Check-out must be after check-in": check_out is greater than check_in
+                "At least one room required": room_assignments is greater than 0
+                "Total cost must be non-negative": total_cost is greater than 0
+            }
+
+            operations {
+                placing reservation with guest and roomType {
+                    require:
+                        - check_in is not empty
+                        - check_out is not empty
+                        - guest is not empty
+                    set reservation_status to "PENDING"
+                    calculate total_cost as sum of nightly_rate
+                    emit ReservationPlaced with reservation_id
+                }
+
+                confirming reservation {
+                    require reservation_status is "PENDING"
+                    set reservation_status to "CONFIRMED"
+                    set updated_at to now
+                    emit ReservationConfirmed with reservation_id
+                }
+
+                cancelling reservation {
+                    require reservation_status is not "CHECKED_IN"
+                    require reservation_status is not "CANCELLED"
+                    set reservation_status to "CANCELLED"
+                    set updated_at to now
+                    emit ReservationCancelled with reservation_id
+                }
+
+                checking in {
+                    require reservation_status is "CONFIRMED"
+                    set reservation_status to "CHECKED_IN"
+                    emit GuestCheckedIn with reservation_id
+                }
+
+                checking out {
+                    require reservation_status is "CHECKED_IN"
+                    set reservation_status to "CHECKED_OUT"
+                    emit GuestCheckedOut with reservation_id
+                }
+            }
+        }
+
+        // ── Aggregate: Room ─────────────────────────────────────────────
+        // Errors: snake_case, "is" syntax, natural-language types/constraints,
+        //         missing when/then/that
+
+        Aggregate Room {
+            room_id is uuid identity
+            room_number is text, required, unique
+            floor is a whole number, at least 1, max 50
+            room_type - text, mandatory
+            base_rate is a number with decimals, cannot be negative
+            is_available is a yes/no flag
+            amenities is a collection of text
+            last_cleaned is datetime
+
+            invariants {
+                "Room number is required": room_number is greater than 0
+                "Base rate must be positive": base_rate is greater than 0
+            }
+
+            operations {
+                marking room available {
+                    set is_available to true
+                }
+
+                marking room unavailable {
+                    set is_available to false
+                }
+
+                updating rate with newRate {
+                    require newRate is greater than 0
+                    set base_rate to newRate
+                }
+            }
+        }
+
+        // ── Value Objects ───────────────────────────────────────────────
+        // Errors: "is" syntax, snake_case, natural-language constraints,
+        //         lowercase types
+
+        ValueObject GuestProfile {
+            first_name is text, required, up to 100 characters
+            last_name is text, required, up to 100 characters
+            phone_number is text, mandatory
+            loyalty_tier is string
+        }
+
+        ValueObject Money {
+            amount is decimal, cannot be negative
+            currency is text, required, up to 3 characters
+        }
+
+        ValueObject DateRange {
+            start_date is datetime, mandatory
+            end_date is datetime, mandatory
+        }
+
+        ValueObject ContactInfo {
+            phone_number is text, required
+            address_line is text, up to 200 characters
+            city - text, up to 100 characters
+            postal_code - text, up to 20 characters
+            country_code is text, required, up to 2 characters
+        }
+
+        // ── Domain Services ─────────────────────────────────────────────
+        // Errors: missing "when", natural-language parameter types
+
+        DomainService PricingService {
+            calculating total with reservation and discountPercent as Decimal {
+                set result to reservation
+            }
+            applying seasonal rate with room and season as String {
+                set result to room
+            }
+        }
+
+        DomainService AvailabilityService {
+            checking availability with roomType as String and dateRange {
+                set result to roomType
+            }
+        }
+    }
+
+    // ─── Domain Events ──────────────────────────────────────────────────
+    // Errors: snake_case, "is" syntax, lowercase types
+
+    events {
+        DomainEvent ReservationPlaced {
+            reservation_id is uuid
+            guest_name is text
+            check_in is datetime
+            check_out is datetime
+            room_type is string
+            occurred_at is datetime
+        }
+
+        DomainEvent ReservationConfirmed {
+            reservation_id is uuid
+            confirmed_at - datetime
+        }
+
+        DomainEvent ReservationCancelled {
+            reservation_id is uuid
+            cancelled_at is datetime
+            reason is text
+        }
+
+        DomainEvent GuestCheckedIn {
+            reservation_id - uuid
+            room_number - text
+            checked_in_at - datetime
+        }
+
+        DomainEvent GuestCheckedOut {
+            reservation_id is uuid
+            checked_out_at is datetime
+            final_bill is decimal
+        }
+
+        DomainEvent RoomCleaned {
+            room_id is uuid
+            cleaned_at is datetime
+            inspected_by is text
+        }
+    }
+
+    // ─── Factories ──────────────────────────────────────────────────────
+
+    factories {
+        Factory ReservationFactory {
+            when creating Reservation from GuestProfile with roomType and dateRange:
+            then set reservationStatus to "PENDING"
+            then calculate totalCost
+            return the created reservation
+        }
+    }
+
+    // ─── Repositories ───────────────────────────────────────────────────
+    // Errors: snake_case in parameter names, lowercase types
+
+    repositories {
+        Repository ReservationRepository for Reservation {
+            findById(id: uuid): Reservation?
+            findByGuest(guest_name: string): List<Reservation>
+            findByStatus(reservation_status: string): List<Reservation>
+            findByDateRange(check_in: datetime, check_out: datetime): List<Reservation>
+            save(reservation: Reservation): Void
+            remove(reservation: Reservation): Void
+            count(): int
+        }
+
+        Repository RoomRepository for Room {
+            findById(id: uuid): Room?
+            findByRoomType(room_type: string): List<Room>
+            findByFloor(floor: int): List<Room>
+            save(room: Room): Void
+        }
+    }
+
+    // ─── Specifications ─────────────────────────────────────────────────
+    // Errors: snake_case field references
+
+    specifications {
+        Specification AvailableRoom {
+            matches Room where:
+                - is_available is true
+        }
+
+        Specification UpcomingReservation {
+            matches Reservation where:
+                - check_in is greater than now
+                - reservation_status is not "CANCELLED"
+        }
+
+        Specification HighValueReservation {
+            matches Reservation where:
+                - total_cost is greater than 500
+        }
+    }
+
+    // ─── Use Cases ──────────────────────────────────────────────────────
+    // Errors: snake_case, lowercase types, "is" syntax
+
+    use-cases {
+        UseCase BookRoom {
+            input: BookingRequest {
+                guest_first_name is text
+                guest_last_name is text
+                room_type is text
+                check_in is datetime
+                check_out is datetime
+            }
+            output: Reservation
+            flow:
+                require guest profile is valid
+                given available rooms of requested type
+                then create reservation
+                then confirm reservation
+                return reservation
+        }
+
+        UseCase CancelBooking {
+            input: CancellationRequest {
+                reservation_id is uuid
+                reason is text
+            }
+            output: Reservation
+            flow:
+                given reservation from repository
+                require reservation is cancellable
+                then cancel reservation
+                return updated reservation
+        }
+    }
+}
