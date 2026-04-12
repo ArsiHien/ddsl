@@ -20,7 +20,7 @@ public final class DdslStdioLanguageServerMain {
     private DdslStdioLanguageServerMain() {
     }
 
-    public static void main(String[] args) {
+    static void main() {
         DdslLanguageServer server = DdslLanguageServerFactory.createProcess();
 
         Launcher<LanguageClient> launcher = Launcher.createLauncher(

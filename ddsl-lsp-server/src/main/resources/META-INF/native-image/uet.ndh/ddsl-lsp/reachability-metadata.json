@@ -1,0 +1,2531 @@
+{
+  "reflection": [
+    {
+      "type": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.classic.spi.LogbackServiceProvider"
+    },
+    {
+      "type": "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.FileAppender",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "setAppend",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "setFile",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setPrudent",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.OutputStreamAppender",
+      "methods": [
+        {
+          "name": "setEncoder",
+          "parameterTypes": [
+            "ch.qos.logback.core.encoder.Encoder"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.encoder.Encoder"
+    },
+    {
+      "type": "ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+      "methods": [
+        {
+          "name": "setParent",
+          "parameterTypes": [
+            "ch.qos.logback.core.spi.ContextAware"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+      "methods": [
+        {
+          "name": "setPattern",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ch.qos.logback.core.spi.ContextAware"
+    },
+    {
+      "type": "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Boolean",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "getBoolean",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Class",
+      "methods": [
+        {
+          "name": "getRecordComponents",
+          "parameterTypes": []
+        },
+        {
+          "name": "isRecord",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Object"
+    },
+    {
+      "type": "java.lang.Record"
+    },
+    {
+      "type": "java.lang.reflect.RecordComponent",
+      "methods": [
+        {
+          "name": "getName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getType",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "java.sql.Date"
+    },
+    {
+      "type": "java.util.ArrayList"
+    },
+    {
+      "type": "java.util.List"
+    },
+    {
+      "type": "org.eclipse.lsp4j.AbstractTextDocumentRegistrationAndWorkDoneProgressOptions",
+      "fields": [
+        {
+          "name": "workDoneProgress"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.AbstractWorkDoneProgressOptions",
+      "fields": [
+        {
+          "name": "workDoneProgress"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CallHierarchyCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CallHierarchyRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.ChangeAnnotation"
+    },
+    {
+      "type": "org.eclipse.lsp4j.ClientCapabilities",
+      "fields": [
+        {
+          "name": "general"
+        },
+        {
+          "name": "notebookDocument"
+        },
+        {
+          "name": "textDocument"
+        },
+        {
+          "name": "window"
+        },
+        {
+          "name": "workspace"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ClientInfo",
+      "fields": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "version"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeAction",
+      "fields": [
+        {
+          "name": "command"
+        },
+        {
+          "name": "data"
+        },
+        {
+          "name": "diagnostics"
+        },
+        {
+          "name": "disabled"
+        },
+        {
+          "name": "edit"
+        },
+        {
+          "name": "isPreferred"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "title"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionCapabilities",
+      "fields": [
+        {
+          "name": "codeActionLiteralSupport"
+        },
+        {
+          "name": "dataSupport"
+        },
+        {
+          "name": "disabledSupport"
+        },
+        {
+          "name": "honorsChangeAnnotations"
+        },
+        {
+          "name": "isPreferredSupport"
+        },
+        {
+          "name": "resolveSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionContext",
+      "fields": [
+        {
+          "name": "diagnostics"
+        },
+        {
+          "name": "triggerKind"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionDisabled"
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionKindCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionLiteralSupportCapabilities",
+      "fields": [
+        {
+          "name": "codeActionKind"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionOptions",
+      "fields": [
+        {
+          "name": "codeActionKinds"
+        },
+        {
+          "name": "resolveProvider"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionParams",
+      "fields": [
+        {
+          "name": "context"
+        },
+        {
+          "name": "range"
+        },
+        {
+          "name": "textDocument"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionResolveSupportCapabilities",
+      "fields": [
+        {
+          "name": "properties"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeActionTriggerKind",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeLensCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeLensOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.CodeLensWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "refreshSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ColorProviderCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ColorProviderOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.Command",
+      "fields": [
+        {
+          "name": "arguments"
+        },
+        {
+          "name": "command"
+        },
+        {
+          "name": "title"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionCapabilities",
+      "fields": [
+        {
+          "name": "completionItem"
+        },
+        {
+          "name": "completionItemKind"
+        },
+        {
+          "name": "completionList"
+        },
+        {
+          "name": "contextSupport"
+        },
+        {
+          "name": "insertTextMode"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemCapabilities",
+      "fields": [
+        {
+          "name": "commitCharactersSupport"
+        },
+        {
+          "name": "deprecatedSupport"
+        },
+        {
+          "name": "documentationFormat"
+        },
+        {
+          "name": "insertReplaceSupport"
+        },
+        {
+          "name": "insertTextModeSupport"
+        },
+        {
+          "name": "labelDetailsSupport"
+        },
+        {
+          "name": "preselectSupport"
+        },
+        {
+          "name": "resolveSupport"
+        },
+        {
+          "name": "snippetSupport"
+        },
+        {
+          "name": "tagSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemInsertTextModeSupportCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemKind",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemKindCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemResolveSupportCapabilities",
+      "fields": [
+        {
+          "name": "properties"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemTag",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionItemTagSupportCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionListCapabilities",
+      "fields": [
+        {
+          "name": "itemDefaults"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CompletionOptions",
+      "fields": [
+        {
+          "name": "allCommitCharacters"
+        },
+        {
+          "name": "completionItem"
+        },
+        {
+          "name": "resolveProvider"
+        },
+        {
+          "name": "triggerCharacters"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.CreateFile"
+    },
+    {
+      "type": "org.eclipse.lsp4j.CreateFileOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DeclarationCapabilities",
+      "fields": [
+        {
+          "name": "linkSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DeclarationRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DefinitionCapabilities",
+      "fields": [
+        {
+          "name": "linkSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DefinitionOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DeleteFile"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DeleteFileOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.Diagnostic"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticCapabilities",
+      "fields": [
+        {
+          "name": "relatedDocumentSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticCodeDescription"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticRelatedInformation"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticSeverity",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticTag",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "refreshSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DiagnosticsTagSupport",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DidChangeConfigurationCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DidChangeWatchedFilesCapabilities",
+      "fields": [
+        {
+          "name": "relativePatternSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DidOpenTextDocumentParams",
+      "fields": [
+        {
+          "name": "textDocument"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentFilter"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentFormattingOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentHighlightCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentHighlightOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentLinkCapabilities",
+      "fields": [
+        {
+          "name": "tooltipSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentLinkOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentOnTypeFormattingOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentRangeFormattingOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentSymbol",
+      "fields": [
+        {
+          "name": "children"
+        },
+        {
+          "name": "deprecated"
+        },
+        {
+          "name": "detail"
+        },
+        {
+          "name": "kind"
+        },
+        {
+          "name": "name"
+        },
+        {
+          "name": "range"
+        },
+        {
+          "name": "selectionRange"
+        },
+        {
+          "name": "tags"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentSymbolCapabilities",
+      "fields": [
+        {
+          "name": "hierarchicalDocumentSymbolSupport"
+        },
+        {
+          "name": "labelSupport"
+        },
+        {
+          "name": "symbolKind"
+        },
+        {
+          "name": "tagSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentSymbolOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.DocumentSymbolParams",
+      "fields": [
+        {
+          "name": "textDocument"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.DynamicRegistrationCapabilities",
+      "fields": [
+        {
+          "name": "dynamicRegistration"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ExecuteCommandCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ExecuteCommandOptions",
+      "fields": [
+        {
+          "name": "commands"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ExecuteCommandParams",
+      "fields": [
+        {
+          "name": "arguments"
+        },
+        {
+          "name": "command"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationFilter"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationPattern"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationPatternOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationsServerCapabilities"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FileOperationsWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "didCreate"
+        },
+        {
+          "name": "didDelete"
+        },
+        {
+          "name": "didRename"
+        },
+        {
+          "name": "willCreate"
+        },
+        {
+          "name": "willDelete"
+        },
+        {
+          "name": "willRename"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.FoldingRangeCapabilities",
+      "fields": [
+        {
+          "name": "foldingRange"
+        },
+        {
+          "name": "foldingRangeKind"
+        },
+        {
+          "name": "lineFoldingOnly"
+        },
+        {
+          "name": "rangeLimit"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.FoldingRangeKindSupportCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.FoldingRangeProviderOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.FoldingRangeSupportCapabilities",
+      "fields": [
+        {
+          "name": "collapsedText"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.FormattingCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.GeneralClientCapabilities",
+      "fields": [
+        {
+          "name": "markdown"
+        },
+        {
+          "name": "positionEncodings"
+        },
+        {
+          "name": "regularExpressions"
+        },
+        {
+          "name": "staleRequestSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.HoverCapabilities",
+      "fields": [
+        {
+          "name": "contentFormat"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.HoverOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.ImplementationCapabilities",
+      "fields": [
+        {
+          "name": "linkSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ImplementationRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.InitializeResult",
+      "fields": [
+        {
+          "name": "capabilities"
+        },
+        {
+          "name": "serverInfo"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InitializedParams",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlayHintCapabilities",
+      "fields": [
+        {
+          "name": "resolveSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlayHintRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlayHintResolveSupportCapabilities",
+      "fields": [
+        {
+          "name": "properties"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlayHintWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "refreshSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlineValueCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlineValueRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.InlineValueWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "refreshSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.InsertTextMode",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.LinkedEditingRangeCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.LinkedEditingRangeRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.Location"
+    },
+    {
+      "type": "org.eclipse.lsp4j.MarkdownCapabilities",
+      "fields": [
+        {
+          "name": "parser"
+        },
+        {
+          "name": "version"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.MessageParams",
+      "fields": [
+        {
+          "name": "message"
+        },
+        {
+          "name": "type"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.MessageType",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.MonikerCapabilities"
+    },
+    {
+      "type": "org.eclipse.lsp4j.MonikerRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookDocumentClientCapabilities",
+      "fields": [
+        {
+          "name": "synchronization"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookDocumentFilter"
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookDocumentSyncClientCapabilities",
+      "fields": [
+        {
+          "name": "executionSummarySupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookDocumentSyncRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookSelector"
+    },
+    {
+      "type": "org.eclipse.lsp4j.NotebookSelectorCell"
+    },
+    {
+      "type": "org.eclipse.lsp4j.OnTypeFormattingCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ParameterInformationCapabilities",
+      "fields": [
+        {
+          "name": "labelOffsetSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.Position",
+      "fields": [
+        {
+          "name": "character"
+        },
+        {
+          "name": "line"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.PrepareSupportDefaultBehavior",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.PublishDiagnosticsCapabilities",
+      "fields": [
+        {
+          "name": "codeDescriptionSupport"
+        },
+        {
+          "name": "dataSupport"
+        },
+        {
+          "name": "relatedInformation"
+        },
+        {
+          "name": "tagSupport"
+        },
+        {
+          "name": "versionSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.PublishDiagnosticsParams",
+      "fields": [
+        {
+          "name": "diagnostics"
+        },
+        {
+          "name": "uri"
+        },
+        {
+          "name": "version"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.Range",
+      "fields": [
+        {
+          "name": "end"
+        },
+        {
+          "name": "start"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.RangeFormattingCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ReferenceOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.ReferencesCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.RegularExpressionsCapabilities",
+      "fields": [
+        {
+          "name": "engine"
+        },
+        {
+          "name": "version"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.RenameCapabilities",
+      "fields": [
+        {
+          "name": "honorsChangeAnnotations"
+        },
+        {
+          "name": "prepareSupport"
+        },
+        {
+          "name": "prepareSupportDefaultBehavior"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.RenameFile"
+    },
+    {
+      "type": "org.eclipse.lsp4j.RenameFileOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.RenameOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.ResourceOperation"
+    },
+    {
+      "type": "org.eclipse.lsp4j.SaveOptions",
+      "fields": [
+        {
+          "name": "includeText"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SelectionRangeCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SelectionRangeRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensCapabilities",
+      "fields": [
+        {
+          "name": "augmentsSyntaxTokens"
+        },
+        {
+          "name": "formats"
+        },
+        {
+          "name": "multilineTokenSupport"
+        },
+        {
+          "name": "overlappingTokenSupport"
+        },
+        {
+          "name": "requests"
+        },
+        {
+          "name": "serverCancelSupport"
+        },
+        {
+          "name": "tokenModifiers"
+        },
+        {
+          "name": "tokenTypes"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensClientCapabilitiesRequests",
+      "fields": [
+        {
+          "name": "full"
+        },
+        {
+          "name": "range"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensClientCapabilitiesRequestsFull",
+      "fields": [
+        {
+          "name": "delta"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensLegend",
+      "fields": [
+        {
+          "name": "tokenModifiers"
+        },
+        {
+          "name": "tokenTypes"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensServerFull"
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions",
+      "fields": [
+        {
+          "name": "full"
+        },
+        {
+          "name": "id"
+        },
+        {
+          "name": "legend"
+        },
+        {
+          "name": "range"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensWorkspaceCapabilities",
+      "fields": [
+        {
+          "name": "refreshSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ServerCapabilities",
+      "fields": [
+        {
+          "name": "callHierarchyProvider"
+        },
+        {
+          "name": "codeActionProvider"
+        },
+        {
+          "name": "codeLensProvider"
+        },
+        {
+          "name": "colorProvider"
+        },
+        {
+          "name": "completionProvider"
+        },
+        {
+          "name": "declarationProvider"
+        },
+        {
+          "name": "definitionProvider"
+        },
+        {
+          "name": "diagnosticProvider"
+        },
+        {
+          "name": "documentFormattingProvider"
+        },
+        {
+          "name": "documentHighlightProvider"
+        },
+        {
+          "name": "documentLinkProvider"
+        },
+        {
+          "name": "documentOnTypeFormattingProvider"
+        },
+        {
+          "name": "documentRangeFormattingProvider"
+        },
+        {
+          "name": "documentSymbolProvider"
+        },
+        {
+          "name": "executeCommandProvider"
+        },
+        {
+          "name": "experimental"
+        },
+        {
+          "name": "foldingRangeProvider"
+        },
+        {
+          "name": "hoverProvider"
+        },
+        {
+          "name": "implementationProvider"
+        },
+        {
+          "name": "inlayHintProvider"
+        },
+        {
+          "name": "inlineValueProvider"
+        },
+        {
+          "name": "linkedEditingRangeProvider"
+        },
+        {
+          "name": "monikerProvider"
+        },
+        {
+          "name": "notebookDocumentSync"
+        },
+        {
+          "name": "positionEncoding"
+        },
+        {
+          "name": "referencesProvider"
+        },
+        {
+          "name": "renameProvider"
+        },
+        {
+          "name": "selectionRangeProvider"
+        },
+        {
+          "name": "semanticTokensProvider"
+        },
+        {
+          "name": "signatureHelpProvider"
+        },
+        {
+          "name": "textDocumentSync"
+        },
+        {
+          "name": "typeDefinitionProvider"
+        },
+        {
+          "name": "typeHierarchyProvider"
+        },
+        {
+          "name": "workspace"
+        },
+        {
+          "name": "workspaceSymbolProvider"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ServerInfo",
+      "fields": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "version"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.ShowDocumentCapabilities",
+      "fields": [
+        {
+          "name": "support"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SignatureHelpCapabilities",
+      "fields": [
+        {
+          "name": "contextSupport"
+        },
+        {
+          "name": "signatureInformation"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SignatureHelpOptions",
+      "fields": [
+        {
+          "name": "retriggerCharacters"
+        },
+        {
+          "name": "triggerCharacters"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SignatureInformationCapabilities",
+      "fields": [
+        {
+          "name": "activeParameterSupport"
+        },
+        {
+          "name": "documentationFormat"
+        },
+        {
+          "name": "parameterInformation"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.StaleRequestCapabilities",
+      "fields": [
+        {
+          "name": "cancel"
+        },
+        {
+          "name": "retryOnContentModified"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SymbolCapabilities",
+      "fields": [
+        {
+          "name": "resolveSupport"
+        },
+        {
+          "name": "symbolKind"
+        },
+        {
+          "name": "tagSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SymbolKind",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SymbolKindCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SymbolTag",
+      "fields": [
+        {
+          "name": "value"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SymbolTagSupportCapabilities",
+      "fields": [
+        {
+          "name": "valueSet"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SynchronizationCapabilities",
+      "fields": [
+        {
+          "name": "didSave"
+        },
+        {
+          "name": "willSave"
+        },
+        {
+          "name": "willSaveWaitUntil"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentClientCapabilities",
+      "fields": [
+        {
+          "name": "callHierarchy"
+        },
+        {
+          "name": "codeAction"
+        },
+        {
+          "name": "codeLens"
+        },
+        {
+          "name": "colorProvider"
+        },
+        {
+          "name": "completion"
+        },
+        {
+          "name": "declaration"
+        },
+        {
+          "name": "definition"
+        },
+        {
+          "name": "diagnostic"
+        },
+        {
+          "name": "documentHighlight"
+        },
+        {
+          "name": "documentLink"
+        },
+        {
+          "name": "documentSymbol"
+        },
+        {
+          "name": "foldingRange"
+        },
+        {
+          "name": "formatting"
+        },
+        {
+          "name": "hover"
+        },
+        {
+          "name": "implementation"
+        },
+        {
+          "name": "inlayHint"
+        },
+        {
+          "name": "inlineValue"
+        },
+        {
+          "name": "linkedEditingRange"
+        },
+        {
+          "name": "onTypeFormatting"
+        },
+        {
+          "name": "publishDiagnostics"
+        },
+        {
+          "name": "rangeFormatting"
+        },
+        {
+          "name": "references"
+        },
+        {
+          "name": "rename"
+        },
+        {
+          "name": "selectionRange"
+        },
+        {
+          "name": "semanticTokens"
+        },
+        {
+          "name": "signatureHelp"
+        },
+        {
+          "name": "synchronization"
+        },
+        {
+          "name": "typeDefinition"
+        },
+        {
+          "name": "typeHierarchy"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentEdit"
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentIdentifier",
+      "fields": [
+        {
+          "name": "uri"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentItem",
+      "fields": [
+        {
+          "name": "languageId"
+        },
+        {
+          "name": "text"
+        },
+        {
+          "name": "uri"
+        },
+        {
+          "name": "version"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentRegistrationOptions",
+      "fields": [
+        {
+          "name": "documentSelector"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentSyncKind"
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextDocumentSyncOptions",
+      "fields": [
+        {
+          "name": "change"
+        },
+        {
+          "name": "openClose"
+        },
+        {
+          "name": "save"
+        },
+        {
+          "name": "willSave"
+        },
+        {
+          "name": "willSaveWaitUntil"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TextEdit"
+    },
+    {
+      "type": "org.eclipse.lsp4j.TypeDefinitionCapabilities",
+      "fields": [
+        {
+          "name": "linkSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TypeDefinitionRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.TypeHierarchyCapabilities",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.TypeHierarchyRegistrationOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WindowClientCapabilities",
+      "fields": [
+        {
+          "name": "showDocument"
+        },
+        {
+          "name": "showMessage"
+        },
+        {
+          "name": "workDoneProgress"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WindowShowMessageRequestActionItemCapabilities",
+      "fields": [
+        {
+          "name": "additionalPropertiesSupport"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WindowShowMessageRequestCapabilities",
+      "fields": [
+        {
+          "name": "messageActionItem"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkDoneProgressAndPartialResultParams"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceClientCapabilities",
+      "fields": [
+        {
+          "name": "applyEdit"
+        },
+        {
+          "name": "codeLens"
+        },
+        {
+          "name": "configuration"
+        },
+        {
+          "name": "diagnostics"
+        },
+        {
+          "name": "didChangeConfiguration"
+        },
+        {
+          "name": "didChangeWatchedFiles"
+        },
+        {
+          "name": "executeCommand"
+        },
+        {
+          "name": "fileOperations"
+        },
+        {
+          "name": "inlayHint"
+        },
+        {
+          "name": "inlineValue"
+        },
+        {
+          "name": "semanticTokens"
+        },
+        {
+          "name": "symbol"
+        },
+        {
+          "name": "workspaceEdit"
+        },
+        {
+          "name": "workspaceFolders"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceEdit"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceEditCapabilities",
+      "fields": [
+        {
+          "name": "changeAnnotationSupport"
+        },
+        {
+          "name": "documentChanges"
+        },
+        {
+          "name": "failureHandling"
+        },
+        {
+          "name": "normalizesLineEndings"
+        },
+        {
+          "name": "resourceOperations"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceEditChangeAnnotationSupportCapabilities",
+      "fields": [
+        {
+          "name": "groupsOnLabel"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceFolder",
+      "fields": [
+        {
+          "name": "name"
+        },
+        {
+          "name": "uri"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceFoldersOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceServerCapabilities"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceSymbolOptions"
+    },
+    {
+      "type": "org.eclipse.lsp4j.WorkspaceSymbolResolveSupportCapabilities",
+      "fields": [
+        {
+          "name": "properties"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.CodeActionResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.DocumentChangeListAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.DocumentDiagnosticReportTypeAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.DocumentSymbolResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.InitializeParamsTypeAdapter$Factory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.InlineValueResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.LocationLinkListAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.PrepareRenameResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.ResourceOperationTypeAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.SemanticTokensFullDeltaResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.VersionedTextDocumentIdentifierTypeAdapter$Factory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.adapters.WorkspaceSymbolResponseAdapter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.jsonrpc.json.adapters.JsonElementTypeAdapter$Factory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.LanguageClient"
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.LanguageClientAware"
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.LanguageServer",
+      "methods": [
+        {
+          "name": "exit",
+          "parameterTypes": []
+        },
+        {
+          "name": "getNotebookDocumentService",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTextDocumentService",
+          "parameterTypes": []
+        },
+        {
+          "name": "getWorkspaceService",
+          "parameterTypes": []
+        },
+        {
+          "name": "initialize",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.InitializeParams"
+          ]
+        },
+        {
+          "name": "initialized",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.InitializedParams"
+          ]
+        },
+        {
+          "name": "shutdown",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.NotebookDocumentService"
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.TextDocumentService",
+      "methods": [
+        {
+          "name": "codeAction",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.CodeActionParams"
+          ]
+        },
+        {
+          "name": "didOpen",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.DidOpenTextDocumentParams"
+          ]
+        },
+        {
+          "name": "documentSymbol",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.DocumentSymbolParams"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.services.WorkspaceService",
+      "methods": [
+        {
+          "name": "executeCommand",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.ExecuteCommandParams"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "uet.ndh.ddsl.compiler.api.CompileResponse",
+      "methods": [
+        {
+          "name": "artifacts",
+          "parameterTypes": []
+        },
+        {
+          "name": "diagnostics",
+          "parameterTypes": []
+        },
+        {
+          "name": "errors",
+          "parameterTypes": []
+        },
+        {
+          "name": "success",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "uet.ndh.ddsl.compiler.api.CompileResponse$Artifact"
+    },
+    {
+      "type": "uet.ndh.ddsl.compiler.api.CompileResponse$DiagnosticMessage"
+    },
+    {
+      "type": "uet.ndh.ddsl.lsp.DdslLanguageServer"
+    },
+    {
+      "type": "uet.ndh.ddsl.lsp.DdslTextDocumentService"
+    },
+    {
+      "type": "uet.ndh.ddsl.lsp.DdslWorkspaceService"
+    },
+    {
+      "type": "uet.ndh.ddsl.lsp.stdio.DdslStdioLanguageServerMain",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "main",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": {
+        "proxy": [
+          "org.eclipse.lsp4j.services.LanguageClient",
+          "org.eclipse.lsp4j.jsonrpc.Endpoint"
+        ]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/services/ch.qos.logback.classic.spi.Configurator"
+    },
+    {
+      "glob": "META-INF/services/java.time.zone.ZoneRulesProvider"
+    },
+    {
+      "glob": "META-INF/services/javax.xml.parsers.SAXParserFactory"
+    },
+    {
+      "glob": "META-INF/services/org.slf4j.spi.SLF4JServiceProvider"
+    },
+    {
+      "glob": "ch/qos/logback/classic/logback-classic-version.properties"
+    },
+    {
+      "glob": "ch/qos/logback/core/logback-core-version.properties"
+    },
+    {
+      "glob": "logback-test.xml"
+    },
+    {
+      "glob": "logback.xml"
+    }
+  ]
+}

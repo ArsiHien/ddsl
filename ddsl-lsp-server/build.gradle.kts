@@ -2,6 +2,7 @@ plugins {
     java
     application
     id("org.graalvm.buildtools.native") version "0.10.6"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "uet.ndh"
@@ -28,9 +29,8 @@ dependencies {
     // Gson is used by websocket JSON-RPC bridge.
     implementation("com.google.code.gson:gson:2.11.0")
 
-    // Optional embedded WebSocket adapter compatibility with Monaco.
-    implementation("org.springframework.boot:spring-boot-starter-websocket:3.5.11")
-    implementation("org.springframework.boot:spring-boot-starter-web:3.5.11")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
 
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
@@ -56,6 +56,14 @@ graalvmNative {
             buildArgs.add("--install-exit-handlers")
             buildArgs.add("--initialize-at-build-time=org.eclipse.lsp4j")
         }
+    }
+}
+
+tasks {
+    shadowJar {
+        archiveBaseName.set("ddsl-lsp")
+        archiveClassifier.set("")
+        archiveVersion.set("")
     }
 }
 

@@ -3,6 +3,7 @@ package uet.ndh.ddsl.lsp;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.junit.jupiter.api.*;
+import uet.ndh.ddsl.compiler.api.CompileResponse;
 import uet.ndh.ddsl.lsp.core.DdslCommandIds;
 
 import java.util.List;
@@ -28,44 +29,17 @@ class DdslLanguageServerTest {
 
     private static final String DOC_URI = "file:///test/sample.ddsl";
     private static final String SAMPLE_DDSL = """
-            BoundedContext ECommerce {
+            BoundedContext Orders {
                 domain {
                     Aggregate Order {
-                        @identity orderId: UUID
-                        customer: String
-                        items: List<OrderItem>
-                        status: OrderStatus
-                        
+                        orderId: UUID @identity
+                        status: String
+
                         operations {
-                            when placing order with customer, items {
-                                require that items is not empty
-                                then set status to "PLACED"
-                                emit event OrderPlaced with orderId, customer
-                            }
+                            when placing order:
+                            then:
+                                - set status to "PENDING"
                         }
-                    }
-                    
-                    Entity OrderItem {
-                        @identity itemId: UUID
-                        product: String
-                        quantity: Int @min(1)
-                    }
-                    
-                    ValueObject Money {
-                        amount: Decimal @min(0)
-                        currency: String @maxLength(3)
-                    }
-                }
-                events {
-                    DomainEvent OrderPlaced {
-                        orderId: UUID
-                        orderDate: DateTime
-                    }
-                }
-                repositories {
-                    Repository OrderRepository for Order {
-                        findById(id: UUID): Order?
-                        save(order: Order): Void
                     }
                 }
             }
@@ -157,6 +131,48 @@ class DdslLanguageServerTest {
                 .get(5, TimeUnit.SECONDS);
 
         assertNull(result);
+    }
+
+    @Test
+    @DisplayName("workspace ddsl.compile returns full artifacts source")
+    void executeCompileCommandReturnsArtifacts() throws Exception {
+        openDocument(SAMPLE_DDSL);
+
+        ExecuteCommandParams params = new ExecuteCommandParams();
+        params.setCommand(DdslCommandIds.COMPILE);
+        params.setArguments(List.of(DOC_URI));
+
+        Object result = server.getWorkspaceService()
+                .executeCommand(params)
+                .get(10, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertTrue(result instanceof CompileResponse);
+
+        CompileResponse response = (CompileResponse) result;
+        assertTrue(response.success(), "Compile should succeed for sample DDSL");
+        assertFalse(response.artifacts().isEmpty(), "Compile should return generated artifacts");
+        assertNotNull(response.artifacts().getFirst().sourceCode(), "Artifacts must include full source code");
+        assertFalse(response.artifacts().getFirst().sourceCode().isBlank(), "Artifact source code must not be blank");
+    }
+
+    @Test
+    @DisplayName("workspace ddsl.compile fails when URI argument is missing")
+    void executeCompileCommandMissingUri() throws Exception {
+        ExecuteCommandParams params = new ExecuteCommandParams();
+        params.setCommand(DdslCommandIds.COMPILE);
+        params.setArguments(List.of());
+
+        Object result = server.getWorkspaceService()
+                .executeCommand(params)
+                .get(5, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertTrue(result instanceof CompileResponse);
+
+        CompileResponse response = (CompileResponse) result;
+        assertFalse(response.success());
+        assertFalse(response.errors().isEmpty());
     }
 
     @Test

@@ -189,6 +189,10 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
     public WorkspaceService getWorkspaceService() {
         return workspaceService;
     }
+
+    public DdslTextDocumentService getDdslTextDocumentService() {
+        return textDocumentService;
+    }
     
     // ========== Accessors ==========
     
