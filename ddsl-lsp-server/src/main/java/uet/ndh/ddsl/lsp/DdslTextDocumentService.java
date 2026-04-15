@@ -150,6 +150,35 @@ public class DdslTextDocumentService implements TextDocumentService {
             return DdslSemanticTokens.encode(tokens);
         });
     }
+
+    @Override
+    public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
+        String uri = params.getTextDocument().getUri();
+        Range requestedRange = params.getRange();
+        log.debug("Semantic tokens range requested for: {} in {}", uri, requestedRange);
+
+        return CompletableFuture.supplyAsync(() -> {
+            List<Token> tokens = tokenCache.get(uri);
+            if (tokens == null) {
+                TextDocumentItem doc = documents.get(uri);
+                if (doc != null) {
+                    tokens = parseDocument(doc.getText());
+                    tokenCache.put(uri, tokens);
+                } else {
+                    return new SemanticTokens(Collections.emptyList());
+                }
+            }
+
+            if (requestedRange == null) {
+                return DdslSemanticTokens.encode(tokens);
+            }
+
+            List<Token> rangeTokens = tokens.stream()
+                .filter(token -> isTokenInRange(token, requestedRange))
+                .toList();
+            return DdslSemanticTokens.encode(rangeTokens);
+        });
+    }
     
     // ========== Completion ==========
     
@@ -334,6 +363,35 @@ public class DdslTextDocumentService implements TextDocumentService {
     private List<Token> parseDocument(String content) {
         Scanner scanner = new Scanner(content);
         return scanner.scanTokens();
+    }
+
+    private boolean isTokenInRange(Token token, Range range) {
+        if (token == null || range == null) {
+            return false;
+        }
+
+        int tokenLine = token.getLine() - 1;
+        int tokenStartChar = token.getColumn() - 1;
+        int tokenEndChar = tokenStartChar + Math.max(1, token.getLexeme().length());
+
+        int startLine = range.getStart().getLine();
+        int startChar = range.getStart().getCharacter();
+        int endLine = range.getEnd().getLine();
+        int endChar = range.getEnd().getCharacter();
+
+        if (tokenLine < startLine || tokenLine > endLine) {
+            return false;
+        }
+
+        if (tokenLine == startLine && tokenEndChar <= startChar) {
+            return false;
+        }
+
+        if (tokenLine == endLine && tokenStartChar >= endChar) {
+            return false;
+        }
+
+        return true;
     }
     
     /**

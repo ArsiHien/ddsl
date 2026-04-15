@@ -150,21 +150,18 @@ public class DdslWorkspaceService implements WorkspaceService {
     }
 
     private String extractUri(List<Object> args) {
-        if (args == null || args.isEmpty()) {
+        if (args == null || args.isEmpty()) return null;
+
+        try {
+            // Dùng Gson để convert bất kể type gì về JsonObject
+            var gson = new com.google.gson.Gson();
+            var json = gson.toJsonTree(args.getFirst()).getAsJsonObject();
+            var uriEl = json.get("uri");
+            return (uriEl != null && !uriEl.isJsonNull()) ? uriEl.getAsString() : null;
+        } catch (Exception e) {
+            log.warn("extractUri failed: {}", e.getMessage());
             return null;
         }
-
-        Object first = args.getFirst();
-        if (first instanceof String s) {
-            return s;
-        }
-
-        if (first instanceof Map<?, ?> map) {
-            Object uri = map.get("uri");
-            return uri instanceof String s ? s : null;
-        }
-
-        return null;
     }
 
     private String extractBasePackage(List<Object> args) {

@@ -1468,6 +1468,17 @@
       "type": "org.eclipse.lsp4j.SelectionRangeRegistrationOptions"
     },
     {
+      "type": "org.eclipse.lsp4j.SemanticTokens",
+      "fields": [
+        {
+          "name": "data"
+        },
+        {
+          "name": "resultId"
+        }
+      ]
+    },
+    {
       "type": "org.eclipse.lsp4j.SemanticTokensCapabilities",
       "fields": [
         {
@@ -1541,6 +1552,37 @@
         },
         {
           "name": "tokenTypes"
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensParams",
+      "fields": [
+        {
+          "name": "textDocument"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.lsp4j.SemanticTokensRangeParams",
+      "fields": [
+        {
+          "name": "range"
+        },
+        {
+          "name": "textDocument"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },
@@ -2368,6 +2410,20 @@
       ]
     },
     {
+      "type": "org.eclipse.lsp4j.jsonrpc.messages.CancelParams",
+      "fields": [
+        {
+          "name": "id"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "org.eclipse.lsp4j.services.LanguageClient"
     },
     {
@@ -2433,6 +2489,18 @@
           "parameterTypes": [
             "org.eclipse.lsp4j.DocumentSymbolParams"
           ]
+        },
+        {
+          "name": "semanticTokensFull",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.SemanticTokensParams"
+          ]
+        },
+        {
+          "name": "semanticTokensRange",
+          "parameterTypes": [
+            "org.eclipse.lsp4j.SemanticTokensRangeParams"
+          ]
         }
       ]
     },
@@ -2446,6 +2514,15 @@
           ]
         }
       ]
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en"
+    },
+    {
+      "type": "sun.text.resources.cldr.FormatData_en_US"
     },
     {
       "type": "uet.ndh.ddsl.compiler.api.CompileResponse",
@@ -2472,7 +2549,29 @@
       "type": "uet.ndh.ddsl.compiler.api.CompileResponse$Artifact"
     },
     {
-      "type": "uet.ndh.ddsl.compiler.api.CompileResponse$DiagnosticMessage"
+      "type": "uet.ndh.ddsl.compiler.api.CompileResponse$DiagnosticMessage",
+      "methods": [
+        {
+          "name": "column",
+          "parameterTypes": []
+        },
+        {
+          "name": "line",
+          "parameterTypes": []
+        },
+        {
+          "name": "message",
+          "parameterTypes": []
+        },
+        {
+          "name": "ruleId",
+          "parameterTypes": []
+        },
+        {
+          "name": "severity",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "uet.ndh.ddsl.lsp.DdslLanguageServer"
@@ -2526,6 +2625,17 @@
     },
     {
       "glob": "logback.xml"
+    },
+    {
+      "module": "java.logging",
+      "glob": "sun/util/logging/resources/logging_en.properties"
+    },
+    {
+      "module": "java.logging",
+      "glob": "sun/util/logging/resources/logging_en_US.properties"
+    },
+    {
+      "bundle": "sun.util.logging.resources.logging"
     }
   ]
 }

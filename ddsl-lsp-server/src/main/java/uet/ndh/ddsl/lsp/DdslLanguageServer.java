@@ -106,7 +106,7 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
             new SemanticTokensWithRegistrationOptions();
         semanticTokensOptions.setLegend(DdslSemanticTokens.getLegend());
         semanticTokensOptions.setFull(true);
-        semanticTokensOptions.setRange(false); // Full document only for now
+        semanticTokensOptions.setRange(true);
         serverCapabilities.setSemanticTokensProvider(semanticTokensOptions);
         
         // Definition: Go-to-definition for types and references

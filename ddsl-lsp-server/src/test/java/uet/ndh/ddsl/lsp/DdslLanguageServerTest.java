@@ -5,6 +5,8 @@ import org.eclipse.lsp4j.services.LanguageClient;
 import org.junit.jupiter.api.*;
 import uet.ndh.ddsl.compiler.api.CompileResponse;
 import uet.ndh.ddsl.lsp.core.DdslCommandIds;
+import uet.ndh.ddsl.parser.lexer.Token;
+import uet.ndh.ddsl.parser.lexer.TokenType;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -413,6 +415,49 @@ class DdslLanguageServerTest {
         assertFalse(tokens.getData().isEmpty(),
                 "Semantic tokens data should be non-empty for a valid document");
     }
+
+        @Test
+        @DisplayName("Semantic tokens range returns tokens for a selected slice")
+        void semanticTokensRange() throws Exception {
+        openDocument(SAMPLE_DDSL);
+
+        SemanticTokensRangeParams stp = new SemanticTokensRangeParams();
+        stp.setTextDocument(new TextDocumentIdentifier(DOC_URI));
+        stp.setRange(new Range(new Position(0, 0), new Position(0, 25)));
+
+        SemanticTokens rangeTokens = server.getTextDocumentService()
+            .semanticTokensRange(stp)
+            .get(5, TimeUnit.SECONDS);
+
+        SemanticTokens fullTokens = server.getTextDocumentService()
+            .semanticTokensFull(new SemanticTokensParams(new TextDocumentIdentifier(DOC_URI)))
+            .get(5, TimeUnit.SECONDS);
+
+        assertNotNull(rangeTokens);
+        assertNotNull(rangeTokens.getData());
+        assertFalse(rangeTokens.getData().isEmpty(),
+            "Semantic tokens range should return token data for the selected line");
+        assertNotNull(fullTokens);
+        assertTrue(rangeTokens.getData().size() < fullTokens.getData().size(),
+            "Range token payload should be smaller than full document payload");
+        }
+
+        @Test
+        @DisplayName("Semantic token encoder skips invalid and out-of-order tokens")
+        void semanticTokensEncoderSafety() {
+        List<Token> tokens = List.of(
+            new Token(TokenType.IDENTIFIER, "Order", 2, 1, 0),
+            new Token(TokenType.IDENTIFIER, "", 2, 5, 4),
+            new Token(TokenType.IDENTIFIER, "Backtrack", 1, 1, 0)
+        );
+
+        SemanticTokens encoded = DdslSemanticTokens.encode(tokens);
+
+        assertNotNull(encoded);
+        assertNotNull(encoded.getData());
+        assertEquals(5, encoded.getData().size(),
+            "Only the first valid token should be encoded as one LSP semantic token tuple");
+        }
 
     // ═══════════════════════════════════════════════════════════════════
     //  7. Document Symbols

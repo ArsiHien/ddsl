@@ -120,12 +120,22 @@ public class DdslSemanticTokens {
      * @return semantic tokens in LSP format
      */
     public static SemanticTokens encode(List<Token> tokens) {
+        if (tokens == null || tokens.isEmpty()) {
+            return new SemanticTokens(Collections.emptyList());
+        }
+
         List<Integer> data = new ArrayList<>();
         
         int prevLine = 0;
         int prevChar = 0;
         
-        for (Token token : tokens) {
+        for (int i = 0; i < tokens.size(); i++) {
+            Token token = tokens.get(i);
+
+            if (token == null) {
+                continue;
+            }
+
             // Skip EOF and whitespace-only tokens
             if (token.getType() == TokenType.EOF || 
                 token.getType() == TokenType.NEWLINE ||
@@ -135,21 +145,29 @@ public class DdslSemanticTokens {
             }
             
             // Get semantic token type for this DDSL token
-            int tokenType = getSemanticTokenType(token);
+            int tokenType = getSemanticTokenType(token, i, tokens);
             if (tokenType < 0) {
                 continue; // Skip tokens we don't want to highlight
             }
             
             // Get modifiers bitmap
-            int modifiers = getSemanticTokenModifiers(token);
+            int modifiers = getSemanticTokenModifiers(token, i, tokens, tokenType);
             
             // Calculate deltas (0-based line/column from token which is 1-based)
             int line = token.getLine() - 1;
             int character = token.getColumn() - 1;
-            int length = token.getLexeme().length();
+            int length = token.getLexeme() != null ? token.getLexeme().length() : 0;
+
+            if (line < 0 || character < 0 || length <= 0) {
+                continue;
+            }
             
             int deltaLine = line - prevLine;
             int deltaStart = (deltaLine == 0) ? (character - prevChar) : character;
+
+            if (deltaLine < 0 || (deltaLine == 0 && deltaStart < 0)) {
+                continue;
+            }
             
             // Add the 5 integers for this token
             data.add(deltaLine);
@@ -168,13 +186,14 @@ public class DdslSemanticTokens {
     /**
      * Map DDSL token type to LSP semantic token type.
      */
-    private static int getSemanticTokenType(Token token) {
+    private static int getSemanticTokenType(Token token, int index, List<Token> tokens) {
         TokenType type = token.getType();
         
         return switch (type) {
             // Structural keywords → keyword
             case BOUNDED_CONTEXT -> TYPE_NAMESPACE;
             case AGGREGATE, ENTITY -> TYPE_CLASS;
+            case ENUM -> TYPE_ENUM;
             case VALUE_OBJECT -> TYPE_STRUCT;
             case DOMAIN_SERVICE -> TYPE_CLASS;
             case DOMAIN_EVENT -> TYPE_EVENT;
@@ -189,8 +208,9 @@ public class DdslSemanticTokens {
             
             // Behavioral keywords → keyword
             case WHEN, REQUIRE, GIVEN, THEN, EMIT, RETURN, THAT, EVENT,
-                 CREATING, SET, CHANGE, RECORD, CALCULATE, CREATE, ADD,
-                 REMOVE, SAVE, IF, OTHERWISE, FOR, EACH -> TYPE_KEYWORD;
+                  CREATING, SET, CHANGE, RECORD, CALCULATE, CREATE, ADD,
+                  REMOVE, SAVE, ENABLE, DISABLE, FETCHED, MAPPED, DOES,
+                  IF, OTHERWISE, FOR, EACH -> TYPE_KEYWORD;
             
             // Type keywords → type
             case STRING_TYPE, INT_TYPE, DECIMAL_TYPE, BOOLEAN_TYPE,
@@ -203,9 +223,20 @@ public class DdslSemanticTokens {
                  GREATER, LESS, THAN, LEAST, MOST, EXCEEDS, WITHIN, ONE,
                  ALL, ANY, NO, ITEMS, HAVE, HAS, BEEN, EMPTY, EXISTS,
                  SYSTEM, VALID, CREATED, CALCULATED, DETERMINED,
-                 SUM, COUNT, WHERE, MATCHES, COMBINES,
+                  SUM, COUNT, MAXIMUM, MINIMUM, AVERAGE, ACROSS, GROUPED,
+                  WHERE, MATCHES, COMBINES, SATISFIES, ELIGIBLE,
                  PLUS, MINUS, TIMES, DIVIDED,
-                 NOW, TODAY, LAST, DAYS, NEW, GENERATED,
+                  NOW, TODAY, YESTERDAY, TOMORROW, LAST, NEXT, AGO,
+                  BEFORE, AFTER, BETWEEN, OCCURRED,
+                  SECONDS, MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS,
+                  NEW, GENERATED,
+                  STATE, MACHINE, STATES, TRANSITIONS, GUARDS, ENTRY, EXIT,
+                  ENTERING, LEAVING, INITIAL, FINAL, CANNOT, MUST, TRANSITION,
+                  ONLY, ALWAYS, NEVER,
+                  COLLECT, ERRORS, WARNING, FAIL, CRITICAL, UP, GROUP,
+                  MATCH, CONTAINS, STARTS, ENDS, BLANK, FORMAT, EMAIL, PHONE,
+                  URL, ALPHANUMERIC, NUMERIC, TRUNCATED, CONCATENATED,
+                  REPLACED, LENGTH, CHARACTERS, MORE, FIRST, EXACTLY,
                  SUCCESS, FAILURE, RESULT -> TYPE_KEYWORD;
             
             // Annotations → decorator
@@ -228,7 +259,7 @@ public class DdslSemanticTokens {
                  COLON, SEMICOLON, COMMA, DOT, DASH, QUESTION -> -1;
             
             // Identifiers
-            case IDENTIFIER -> TYPE_VARIABLE;
+            case IDENTIFIER -> classifyIdentifier(token, index, tokens);
             
             // Error tokens - could highlight as error
             case ERROR -> -1;
@@ -241,7 +272,7 @@ public class DdslSemanticTokens {
      * Get semantic token modifiers for a token.
      * Returns a bitmap of active modifiers.
      */
-    private static int getSemanticTokenModifiers(Token token) {
+    private static int getSemanticTokenModifiers(Token token, int index, List<Token> tokens, int semanticType) {
         int modifiers = 0;
         TokenType type = token.getType();
         
@@ -259,13 +290,96 @@ public class DdslSemanticTokens {
         if (type == TokenType.TRUE || type == TokenType.FALSE || type == TokenType.NULL) {
             modifiers |= (1 << MOD_READONLY);
         }
+
+        if (type == TokenType.IDENTIFIER) {
+            Token previous = previousSignificantToken(index, tokens);
+            if (previous != null && isDeclarationKeyword(previous.getType())) {
+                modifiers |= (1 << MOD_DECLARATION);
+                modifiers |= (1 << MOD_DEFINITION);
+            }
+            if (semanticType == TYPE_ENUM_MEMBER) {
+                modifiers |= (1 << MOD_READONLY);
+            }
+        }
         
         return modifiers;
+    }
+
+    private static int classifyIdentifier(Token token, int index, List<Token> tokens) {
+        Token previous = previousSignificantToken(index, tokens);
+        Token next = nextSignificantToken(index, tokens);
+
+        if (previous != null && isDeclarationKeyword(previous.getType())) {
+            return switch (previous.getType()) {
+                case ENUM -> TYPE_ENUM;
+                case VALUE_OBJECT -> TYPE_STRUCT;
+                case DOMAIN_EVENT -> TYPE_EVENT;
+                case FACTORY -> TYPE_FUNCTION;
+                case REPOSITORY, SPECIFICATION -> TYPE_INTERFACE;
+                case USE_CASE -> TYPE_METHOD;
+                default -> TYPE_CLASS;
+            };
+        }
+
+        if (next != null && next.getType() == TokenType.COLON) {
+            return TYPE_PROPERTY;
+        }
+
+        if (next != null && next.getType() == TokenType.LEFT_PAREN) {
+            return TYPE_METHOD;
+        }
+
+        if (previous != null && isTypePositionIndicator(previous.getType()) && isProbablyTypeName(token.getLexeme())) {
+            return TYPE_TYPE;
+        }
+
+        if (isProbablyTypeName(token.getLexeme())) {
+            return TYPE_TYPE;
+        }
+
+        return TYPE_VARIABLE;
+    }
+
+    private static Token previousSignificantToken(int index, List<Token> tokens) {
+        for (int i = index - 1; i >= 0; i--) {
+            Token candidate = tokens.get(i);
+            if (candidate == null) {
+                continue;
+            }
+            TokenType type = candidate.getType();
+            if (type != TokenType.NEWLINE && type != TokenType.INDENT && type != TokenType.DEDENT) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static Token nextSignificantToken(int index, List<Token> tokens) {
+        for (int i = index + 1; i < tokens.size(); i++) {
+            Token candidate = tokens.get(i);
+            if (candidate == null) {
+                continue;
+            }
+            TokenType type = candidate.getType();
+            if (type != TokenType.NEWLINE && type != TokenType.INDENT && type != TokenType.DEDENT) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isTypePositionIndicator(TokenType type) {
+        return type == TokenType.COLON || type == TokenType.LEFT_ANGLE || type == TokenType.COMMA;
+    }
+
+    private static boolean isProbablyTypeName(String lexeme) {
+        return lexeme != null && !lexeme.isEmpty() && Character.isUpperCase(lexeme.charAt(0));
     }
     
     private static boolean isDeclarationKeyword(TokenType type) {
         return type == TokenType.BOUNDED_CONTEXT ||
                type == TokenType.AGGREGATE ||
+               type == TokenType.ENUM ||
                type == TokenType.ENTITY ||
                type == TokenType.VALUE_OBJECT ||
                type == TokenType.DOMAIN_SERVICE ||
@@ -277,6 +391,7 @@ public class DdslSemanticTokens {
     
     private static boolean isTypeDefinitionKeyword(TokenType type) {
         return type == TokenType.AGGREGATE ||
+               type == TokenType.ENUM ||
                type == TokenType.ENTITY ||
                type == TokenType.VALUE_OBJECT ||
                type == TokenType.DOMAIN_EVENT;
