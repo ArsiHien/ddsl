@@ -19,6 +19,8 @@ public final class DdslCommandIds {
     public static final String EXTRACT_TO_VALUE_OBJECT = "ddsl.extractToValueObject";
     public static final String GENERATE_INVARIANTS = "ddsl.generateInvariants";
     public static final String GENERATE_OPERATIONS = "ddsl.generateOperations";
+    public static final String GENERATE_COMPONENT_DIAGRAM = "ddsl.generateComponentDiagram";
+    public static final String GENERATE_EVENT_FLOW_DIAGRAM = "ddsl.generateEventFlowDiagram";
 
     public static final List<String> ALL = List.of(
         COMPILE,
@@ -28,6 +30,8 @@ public final class DdslCommandIds {
         EXTRACT_VALUE_OBJECT,
         EXTRACT_TO_VALUE_OBJECT,
         GENERATE_INVARIANTS,
-        GENERATE_OPERATIONS
+        GENERATE_OPERATIONS,
+        GENERATE_COMPONENT_DIAGRAM,
+        GENERATE_EVENT_FLOW_DIAGRAM
     );
 }

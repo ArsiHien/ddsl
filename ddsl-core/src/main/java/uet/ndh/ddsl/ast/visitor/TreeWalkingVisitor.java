@@ -70,6 +70,27 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
         for (EnumDecl enumDecl : decl.enums()) {
             result = aggregateResult(result, enumDecl.accept(this));
         }
+        for (var valueObject : decl.valueObjects()) {
+            result = aggregateResult(result, valueObject.accept(this));
+        }
+        for (var domainService : decl.domainServices()) {
+            result = aggregateResult(result, domainService.accept(this));
+        }
+        for (var domainEvent : decl.domainEvents()) {
+            result = aggregateResult(result, domainEvent.accept(this));
+        }
+        for (var repository : decl.repositories()) {
+            result = aggregateResult(result, repository.accept(this));
+        }
+        for (var factory : decl.factories()) {
+            result = aggregateResult(result, factory.accept(this));
+        }
+        for (var specification : decl.specifications()) {
+            result = aggregateResult(result, specification.accept(this));
+        }
+        for (var applicationService : decl.applicationServices()) {
+            result = aggregateResult(result, applicationService.accept(this));
+        }
         return result;
     }
     

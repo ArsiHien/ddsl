@@ -310,8 +310,11 @@ public class DdslParser {
                     aggregates.add(aggregate);
                 }
             } else if (check(TokenType.ENTITY)) {
-                // Standalone entities not directly added to context
-                entityDeclaration();
+                // Preserve standalone entity declarations by promoting them to aggregate roots.
+                EntityDecl entity = entityDeclaration();
+                if (entity != null) {
+                    aggregates.add(promoteStandaloneEntityToAggregate(entity));
+                }
             } else if (check(TokenType.VALUE_OBJECT)) {
                 ValueObjectDecl vo = valueObjectDeclaration();
                 if (vo != null) {
@@ -335,6 +338,38 @@ public class DdslParser {
         
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of domain section");
     }
+
+        private AggregateDecl promoteStandaloneEntityToAggregate(EntityDecl entity) {
+        EntityDecl aggregateRoot = entity.isAggregateRoot()
+            ? entity
+            : new EntityDecl(
+                entity.span(),
+                entity.name(),
+                entity.identity(),
+                entity.fields(),
+                entity.methods(),
+                entity.constructors(),
+                entity.behaviors(),
+                entity.invariants(),
+                entity.domainEvents(),
+                true,
+                entity.documentation()
+            );
+
+        return new AggregateDecl(
+            entity.span(),
+            entity.name(),
+            aggregateRoot,
+            List.of(),
+            List.of(),
+            entity.invariants(),
+            entity.behaviors(),
+            List.of(),
+            List.of(),
+            List.of(),
+            entity.documentation()
+        );
+        }
 
     /**
      * EnumDeclaration ::=

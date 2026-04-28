@@ -166,6 +166,12 @@ public class DdslLanguageServer implements LanguageServer, LanguageClientAware {
             log.info("Ready to serve DDSL language features");
         }
     }
+
+    @Override
+    public void setTrace(SetTraceParams params) {
+        String traceValue = params != null ? params.getValue() : "off";
+        log.debug("Received $/setTrace notification with value={}", traceValue);
+    }
     
     @Override
     public CompletableFuture<Object> shutdown() {

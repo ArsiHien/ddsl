@@ -4,6 +4,8 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.junit.jupiter.api.*;
 import uet.ndh.ddsl.compiler.api.CompileResponse;
+import uet.ndh.ddsl.lsp.diagram.DdslDiagramService;
+import uet.ndh.ddsl.lsp.diagram.DiagramResponse;
 import uet.ndh.ddsl.lsp.core.DdslCommandIds;
 import uet.ndh.ddsl.parser.lexer.Token;
 import uet.ndh.ddsl.parser.lexer.TokenType;
@@ -159,6 +161,26 @@ class DdslLanguageServerTest {
     }
 
     @Test
+    @DisplayName("workspace ddsl.compile accepts object URI argument")
+    void executeCompileCommandWithObjectUri() throws Exception {
+        openDocument(SAMPLE_DDSL);
+
+        ExecuteCommandParams params = new ExecuteCommandParams();
+        params.setCommand(DdslCommandIds.COMPILE);
+        params.setArguments(List.of(java.util.Map.of("uri", DOC_URI)));
+
+        Object result = server.getWorkspaceService()
+                .executeCommand(params)
+                .get(10, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertTrue(result instanceof CompileResponse);
+
+        CompileResponse response = (CompileResponse) result;
+        assertTrue(response.success(), "Compile should succeed when URI is passed as object payload");
+    }
+
+    @Test
     @DisplayName("workspace ddsl.compile fails when URI argument is missing")
     void executeCompileCommandMissingUri() throws Exception {
         ExecuteCommandParams params = new ExecuteCommandParams();
@@ -175,6 +197,52 @@ class DdslLanguageServerTest {
         CompileResponse response = (CompileResponse) result;
         assertFalse(response.success());
         assertFalse(response.errors().isEmpty());
+    }
+
+    @Test
+    @DisplayName("workspace generate component diagram returns JSON model")
+    void executeGenerateComponentDiagram() throws Exception {
+        openDocument(SAMPLE_DDSL);
+
+        ExecuteCommandParams params = new ExecuteCommandParams();
+        params.setCommand(DdslCommandIds.GENERATE_COMPONENT_DIAGRAM);
+        params.setArguments(List.of(java.util.Map.of("uri", DOC_URI)));
+
+        Object result = server.getWorkspaceService()
+                .executeCommand(params)
+                .get(10, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertTrue(result instanceof DiagramResponse);
+
+        DiagramResponse response = (DiagramResponse) result;
+        assertTrue(response.success());
+        assertEquals("component", response.diagramType());
+        assertNotNull(response.model());
+        assertTrue(response.model() instanceof DdslDiagramService.ComponentDiagramModel);
+    }
+
+    @Test
+    @DisplayName("workspace generate event-flow diagram returns JSON model")
+    void executeGenerateEventFlowDiagram() throws Exception {
+        openDocument(SAMPLE_DDSL);
+
+        ExecuteCommandParams params = new ExecuteCommandParams();
+        params.setCommand(DdslCommandIds.GENERATE_EVENT_FLOW_DIAGRAM);
+        params.setArguments(List.of(java.util.Map.of("uri", DOC_URI)));
+
+        Object result = server.getWorkspaceService()
+                .executeCommand(params)
+                .get(10, TimeUnit.SECONDS);
+
+        assertNotNull(result);
+        assertTrue(result instanceof DiagramResponse);
+
+        DiagramResponse response = (DiagramResponse) result;
+        assertTrue(response.success());
+        assertEquals("eventFlow", response.diagramType());
+        assertNotNull(response.model());
+        assertTrue(response.model() instanceof DdslDiagramService.EventFlowDiagramModel);
     }
 
     @Test
