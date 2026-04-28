@@ -24,40 +24,46 @@ class AgentPipelineTest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    // ─── DslState tests ─────────────────────────────────────────────────
+    // ─── EnhancedDslState tests ────────────────────────────────────────
 
     @Nested
-    @DisplayName("DslState")
-    class DslStateTests {
+    @DisplayName("EnhancedDslState")
+    class EnhancedDslStateTests {
 
         @Test
         @DisplayName("Default state has sane initial values")
         void defaultValues() {
-            var state = new DslState(Map.of());
+            var state = new EnhancedDslState(Map.of());
             assertEquals("", state.userInput());
             assertEquals("", state.currentDsl());
             assertEquals(List.of(), state.errorLogs());
-            assertEquals(0, state.retryCount());
+            assertEquals(0, state.retrieverRetries());
+            assertEquals(0, state.normalizerRetries());
+            assertEquals(0, state.synthesizerRetries());
             assertFalse(state.isSuccessful());
-            assertEquals(3, state.maxRetries());
+            assertEquals(2, state.maxRetriesPerAgent());
         }
 
         @Test
         @DisplayName("State reflects provided values")
         void customValues() {
-            var state = new DslState(Map.of(
-                    DslState.KEY_USER_INPUT, "create an order",
-                    DslState.KEY_CURRENT_DSL, "BoundedContext {}",
-                    DslState.KEY_RETRY_COUNT, 2,
-                    DslState.KEY_IS_SUCCESSFUL, true,
-                    DslState.KEY_MAX_RETRIES, 5
+            var state = new EnhancedDslState(Map.of(
+                    EnhancedDslState.KEY_USER_INPUT, "create an order",
+                    EnhancedDslState.KEY_CURRENT_DSL, "BoundedContext {}",
+                    EnhancedDslState.KEY_RETRIEVER_RETRIES, 1,
+                    EnhancedDslState.KEY_NORMALIZER_RETRIES, 0,
+                    EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 1,
+                    EnhancedDslState.KEY_IS_SUCCESSFUL, true,
+                    EnhancedDslState.KEY_MAX_RETRIES_PER_AGENT, 5
             ));
 
             assertEquals("create an order", state.userInput());
             assertEquals("BoundedContext {}",  state.currentDsl());
-            assertEquals(2, state.retryCount());
+            assertEquals(1, state.retrieverRetries());
+            assertEquals(0, state.normalizerRetries());
+            assertEquals(1, state.synthesizerRetries());
             assertTrue(state.isSuccessful());
-            assertEquals(5, state.maxRetries());
+            assertEquals(5, state.maxRetriesPerAgent());
         }
     }
 
@@ -139,8 +145,8 @@ class AgentPipelineTest {
         @Test
         @DisplayName("Valid DSL → isSuccessful=true, empty error logs")
         void validDslPassesJudge() throws Exception {
-            var state = new DslState(Map.of(
-                    DslState.KEY_CURRENT_DSL, """
+            var state = new EnhancedDslState(Map.of(
+                    EnhancedDslState.KEY_CURRENT_DSL, """
                             BoundedContext MyCtx {
                                 domain {
                                     Aggregate Order {
@@ -150,55 +156,60 @@ class AgentPipelineTest {
                                 }
                             }
                             """,
-                    DslState.KEY_RETRY_COUNT, 1
+                    EnhancedDslState.KEY_RETRIEVER_RETRIES, 0,
+                    EnhancedDslState.KEY_NORMALIZER_RETRIES, 0,
+                    EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 1
             ));
 
             Map<String, Object> updates = judgeNode.apply(state);
 
-            assertTrue((Boolean) updates.get(DslState.KEY_IS_SUCCESSFUL));
+            assertTrue((Boolean) updates.get(EnhancedDslState.KEY_IS_SUCCESSFUL));
             @SuppressWarnings("unchecked")
-            List<String> errors = (List<String>) updates.get(DslState.KEY_ERROR_LOGS);
+            List<String> errors = (List<String>) updates.get(EnhancedDslState.KEY_ERROR_LOGS);
             assertTrue(errors.isEmpty());
         }
 
         @Test
         @DisplayName("Invalid DSL → isSuccessful=false, error logs populated")
         void invalidDslFailsJudge() throws Exception {
-            var state = new DslState(Map.of(
-                    DslState.KEY_CURRENT_DSL, "This is not DDSL at all {{{",
-                    DslState.KEY_RETRY_COUNT, 1
+            var state = new EnhancedDslState(Map.of(
+                    EnhancedDslState.KEY_CURRENT_DSL, "This is not DDSL at all {{{",
+                    EnhancedDslState.KEY_RETRIEVER_RETRIES, 0,
+                    EnhancedDslState.KEY_NORMALIZER_RETRIES, 0,
+                    EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 1
             ));
 
             Map<String, Object> updates = judgeNode.apply(state);
 
-            assertFalse((Boolean) updates.get(DslState.KEY_IS_SUCCESSFUL));
+            assertFalse((Boolean) updates.get(EnhancedDslState.KEY_IS_SUCCESSFUL));
             @SuppressWarnings("unchecked")
-            List<String> errors = (List<String>) updates.get(DslState.KEY_ERROR_LOGS);
+            List<String> errors = (List<String>) updates.get(EnhancedDslState.KEY_ERROR_LOGS);
             assertFalse(errors.isEmpty(), "Should have at least one error");
         }
 
         @Test
         @DisplayName("Empty DSL draft → isSuccessful=false")
         void emptyDslFailsJudge() throws Exception {
-            var state = new DslState(Map.of(
-                    DslState.KEY_CURRENT_DSL, "",
-                    DslState.KEY_RETRY_COUNT, 0
+            var state = new EnhancedDslState(Map.of(
+                    EnhancedDslState.KEY_CURRENT_DSL, "",
+                    EnhancedDslState.KEY_RETRIEVER_RETRIES, 0,
+                    EnhancedDslState.KEY_NORMALIZER_RETRIES, 0,
+                    EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 0
             ));
 
             Map<String, Object> updates = judgeNode.apply(state);
 
-            assertFalse((Boolean) updates.get(DslState.KEY_IS_SUCCESSFUL));
+            assertFalse((Boolean) updates.get(EnhancedDslState.KEY_IS_SUCCESSFUL));
         }
 
         @Test
         @DisplayName("Null DSL draft → isSuccessful=false")
         void nullDslFailsJudge() throws Exception {
-            // DslState defaults currentDsl to "" but let's be defensive
-            var state = new DslState(Map.of());
+            var state = new EnhancedDslState(Map.of());
 
             Map<String, Object> updates = judgeNode.apply(state);
 
-            assertFalse((Boolean) updates.get(DslState.KEY_IS_SUCCESSFUL));
+            assertFalse((Boolean) updates.get(EnhancedDslState.KEY_IS_SUCCESSFUL));
         }
     }
 
@@ -215,24 +226,30 @@ class AgentPipelineTest {
             assertFalse(result.success());
             assertEquals("", result.dsl());
             assertEquals(List.of("something broke"), result.errors());
-            assertEquals(0, result.retries());
+            assertEquals(0, result.retrieverRetries());
+            assertEquals(0, result.normalizerRetries());
+            assertEquals(0, result.synthesizerRetries());
         }
 
         @Test
-        @DisplayName("from() extracts fields from DslState")
+        @DisplayName("from() extracts fields from EnhancedDslState")
         void fromState() {
-            var state = new DslState(Map.of(
-                    DslState.KEY_IS_SUCCESSFUL, true,
-                    DslState.KEY_CURRENT_DSL, "BoundedContext OK {}",
-                    DslState.KEY_ERROR_LOGS, List.of(),
-                    DslState.KEY_RETRY_COUNT, 2
+            var state = new EnhancedDslState(Map.of(
+                    EnhancedDslState.KEY_IS_SUCCESSFUL, true,
+                    EnhancedDslState.KEY_FINAL_DSL, "BoundedContext OK {}",
+                    EnhancedDslState.KEY_ERROR_LOGS, List.of(),
+                    EnhancedDslState.KEY_RETRIEVER_RETRIES, 1,
+                    EnhancedDslState.KEY_NORMALIZER_RETRIES, 0,
+                    EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 1
             ));
 
             var result = NlToDslService.NlToDslResult.from(state);
             assertTrue(result.success());
             assertEquals("BoundedContext OK {}", result.dsl());
             assertTrue(result.errors().isEmpty());
-            assertEquals(2, result.retries());
+            assertEquals(1, result.retrieverRetries());
+            assertEquals(0, result.normalizerRetries());
+            assertEquals(1, result.synthesizerRetries());
         }
     }
 
@@ -244,17 +261,17 @@ class AgentPipelineTest {
         var judgeNode = new JudgeNode(new DdslValidationTool());
 
         // --- Iteration 1: bad DSL ---
-        var state1 = new DslState(Map.of(
-                DslState.KEY_CURRENT_DSL, "BoundedContext { }",  // missing name
-                DslState.KEY_RETRY_COUNT, 1,
-                DslState.KEY_MAX_RETRIES, 3
+        var state1 = new EnhancedDslState(Map.of(
+                EnhancedDslState.KEY_CURRENT_DSL, "BoundedContext { }",
+                EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 1,
+                EnhancedDslState.KEY_MAX_RETRIES_PER_AGENT, 3
         ));
         Map<String, Object> out1 = judgeNode.apply(state1);
-        assertFalse((Boolean) out1.get(DslState.KEY_IS_SUCCESSFUL));
+        assertFalse((Boolean) out1.get(EnhancedDslState.KEY_IS_SUCCESSFUL));
 
         // --- Iteration 2: fixed DSL ---
         var fixedState = new HashMap<String, Object>();
-        fixedState.put(DslState.KEY_CURRENT_DSL, """
+        fixedState.put(EnhancedDslState.KEY_CURRENT_DSL, """
                 BoundedContext FixedCtx {
                     domain {
                         Aggregate FixedAgg {
@@ -263,11 +280,11 @@ class AgentPipelineTest {
                     }
                 }
                 """);
-        fixedState.put(DslState.KEY_RETRY_COUNT, 2);
-        fixedState.put(DslState.KEY_MAX_RETRIES, 3);
+        fixedState.put(EnhancedDslState.KEY_SYNTHESIZER_RETRIES, 2);
+        fixedState.put(EnhancedDslState.KEY_MAX_RETRIES_PER_AGENT, 3);
 
-        Map<String, Object> out2 = judgeNode.apply(new DslState(fixedState));
-        assertTrue((Boolean) out2.get(DslState.KEY_IS_SUCCESSFUL),
+        Map<String, Object> out2 = judgeNode.apply(new EnhancedDslState(fixedState));
+        assertTrue((Boolean) out2.get(EnhancedDslState.KEY_IS_SUCCESSFUL),
                 "Fixed DSL should pass validation");
     }
 }

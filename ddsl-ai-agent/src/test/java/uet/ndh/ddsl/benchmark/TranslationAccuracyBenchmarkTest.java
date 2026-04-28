@@ -431,7 +431,7 @@ class TranslationAccuracyBenchmarkTest {
                 long elapsed = System.currentTimeMillis() - start;
 
                 boolean valid = result.success();
-                int retries = result.retries();
+                int retries = result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries();
                 boolean wasPass1 = (retries <= 1 && valid);
                 int tokens = estimateTokens(tc.prompt(), result.dsl())
                         * Math.max(1, retries);
@@ -512,7 +512,7 @@ class TranslationAccuracyBenchmarkTest {
 
             for (var tc : cases) {
                 NlToDslResult result = nlToDslService.translate(tc.prompt(), 3);
-                int iters = result.retries();
+                int iters = result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries();
                 itersByComplexity.get(tc.complexity()).add(iters);
                 successByComplexity.get(tc.complexity()).add(result.success());
 
@@ -582,16 +582,18 @@ class TranslationAccuracyBenchmarkTest {
                 long t1 = System.currentTimeMillis();
                 NlToDslResult proposed = nlToDslService.translate(tc.prompt(), 3);
                 long proposedMs = System.currentTimeMillis() - t1;
-                boolean pPass1 = (proposed.retries() <= 1 && proposed.success());
+                boolean pPass1 = (proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries() <= 1 && proposed.success());
                 boolean pHealed = proposed.success();
                 int pTokens = estimateTokens(tc.prompt(), proposed.dsl())
-                        * Math.max(1, proposed.retries());
+                        * Math.max(1, proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries());
                 if (pPass1) proposedPass1++;
                 if (pHealed) proposedHealed++;
                 proposedTotalTokens += pTokens;
 
                 System.out.printf("  Proposed:  %s (%d iter, %d ms, ~%d tok)%n",
-                        pHealed ? "✅" : "❌", proposed.retries(), proposedMs, pTokens);
+                        pHealed ? "✅" : "❌",
+                        proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries(),
+                        proposedMs, pTokens);
             }
 
             int total = cases.size();
@@ -649,7 +651,8 @@ class TranslationAccuracyBenchmarkTest {
 
                 System.out.printf("%n┌─ [%s] %s (%s)%n", tc.id(), tc.name(), tc.complexity());
                 System.out.printf("│  Success: %s  |  Iterations: %d%n",
-                        result.success() ? "✅" : "❌", result.retries());
+                        result.success() ? "✅" : "❌",
+                        result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
 
                 if (result.success()) {
                     // Show first lines of the generated DSL
@@ -786,7 +789,8 @@ class TranslationAccuracyBenchmarkTest {
                     "Create a simple Product aggregate with an ID and a name.", 3);
 
             System.out.printf("  Simple prompt: %s (retries=%d)%n",
-                    result.success() ? "✅" : "❌", result.retries());
+                    result.success() ? "✅" : "❌",
+                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
             if (result.success()) {
                 System.out.printf("  DSL: %s%n", truncate(result.dsl(), 200));
                 assertTrue(hardCompilerValidation(result.dsl()),
@@ -814,7 +818,8 @@ class TranslationAccuracyBenchmarkTest {
             NlToDslResult result = nlToDslService.translate(complexPrompt, 3);
 
             System.out.printf("  Complex prompt: %s (retries=%d)%n",
-                    result.success() ? "✅" : "❌", result.retries());
+                    result.success() ? "✅" : "❌",
+                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
 
             if (result.success()) {
                 assertTrue(hardCompilerValidation(result.dsl()),
@@ -840,7 +845,8 @@ class TranslationAccuracyBenchmarkTest {
             NlToDslResult result = nlToDslService.translate(trickyPrompt, 3);
 
             System.out.printf("  Tricky prompt: %s (retries=%d)%n",
-                    result.success() ? "✅" : "❌", result.retries());
+                    result.success() ? "✅" : "❌",
+                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
 
             if (result.success()) {
                 assertTrue(hardCompilerValidation(result.dsl()),

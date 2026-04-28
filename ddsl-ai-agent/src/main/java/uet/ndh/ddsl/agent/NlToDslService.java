@@ -3,44 +3,44 @@ package uet.ndh.ddsl.agent;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.StateGraph;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Service that compiles and executes the NL → DDSL self-healing pipeline.
+ * Service that compiles and executes the NL → DDSL pipeline.
  * Entry point for REST controllers.
  */
 @Service
 @Slf4j
 public class NlToDslService {
 
-    private final CompiledGraph<DslState> compiledGraph;
+    private final CompiledGraph<EnhancedDslState> compiledGraph;
 
-    public NlToDslService(StateGraph<DslState> stateGraph) throws Exception {
+    public NlToDslService(StateGraph<EnhancedDslState> stateGraph) throws Exception {
         this.compiledGraph = stateGraph.compile();
-        log.info("NlToDslService: compiled LangGraph4j graph (synthesizer → judge)");
+        log.info("NlToDslService: compiled LangGraph4j pipeline (retriever → normalizer → synthesizer → judge)");
     }
 
     /**
-     * Execute the NL → DDSL pipeline with self-healing retry loop.
+     * Execute the NL → DDSL pipeline with per-agent retry logic.
      *
-     * @param naturalLanguageInput the raw user input in any language
-     * @param maxRetries           max validation-retry loops (default 3)
-     * @return the result containing the final DSL and metadata
+     * @param naturalLanguageInput the raw user input
+     * @param maxRetriesPerAgent   max retries per agent (default 2)
+     * @return the result containing DSL and metadata
      */
-    public NlToDslResult translate(String naturalLanguageInput, int maxRetries) {
-        log.info("Starting NL→DSL translation ({} chars, maxRetries={})",
-                naturalLanguageInput.length(), maxRetries);
+    public NlToDslResult translate(String naturalLanguageInput, int maxRetriesPerAgent) {
+        log.info("Starting NL→DSL translation ({} chars, maxRetriesPerAgent={})",
+                naturalLanguageInput.length(), maxRetriesPerAgent);
 
         Map<String, Object> initialState = new HashMap<>();
-        initialState.put(DslState.KEY_USER_INPUT, naturalLanguageInput);
-        initialState.put(DslState.KEY_MAX_RETRIES, maxRetries);
+        initialState.put(EnhancedDslState.KEY_USER_INPUT, naturalLanguageInput);
+        initialState.put(EnhancedDslState.KEY_MAX_RETRIES_PER_AGENT, maxRetriesPerAgent);
 
         try {
-            DslState finalState = null;
+            EnhancedDslState finalState = null;
 
             for (var nodeOutput : compiledGraph.stream(initialState)) {
                 log.debug("Graph node output: {}", nodeOutput.node());
@@ -60,28 +60,39 @@ public class NlToDslService {
     }
 
     public NlToDslResult translate(String naturalLanguageInput) {
-        return translate(naturalLanguageInput, 3);
+        return translate(naturalLanguageInput, 2);
     }
 
-    // ── Result record ───────────────────────────────────────────────────
-
+    /**
+     * Result record for NL → DSL translation.
+     */
     public record NlToDslResult(
             boolean success,
             String dsl,
             List<String> errors,
-            int retries
+            int retrieverRetries,
+            int normalizerRetries,
+            int synthesizerRetries,
+            double retrievalQuality,
+            String errorStage
     ) {
-        public static NlToDslResult from(DslState state) {
+        public static NlToDslResult from(EnhancedDslState state) {
             return new NlToDslResult(
                     state.isSuccessful(),
-                    state.currentDsl(),
+                    state.isSuccessful() ? state.finalDsl() : state.currentDsl(),
                     state.errorLogs(),
-                    state.retryCount()
+                    state.retrieverRetries(),
+                    state.normalizerRetries(),
+                    state.synthesizerRetries(),
+                    state.retrievalQuality(),
+                    state.errorStage()
             );
         }
 
         public static NlToDslResult failure(String errorMessage) {
-            return new NlToDslResult(false, "", List.of(errorMessage), 0);
+            return new NlToDslResult(
+                    false, "", List.of(errorMessage), 0, 0, 0, 0.0, "SERVICE"
+            );
         }
     }
 }

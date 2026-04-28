@@ -10,14 +10,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Centralized prompt management — loads prompt templates from external {@code .st}
- * resource files under {@code classpath:prompts/}.
- *
- * <h3>Loaded prompts:</h3>
- * <ul>
- *   <li>{@code synthesizer-system.st} — SynthesizerNode system prompt (grammar ref + self-correction rules)</li>
- *   <li>{@code default-system.st}     — default ChatClient system prompt</li>
- * </ul>
+ * Centralized prompt management for all agent nodes.
+ * Loads prompt templates from external .st resource files.
  */
 @Component
 public class PromptManager {
@@ -25,34 +19,39 @@ public class PromptManager {
     private static final Logger log = LoggerFactory.getLogger(PromptManager.class);
 
     private final String synthesizerSystemPrompt;
+    private final String synthesizerStrictPrompt;
+    private final String normalizerSystemPrompt;
     private final String defaultSystemPrompt;
 
     public PromptManager(
             @Value("classpath:prompts/synthesizer-system.st") Resource synthesizerSystem,
+            @Value("classpath:prompts/synthesizer-strict.st") Resource synthesizerStrict,
+            @Value("classpath:prompts/normalizer-system.st") Resource normalizerSystem,
             @Value("classpath:prompts/default-system.st") Resource defaultSystem
     ) throws IOException {
         this.synthesizerSystemPrompt = loadResource(synthesizerSystem, "synthesizer-system.st");
+        this.synthesizerStrictPrompt = loadResource(synthesizerStrict, "synthesizer-strict.st");
+        this.normalizerSystemPrompt = loadResource(normalizerSystem, "normalizer-system.st");
         this.defaultSystemPrompt = loadResource(defaultSystem, "default-system.st");
 
-        log.info("PromptManager: loaded 2 prompt templates from classpath:prompts/");
+        log.info("PromptManager: loaded 4 prompt templates from classpath:prompts/");
     }
 
-    /**
-     * System prompt for the SynthesizerNode — DDSL code generation with grammar
-     * reference and self-correction rules.
-     */
     public String synthesizerSystemPrompt() {
         return synthesizerSystemPrompt;
     }
 
-    /**
-     * Default system prompt for the ChatClient builder.
-     */
+    public String synthesizerStrictPrompt() {
+        return synthesizerStrictPrompt;
+    }
+
+    public String normalizerSystemPrompt() {
+        return normalizerSystemPrompt;
+    }
+
     public String defaultSystemPrompt() {
         return defaultSystemPrompt;
     }
-
-    // ── Internal helpers ─────────────────────────────────────────────────
 
     private static String loadResource(Resource resource, String name) throws IOException {
         if (!resource.exists()) {
