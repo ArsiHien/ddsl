@@ -1,0 +1,32 @@
+{
+  "version": "3.0.0",
+  "totalCases": 3,
+  "categories": {
+    "easy": 1,
+    "medium": 1,
+    "hard": 1
+  },
+  "testCases": [
+    {
+      "id": "TEST-E001",
+      "category": "easy",
+      "name": "Simple Order Aggregate",
+      "input": "Create an Order aggregate with orderId as UUID and identity, customerName as text and required, totalAmount as decimal with minimum 0, status as text, and createdAt as datetime.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        orderId: UUID @identity\n        customerName: String @required\n        totalAmount: Decimal @min(0)\n        status: String\n        createdAt: DateTime\n    }\n}"
+    },
+    {
+      "id": "TEST-M001",
+      "category": "medium",
+      "name": "Order with Behaviors",
+      "input": "Order aggregate with orderId UUID identity, customerName text required, items list of OrderItem, totalAmount decimal, status text. When placing order with customer and items: require that customer is not empty and items is not empty, calculate total as sum of items price, set status to PENDING, emit OrderPlaced with orderId.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        orderId: UUID @identity\n        customerName: String @required\n        items: List<OrderItem>\n        totalAmount: Decimal\n        status: String\n\n        operations {\n            when placing order with customer and items:\n                require that customer is not empty and items is not empty\n                calculate total as sum of items price\n                set status to \"PENDING\"\n                emit OrderPlaced with orderId\n        }\n    }\n}"
+    },
+    {
+      "id": "TEST-H001",
+      "category": "hard",
+      "name": "Order with Temporal Validation and State Machine",
+      "input": "Order aggregate with orderId UUID identity, customerName text required, status text default PENDING, createdAt datetime, expiresAt datetime. State machine for status: states are PENDING initial, CONFIRMED, DELIVERED final, CANCELLED final. Transitions: PENDING to CONFIRMED when payment received, CONFIRMED to DELIVERED always, any to CANCELLED always. When confirming order: require that status is PENDING and createdAt is more than 24 hours ago and payment is received, set status to CONFIRMED, emit OrderConfirmed with orderId.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        orderId: UUID @identity\n        customerName: String @required\n        status: String @default(\"PENDING\")\n        createdAt: DateTime\n        expiresAt: DateTime\n\n        state machine for status {\n            states:\n                - PENDING (initial)\n                - CONFIRMED\n                - DELIVERED (final)\n                - CANCELLED (final)\n\n            transitions:\n                - PENDING -> CONFIRMED: when payment received\n                - CONFIRMED -> DELIVERED: always\n                - [PENDING, CONFIRMED] -> CANCELLED: always\n        }\n\n        operations {\n            when confirming order:\n                require that status is \"PENDING\" and createdAt is more than 24 hours ago and payment is received\n                set status to \"CONFIRMED\"\n                emit OrderConfirmed with orderId\n        }\n    }\n}"
+    }
+  ]
+}

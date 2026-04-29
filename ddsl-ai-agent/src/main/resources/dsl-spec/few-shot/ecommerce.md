@@ -4,8 +4,10 @@ category: FEW_SHOT
 subcategory: informal_field_declarations
 language: en
 complexity: intermediate
+version: 3.0
 ---
-This example shows how to translate very informal, natural-language-style field declarations into valid DDSL syntax.
+
+This example shows how to translate very informal, natural-language-style field declarations and behaviors into valid DDSL syntax using the natural format.
 
 User input (highly informal pseudocode):
 ```
@@ -63,11 +65,11 @@ BoundedContext ECommerce {
 ```
 
 Corrected DDSL output:
-```
+```ddsl
 BoundedContext ECommerce {
     domain {
         Aggregate Order {
-            @identity orderId: UUID
+            orderId: UUID @identity
             customerName: String @required
             items: List<OrderItem>
             totalAmount: Money
@@ -80,17 +82,16 @@ BoundedContext ECommerce {
             }
 
             operations {
-                when placing an order with customer, items {
-                    require that items must not be empty
-                    then set status to "PLACED"
-                    then calculate total from item prices
-                    emit event OrderPlaced with orderId, customer
-                }
+                when placing order with customer and items:
+                    require that items is not empty
+                    set status to "PLACED"
+                    calculate total from item prices
+                    emit OrderPlaced with orderId and customer
             }
         }
 
         Entity OrderItem {
-            @identity itemId: UUID
+            itemId: UUID @identity
             productName: String @required @maxLength(200)
             quantity: Int @min(1)
             unitPrice: Decimal @min(0)
@@ -118,7 +119,7 @@ BoundedContext ECommerce {
 ```
 
 Key transformations:
-- `order id is UUID for identity` → `@identity orderId: UUID` — spaces→camelCase, "is"→colon, "for identity"→@identity annotation
+- `order id is UUID for identity` → `orderId: UUID @identity` — spaces→camelCase, "is"→colon, "for identity"→@identity annotation
 - `customer name is text, required` → `customerName: String @required` — spaces→camelCase, text→String, required→@required
 - `items is a list of OrderItem` → `items: List<OrderItem>` — "is a list of"→List<>
 - `total amount as money` → `totalAmount: Money` — "as"→colon, spaces→camelCase
@@ -126,8 +127,9 @@ Key transformations:
 - `product name is text, mandatory, max 200 chars` → `productName: String @required @maxLength(200)` — mandatory→@required, "max 200 chars"→@maxLength(200)
 - `quantity is a number, at least 1` → `quantity: Int @min(1)` — "a number"→Int, "at least 1"→@min(1)
 - `amount is decimal, no negatives` → `amount: Decimal @min(0)` — "no negatives"→@min(0)
-- `placing an order with customer and items {` → `when placing an order with customer, items {` — add `when`, "and"→comma
-- `items must not be empty` → `require that items must not be empty` — wrap in require that
-- `change status to "PLACED"` → `then set status to "PLACED"` — "change"→"then set"
-- `calculate total from item prices` → `then calculate total from item prices` — add "then"
-- `publish event OrderPlaced containing orderId and customer` → `emit event OrderPlaced with orderId, customer` — "publish"→"emit", "containing"→"with", "and"→comma
+- `placing an order with customer and items {` → `when placing order with customer and items:` — add `when`, convert to natural format
+- `items must not be empty` → `require that items is not empty` — wrap in require that
+- `change status to "PLACED"` → `set status to "PLACED"` — "change"→"set"
+- `calculate total from item prices` → `calculate total from item prices` — keep as is
+- `publish event OrderPlaced containing orderId and customer` → `emit OrderPlaced with orderId and customer` — "publish"→"emit", "containing"→"with"
+- **Natural format**: No bullet points, actions flow as readable sentences

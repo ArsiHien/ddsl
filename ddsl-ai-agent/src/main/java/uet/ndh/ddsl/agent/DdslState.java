@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * Uses LangGraph4j {@link AgentState} with last-value-wins channels.
  */
-public class DslState extends AgentState {
+public class DdslState extends AgentState {
 
     // ── State Keys ──────────────────────────────────────────────────────
     public static final String KEY_USER_INPUT = "userInput";
@@ -31,20 +31,39 @@ public class DslState extends AgentState {
     public static final String KEY_RETRY_COUNT = "retryCount";
     public static final String KEY_IS_SUCCESSFUL = "isSuccessful";
     public static final String KEY_MAX_RETRIES = "maxRetries";
+    public static final String KEY_RETRIEVER_RETRIES = "retrieverRetries";
+    public static final String KEY_SYNTHESIZER_RETRIES = "synthesizerRetries";
+    public static final String KEY_RETRIEVAL_QUALITY = "retrievalQuality";
+    public static final String KEY_COMPILER_FEEDBACK = "compilerFeedback";
+    public static final String KEY_FINAL_DSL = "finalDsl";
+    public static final String KEY_RETRIEVED_CONTEXT = "retrievedContext";
 
     /**
      * Channel schema — every key uses last-value-wins semantics.
      */
-    public static final Map<String, Channel<?>> SCHEMA = Map.of(
-            KEY_USER_INPUT, Channels.base(() -> ""),
-            KEY_CURRENT_DSL, Channels.base(() -> ""),
-            KEY_ERROR_LOGS, Channels.base(() -> List.<String>of()),
-            KEY_RETRY_COUNT, Channels.base(() -> 0),
-            KEY_IS_SUCCESSFUL, Channels.base(() -> false),
-            KEY_MAX_RETRIES, Channels.base(() -> 3)
+    public static final Map<String, Channel<?>> SCHEMA = Map.ofEntries(
+            Map.entry(KEY_USER_INPUT, Channels.base(() -> "")),
+            Map.entry(KEY_CURRENT_DSL, Channels.base(() -> "")),
+            Map.entry(KEY_ERROR_LOGS, Channels.base(() -> List.<String>of())),
+            Map.entry(KEY_RETRY_COUNT, Channels.base(() -> 0)),
+            Map.entry(KEY_IS_SUCCESSFUL, Channels.base(() -> false)),
+            Map.entry(KEY_MAX_RETRIES, Channels.base(() -> 3)),
+            Map.entry(KEY_RETRIEVER_RETRIES, Channels.base(() -> 0)),
+            Map.entry(KEY_SYNTHESIZER_RETRIES, Channels.base(() -> 0)),
+            Map.entry(KEY_RETRIEVAL_QUALITY, Channels.base(() -> 0.0)),
+            Map.entry(KEY_COMPILER_FEEDBACK, Channels.base(() -> "")),
+            Map.entry(KEY_FINAL_DSL, Channels.base(() -> "")),
+            Map.entry(KEY_RETRIEVED_CONTEXT, Channels.base(() -> ""))
     );
 
-    public DslState(Map<String, Object> initData) {
+    /**
+     * Factory method for LangGraph4j StateGraph compatibility.
+     */
+    public static DdslState from(Map<String, Object> initData) {
+        return new DdslState(initData);
+    }
+
+    public DdslState(Map<String, Object> initData) {
         super(initData);
     }
 
@@ -72,5 +91,29 @@ public class DslState extends AgentState {
 
     public int maxRetries() {
         return this.<Integer>value(KEY_MAX_RETRIES).orElse(3);
+    }
+
+    public int retrieverRetries() {
+        return this.<Integer>value(KEY_RETRIEVER_RETRIES).orElse(0);
+    }
+
+    public int synthesizerRetries() {
+        return this.<Integer>value(KEY_SYNTHESIZER_RETRIES).orElse(0);
+    }
+
+    public double retrievalQuality() {
+        return this.<Double>value(KEY_RETRIEVAL_QUALITY).orElse(0.0);
+    }
+
+    public String compilerFeedback() {
+        return this.<String>value(KEY_COMPILER_FEEDBACK).orElse("");
+    }
+
+    public String finalDsl() {
+        return this.<String>value(KEY_FINAL_DSL).orElse("");
+    }
+
+    public String retrievedContext() {
+        return this.<String>value(KEY_RETRIEVED_CONTEXT).orElse("");
     }
 }

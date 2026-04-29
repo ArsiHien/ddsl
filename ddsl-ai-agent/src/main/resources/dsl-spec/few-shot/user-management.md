@@ -4,8 +4,10 @@ category: FEW_SHOT
 subcategory: informal_mixed
 language: en
 complexity: intermediate
+version: 3.0
 ---
-This example shows how to handle a mix of very informal descriptions — compressed behaviors, loose field definitions, casual event and repository syntax.
+
+This example shows how to handle a mix of very informal descriptions — compressed behaviors, loose field definitions, casual event and repository syntax — using the natural DDSL format.
 
 User input (mix of casual English and pseudo-DDSL):
 ```
@@ -60,38 +62,33 @@ BoundedContext UserManagement {
 ```
 
 Corrected DDSL output:
-```
+```ddsl
 BoundedContext UserManagement {
     domain {
         Aggregate User {
-            @identity userId: UUID
+            userId: UUID @identity
             name: String @required @maxLength(100)
             email: String @required @email
             password: String @required @minLength(8)
             registeredAt: DateTime
-            active: Boolean
+            active: Boolean @default(true)
 
             operations {
-                when registering a new user with name, email, password {
-                    require that email is not empty
-                    require that password is not empty
-                    then set active to true
-                    then set registeredAt to now
-                    emit event UserRegistered with userId, email
-                }
+                when registering user with name and email and password:
+                    require that email is not empty and password is not empty
+                    set active to true
+                    set registeredAt to now
+                    emit UserRegistered with userId and email
 
-                when deactivating user {
-                    require that user must be currently active
-                    then set active to false
-                    emit event UserDeactivated with userId
-                }
+                when deactivating user:
+                    require that active is true
+                    set active to false
+                    emit UserDeactivated with userId
 
-                when changing password with oldPassword, newPassword {
-                    require that old password must match current
-                    require that new password must be at least 8 chars
-                    then update password
-                    emit event PasswordChanged with userId
-                }
+                when changing password with oldPassword and newPassword:
+                    require that oldPassword matches current and newPassword length is at least 8
+                    set password to newPassword
+                    emit PasswordChanged with userId
             }
         }
     }
@@ -121,16 +118,17 @@ BoundedContext UserManagement {
 ```
 
 Key transformations:
-- `user id is UUID, this is the identity` → `@identity userId: UUID` — "this is the identity"→@identity
+- `user id is UUID, this is the identity` → `userId: UUID @identity` — "this is the identity"→@identity
 - `must be valid email` → `@email`
 - `at least 8 characters` → `@minLength(8)` — natural constraint→formal
 - `max 100 chars` → `@maxLength(100)`
-- `default true` → dropped (DDSL has no default keyword; invariants or init logic handle defaults)
-- Compressed `email and password cannot be empty, activate the user, record registration time, notify with UserRegistered event including userId and email` → split into: 2× `require that`, `then set active`, `then set registeredAt`, `emit event UserRegistered`
-- `activate the user` → `then set active to true` — interpret intent
-- `record registration time` → `then set registeredAt to now` — interpret intent
-- `notify with UserRegistered event including userId and email` → `emit event UserRegistered with userId, email` — "notify with"→"emit", "including"→"with", "and"→comma
-- `send UserDeactivated event with userId` → `emit event UserDeactivated with userId` — "send"→"emit event"
-- `fire PasswordChanged event` → `emit event PasswordChanged with userId` — "fire"→"emit event"
-- `user must be currently active` → `require that user must be currently active`
-- All compressed comma-separated sentences → expanded into individual DDSL clauses
+- `default true` → `@default(true)`
+- Compressed `email and password cannot be empty, activate the user, record registration time, notify with UserRegistered event including userId and email` → natural format: `require that email is not empty and password is not empty` (combined), then actions flow as sentences
+- `activate the user` → `set active to true` — interpret intent
+- `record registration time` → `set registeredAt to now` — interpret intent
+- `notify with UserRegistered event including userId and email` → `emit UserRegistered with userId and email` — "notify with"→"emit", "including"→"with"
+- `send UserDeactivated event with userId` → `emit UserDeactivated with userId` — "send"→"emit"
+- `fire PasswordChanged event` → `emit PasswordChanged with userId` — "fire"→"emit"
+- `user must be currently active` → `require that active is true`
+- `old password must match current, new password must be at least 8 chars` → `require that oldPassword matches current and newPassword length is at least 8` — combined with "and"
+- **Natural format**: Combined requires with "and", no bullet points, actions as readable sentences, removed "then" keyword for cleaner flow

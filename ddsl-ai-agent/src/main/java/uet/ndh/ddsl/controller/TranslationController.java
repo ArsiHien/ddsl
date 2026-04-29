@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uet.ndh.ddsl.agent.NlToDslResult;
 import uet.ndh.ddsl.agent.NlToDslService;
 
 /**
@@ -29,7 +30,7 @@ public class TranslationController {
      * @return the translation result with generated DDSL
      */
     @PostMapping
-    public ResponseEntity<NlToDslService.NlToDslResult> translate(
+    public ResponseEntity<NlToDslResult> translate(
             @RequestBody TranslateRequest request
     ) {
         log.info("POST /api/translate — input: {} chars",
@@ -37,7 +38,7 @@ public class TranslationController {
 
         if (request.input() == null || request.input().isBlank()) {
             return ResponseEntity.badRequest().body(
-                    NlToDslService.NlToDslResult.failure("Input cannot be empty")
+                    NlToDslResult.failure("Input cannot be empty")
             );
         }
 

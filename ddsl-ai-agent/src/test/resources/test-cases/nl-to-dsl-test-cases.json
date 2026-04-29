@@ -1,0 +1,711 @@
+{
+  "version": "1.0.0",
+  "totalCases": 100,
+  "categories": {
+    "easy": 30,
+    "medium": 40,
+    "hard": 30
+  },
+  "testCases": [
+    {
+      "id": "E001",
+      "category": "easy",
+      "name": "Simple Blog Post",
+      "input": "Create a BlogPost aggregate with postId as UUID for identity, title as text required, content as text, and publishedAt as optional datetime.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Aggregate BlogPost {\n        @identity postId: UUID\n        title: String @required\n        content: String\n        publishedAt: DateTime?\n    }\n}"
+    },
+    {
+      "id": "E002",
+      "category": "easy",
+      "name": "User Entity",
+      "input": "User entity with userId UUID identity, email as text, name as text required.",
+      "expectedOutput": "BoundedContext UserContext {\n    Entity User {\n        @identity userId: UUID\n        email: String\n        name: String @required\n    }\n}"
+    },
+    {
+      "id": "E003",
+      "category": "easy",
+      "name": "Product Value Object",
+      "input": "Money value object with amount as decimal and currency as text.",
+      "expectedOutput": "BoundedContext CommerceContext {\n    ValueObject Money {\n        amount: Decimal\n        currency: String\n    }\n}"
+    },
+    {
+      "id": "E004",
+      "category": "easy",
+      "name": "Simple Category",
+      "input": "Category aggregate with categoryId UUID, name text required, description text optional.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate Category {\n        @identity categoryId: UUID\n        name: String @required\n        description: String?\n    }\n}"
+    },
+    {
+      "id": "E005",
+      "category": "easy",
+      "name": "Tag Entity",
+      "input": "Tag entity with tagId as UUID for identity, tagName as text required.",
+      "expectedOutput": "BoundedContext ContentContext {\n    Entity Tag {\n        @identity tagId: UUID\n        tagName: String @required\n    }\n}"
+    },
+    {
+      "id": "E006",
+      "category": "easy",
+      "name": "Comment Aggregate",
+      "input": "Comment aggregate with commentId UUID identity, authorName text, content text required, createdAt datetime.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Aggregate Comment {\n        @identity commentId: UUID\n        authorName: String\n        content: String @required\n        createdAt: DateTime\n    }\n}"
+    },
+    {
+      "id": "E007",
+      "category": "easy",
+      "name": "Author Entity",
+      "input": "Author entity with authorId UUID identity, fullName text required, bio text optional.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Entity Author {\n        @identity authorId: UUID\n        fullName: String @required\n        bio: String?\n    }\n}"
+    },
+    {
+      "id": "E008",
+      "category": "easy",
+      "name": "Address Value Object",
+      "input": "Address value object with street text, city text required, country text, postalCode text.",
+      "expectedOutput": "BoundedContext SharedContext {\n    ValueObject Address {\n        street: String\n        city: String @required\n        country: String\n        postalCode: String\n    }\n}"
+    },
+    {
+      "id": "E009",
+      "category": "easy",
+      "name": "Simple Order",
+      "input": "Order aggregate with orderId UUID identity, totalAmount decimal, orderDate datetime.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        totalAmount: Decimal\n        orderDate: DateTime\n    }\n}"
+    },
+  {
+      "id": "E010",
+      "category": "easy",
+      "name": "Customer Entity",
+      "input": "Customer entity with customerId UUID for identity, firstName text, lastName text, email text.",
+      "expectedOutput": "BoundedContext CustomerContext {\n    Entity Customer {\n        @identity customerId: UUID\n        firstName: String\n        lastName: String\n        email: String\n    }\n}"
+    },
+    {
+      "id": "E011",
+      "category": "easy",
+      "name": "Simple Entity 11",
+      "input": "Create a Simple11 entity with id UUID identity and name text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple11 {\n        @identity id: UUID\n        name: String\n    }\n}"
+    },
+    {
+      "id": "E012",
+      "category": "easy",
+      "name": "Simple Entity 12",
+      "input": "Create a Simple12 entity with id UUID identity, value int.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple12 {\n        @identity id: UUID\n        value: Int\n    }\n}"
+    },
+    {
+      "id": "E013",
+      "category": "easy",
+      "name": "Simple Entity 13",
+      "input": "Create a Simple13 entity with id UUID identity, label text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple13 {\n        @identity id: UUID\n        label: String\n    }\n}"
+    },
+    {
+      "id": "E014",
+      "category": "easy",
+      "name": "Simple Entity 14",
+      "input": "Create a Simple14 entity with id UUID identity, code text, active boolean.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple14 {\n        @identity id: UUID\n        code: String\n        active: Boolean\n    }\n}"
+    },
+    {
+      "id": "E015",
+      "category": "easy",
+      "name": "Simple Entity 15",
+      "input": "Create a Simple15 entity with id UUID identity, createdAt datetime.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple15 {\n        @identity id: UUID\n        createdAt: DateTime\n    }\n}"
+    },
+    {
+      "id": "E016",
+      "category": "easy",
+      "name": "Simple Entity 16",
+      "input": "Create a Simple16 entity with id UUID identity, score decimal.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple16 {\n        @identity id: UUID\n        score: Decimal\n    }\n}"
+    },
+    {
+      "id": "E017",
+      "category": "easy",
+      "name": "Simple Entity 17",
+      "input": "Create a Simple17 entity with id UUID identity, name text, age int.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple17 {\n        @identity id: UUID\n        name: String\n        age: Int\n    }\n}"
+    },
+    {
+      "id": "E018",
+      "category": "easy",
+      "name": "Simple Entity 18",
+      "input": "Create a Simple18 entity with id UUID identity, active boolean.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple18 {\n        @identity id: UUID\n        active: Boolean\n    }\n}"
+    },
+    {
+      "id": "E019",
+      "category": "easy",
+      "name": "Simple Entity 19",
+      "input": "Create a Simple19 entity with id UUID identity, status text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple19 {\n        @identity id: UUID\n        status: String\n    }\n}"
+    },
+    {
+      "id": "E020",
+      "category": "easy",
+      "name": "Simple Entity 20",
+      "input": "Create a Simple20 entity with id UUID identity, description text optional.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple20 {\n        @identity id: UUID\n        description: String?\n    }\n}"
+    },
+    {
+      "id": "E021",
+      "category": "easy",
+      "name": "Simple Entity 21",
+      "input": "Create a Simple21 entity with id UUID identity, name text, createdAt datetime.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple21 {\n        @identity id: UUID\n        name: String\n        createdAt: DateTime\n    }\n}"
+    },
+    {
+      "id": "E022",
+      "category": "easy",
+      "name": "Simple Entity 22",
+      "input": "Create a Simple22 entity with id UUID identity, tag text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple22 {\n        @identity id: UUID\n        tag: String\n    }\n}"
+    },
+    {
+      "id": "E023",
+      "category": "easy",
+      "name": "Simple Entity 23",
+      "input": "Create a Simple23 entity with id UUID identity, rate decimal.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple23 {\n        @identity id: UUID\n        rate: Decimal\n    }\n}"
+    },
+    {
+      "id": "E024",
+      "category": "easy",
+      "name": "Simple Entity 24",
+      "input": "Create a Simple24 entity with id UUID identity, title text required.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple24 {\n        @identity id: UUID\n        title: String @required\n    }\n}"
+    },
+    {
+      "id": "E025",
+      "category": "easy",
+      "name": "Simple Entity 25",
+      "input": "Create a Simple25 entity with id UUID identity, description text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple25 {\n        @identity id: UUID\n        description: String\n    }\n}"
+    },
+    {
+      "id": "E026",
+      "category": "easy",
+      "name": "Simple Entity 26",
+      "input": "Create a Simple26 entity with id UUID identity, code text, valid boolean.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple26 {\n        @identity id: UUID\n        code: String\n        valid: Boolean\n    }\n}"
+    },
+    {
+      "id": "E027",
+      "category": "easy",
+      "name": "Simple Entity 27",
+      "input": "Create a Simple27 entity with id UUID identity, label text, amount decimal.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple27 {\n        @identity id: UUID\n        label: String\n        amount: Decimal\n    }\n}"
+    },
+    {
+      "id": "E028",
+      "category": "easy",
+      "name": "Simple Entity 28",
+      "input": "Create a Simple28 entity with id UUID identity, priority int.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple28 {\n        @identity id: UUID\n        priority: Int\n    }\n}"
+    },
+    {
+      "id": "E029",
+      "category": "easy",
+      "name": "Simple Entity 29",
+      "input": "Create a Simple29 entity with id UUID identity, flag boolean.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple29 {\n        @identity id: UUID\n        flag: Boolean\n    }\n}"
+    },
+    {
+      "id": "E030",
+      "category": "easy",
+      "name": "Simple Entity 30",
+      "input": "Create a Simple30 entity with id UUID identity, nickname text.",
+      "expectedOutput": "BoundedContext EasyContext {\n    Entity Simple30 {\n        @identity id: UUID\n        nickname: String\n    }\n}"
+    },
+    {
+      "id": "M003",
+      "category": "medium",
+      "name": "Blog with Items",
+      "input": "BlogPost aggregate with postId UUID identity, title text required, body text, tags list of text. Include behavior to addTag(tagText) with non-empty tag.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Aggregate BlogPost {\n        @identity postId: UUID\n        title: String @required\n        body: String\n        tags: List[String]\n        \n        behavior {\n            addTag(tagText: String) {\n                require tagText notEmpty\n                tags.add(tagText)\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M004",
+      "category": "medium",
+      "name": "Order with Items and Discount",
+      "input": "Order aggregate with orderId UUID identity, items list of OrderItem, discount decimal optional, totalAmount decimal. When applying discount, reduce totalAmount accordingly. OrderItem { itemId UUID, productName text, quantity int, unitPrice decimal }",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        items: List[OrderItem]\n        discount: Decimal?\n        totalAmount: Decimal\n        \n        Entity OrderItem {\n            itemId: UUID\n            productName: String\n            quantity: Int\n            unitPrice: Decimal\n        }\n        \n        rules {\n            applyDiscount(amount: Decimal) {\n                reduce totalAmount by amount\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M005",
+      "category": "medium",
+      "name": "Inventory with Stock",
+      "input": "Product aggregate with productId UUID identity, stock int, price decimal. When selling, require stock > 0 and decrease stock by 1, emit ItemSold event.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate Product {\n        @identity productId: UUID\n        stock: Int\n        price: Decimal\n        \n        events {\n            ItemSold {\n                productId: UUID\n                quantity: Int\n            }\n        }\n        \n        operations {\n            when selling {\n                require stock > 0\n                then stock = stock - 1\n                emit ItemSold\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M006",
+      "category": "medium",
+      "name": "Customer with Orders",
+      "input": "Customer entity with customerId UUID identity, name text, email text, orders list of Order references. When adding order, ensure reference exists.",
+      "expectedOutput": "BoundedContext CustomerContext {\n    Entity Customer {\n        @identity customerId: UUID\n        name: String\n        email: String\n        orders: List[String]\n        \n        rules {\n            addOrder(orderRef: String) {\n                require orderRef notEmpty\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M007",
+      "category": "medium",
+      "name": "Address with Validation",
+      "input": "Address value object with street text, city text, country text, postalCode text. Validation: postalCode must match pattern [A-Z0-9]{3,10}.",
+      "expectedOutput": "BoundedContext SharedContext {\n    ValueObject Address {\n        street: String\n        city: String\n        country: String\n        postalCode: String\n        \n        validations { postalCode matches /[A-Z0-9]{3,10}/ }\n    }\n}"
+    },
+    {
+      "id": "M008",
+      "category": "medium",
+      "name": "Event Sourced Order",
+      "input": "Order aggregate with event sourcing: append(OrderPlaced) when placing order.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        events { OrderPlaced }\n        \n        operations {\n            when placingOrder {\n                emit OrderPlaced\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M009",
+      "category": "medium",
+      "name": "Product with Category",
+      "input": "Product aggregate with productId UUID identity, category text, price decimal, tags list of text.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate Product {\n        @identity productId: UUID\n        category: String\n        price: Decimal\n        tags: List[String]\n    }\n}"
+    },
+    {
+      "id": "M010",
+      "category": "medium",
+      "name": "Shipment with Tracking",
+      "input": "Shipment aggregate with shipmentId UUID identity, orderId UUID, status text. When shipped, emit ShipmentSent.",
+      "expectedOutput": "BoundedContext LogisticsContext {\n    Aggregate Shipment {\n        @identity shipmentId: UUID\n        orderId: UUID\n        status: String\n        \n        events { ShipmentSent }\n        \n        operations {\n            when ship {\n                emit ShipmentSent\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "M011",
+      "category": "medium",
+      "name": "CustomerProfile with Address",
+      "input": "CustomerProfile entity with profileId UUID identity, customerId UUID, bio text optional, address Address value object.",
+      "expectedOutput": "BoundedContext CustomerContext {\n    Entity CustomerProfile {\n        @identity profileId: UUID\n        customerId: UUID\n        bio: String?\n        address: Address\n    }\n}"
+    },
+    {
+      "id": "M012",
+      "category": "medium",
+      "name": "OrderService with Methods",
+      "input": "Service OrderService with method placeOrder(customerId UUID, items List[OrderItem]) returns Order.",
+      "expectedOutput": "BoundedContext ServiceContext {\n    Service OrderService {\n        placeOrder(customerId: UUID, items: List[OrderItem]): Order\n    }\n}"
+    },
+    {
+      "id": "M013",
+      "category": "medium",
+      "name": "Inventory with Reorder Point",
+      "input": "Inventory aggregate with productId UUID identity, stock int, reorderPoint int. If stock <= reorderPoint, emit ReorderNeeded.",
+      "expectedOutput": "BoundedContext InventoryContext {\n    Aggregate Inventory {\n        @identity productId: UUID\n        stock: Int\n        reorderPoint: Int\n        \n        events { ReorderNeeded }\n        \n        rules { when stock <= reorderPoint { emit ReorderNeeded } }\n    }\n}"
+    },
+    {
+      "id": "M014",
+      "category": "medium",
+      "name": "Payment with Status",
+      "input": "Payment aggregate with paymentId UUID identity, amount decimal, status text. When paying, status -> PROCESSED and emit PaymentCompleted.",
+      "expectedOutput": "BoundedContext PaymentsContext {\n    Aggregate Payment {\n        @identity paymentId: UUID\n        amount: Decimal\n        status: String\n        \n        events { PaymentCompleted }\n        \n        operations { when paying { set status to \"PROCESSED\"; emit PaymentCompleted } }\n    }\n}"
+    },
+    {
+      "id": "M015",
+      "category": "medium",
+      "name": "Customer with Addresses",
+      "input": "Customer entity with customerId UUID identity, addresses List[Address], primaryAddress Address.",
+      "expectedOutput": "BoundedContext CustomerContext {\n    Entity Customer {\n        @identity customerId: UUID\n        addresses: List[Address]\n        primaryAddress: Address\n    }\n}"
+    },
+    {
+      "id": "M016",
+      "category": "medium",
+      "name": "Shipment and Carrier",
+      "input": "Shipment aggregate with shipmentId UUID identity, carrier text, trackingCode text.",
+      "expectedOutput": "BoundedContext LogisticsContext {\n    Aggregate Shipment {\n        @identity shipmentId: UUID\n        carrier: String\n        trackingCode: String\n    }\n}"
+    },
+    {
+      "id": "M017",
+      "category": "medium",
+      "name": "Cart with Items",
+      "input": "Cart aggregate with cartId UUID identity, items List[CartItem], total Decimal. CartItem with productId UUID, quantity int.",
+      "expectedOutput": "BoundedContext CommerceContext {\n    Aggregate Cart {\n        @identity cartId: UUID\n        items: List[CartItem]\n        total: Decimal\n    }\n    \n    Entity CartItem {\n        productId: UUID\n        quantity: Int\n    }\n}"
+    },
+    {
+      "id": "M018",
+      "category": "medium",
+      "name": "Audit Trail for User",
+      "input": "User entity with userId UUID identity, createdAt datetime, updatedAt datetime. Audit trail enabled for changes to user data.",
+      "expectedOutput": "BoundedContext SecurityContext {\n    Entity User {\n        @identity userId: UUID\n        createdAt: DateTime\n        updatedAt: DateTime\n    }\n}"
+    },
+    {
+      "id": "M019",
+      "category": "medium",
+      "name": "Product Search Service",
+      "input": "Service ProductSearch with query text, results List[Product], paging page int, size int.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Service ProductSearch {\n        query: String\n        results: List[Product]\n        paging { page: Int; size: Int }\n    }\n}"
+    },
+    {
+      "id": "M020",
+      "category": "medium",
+      "name": "Order with Discounts",
+      "input": "Order aggregate with orderId UUID identity, items List[OrderItem], discountCode text optional.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        items: List[OrderItem]\n        discountCode: String?\n    }\n}"
+    },
+    {
+      "id": "M021",
+      "category": "medium",
+      "name": "Inventory withLocation",
+      "input": "Inventory item with productId UUID identity, location text, stock int.",
+      "expectedOutput": "BoundedContext InventoryContext {\n    Entity InventoryItem {\n        @identity productId: UUID\n        location: String\n        stock: Int\n    }\n}"
+    },
+    {
+      "id": "M022",
+      "category": "medium",
+      "name": "Ticket with Status",
+      "input": "Ticket aggregate with ticketId UUID identity, status text, priority int.",
+      "expectedOutput": "BoundedContext SupportContext {\n    Aggregate Ticket {\n        @identity ticketId: UUID\n        status: String\n        priority: Int\n    }\n}"
+    },
+    {
+      "id": "M023",
+      "category": "medium",
+      "name": "Notification with Payload",
+      "input": "Notification event with payload Map[String, String], recipientId UUID.",
+      "expectedOutput": "BoundedContext NotificationContext {\n    Event Notification {\n        payload: Map[String, String]\n        recipientId: UUID\n    }\n}"
+    },
+    {
+      "id": "M024",
+      "category": "medium",
+      "name": "Review Workflow",
+      "input": "Workflow Review with steps: Submit, Approve, Publish. Each step requires role text.",
+      "expectedOutput": "BoundedContext WorkflowContext {\n    Workflow Review {\n        steps: List[String]\n        roles: Map[String, String]\n    }\n}"
+    },
+    {
+      "id": "M025",
+      "category": "medium",
+      "name": "CustomerMessage Channel",
+      "input": "Entity CustomerMessage with id UUID identity, channel text, payload String. Route messages via Channel.",
+      "expectedOutput": "BoundedContext MessagingContext {\n    Entity CustomerMessage {\n        @identity id: UUID\n        channel: String\n        payload: String\n    }\n}"
+    },
+    {
+      "id": "M026",
+      "category": "medium",
+      "name": "Billing with Invoice",
+      "input": "Billing aggregate with invoiceId UUID identity, amount decimal, dueDate datetime. When generating invoice, emit InvoiceGenerated with totalAmount.",
+      "expectedOutput": "BoundedContext BillingContext {\n    Aggregate Billing {\n        @identity invoiceId: UUID\n        amount: Decimal\n        dueDate: DateTime\n        \n        events { InvoiceGenerated }\n        \n        operations { when generateInvoice { emit InvoiceGenerated } }\n    }\n}"
+    },
+    {
+      "id": "M027",
+      "category": "medium",
+      "name": "Wallet with Transfer",
+      "input": "Wallet aggregate with walletId UUID identity, balance decimal. Transfer between wallets requires amount > 0 and sufficient balance.",
+      "expectedOutput": "BoundedContext FinanceContext {\n    Aggregate Wallet {\n        @identity walletId: UUID\n        balance: Decimal\n        \n        operations { when transfer(amount: Decimal, toWalletId: UUID) { require amount > 0; require balance >= amount; balance -= amount; // transfer to toWalletId } }\n    }\n}"
+    },
+    {
+      "id": "M028",
+      "category": "medium",
+      "name": "Shipment with Carrier Tracking",
+      "input": "Shipment with carrier text, trackingCode text, status text. On delivery, emit Delivered event.",
+      "expectedOutput": "BoundedContext LogisticsContext {\n    Aggregate Shipment {\n        carrier: String\n        trackingCode: String\n        status: String\n        events { Delivered }\n    }\n}"
+    },
+    {
+      "id": "M029",
+      "category": "medium",
+      "name": "Product with Reviews",
+      "input": "Product aggregate with productId UUID identity, name text, reviews List[Review]. Review with reviewer text, rating int.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate Product {\n        @identity productId: UUID\n        name: String\n        reviews: List[Review]\n    }\n    Entity Review {\n        reviewer: String\n        rating: Int\n    }\n}"
+    },
+    {
+      "id": "M030",
+      "category": "medium",
+      "name": "Workflow with Conditions",
+      "input": "Workflow OrderApproval with steps and conditions: if totalAmount > 1000 then require managerApproval.",
+      "expectedOutput": "BoundedContext ApprovalContext {\n    Workflow OrderApproval {\n        steps: List[String]\n        conditions { totalAmount > 1000 => require managerApproval }\n    }\n}"
+    },
+    {
+      "id": "M031",
+      "category": "medium",
+      "name": "Event Sourcing Domain",
+      "input": "Domain with event sourcing using CustomerUpdated event on Customer entity update.",
+      "expectedOutput": "BoundedContext EventSourcingContext {\n    Entity Customer {\n        @identity customerId: UUID\n        name: String\n        events { CustomerUpdated }\n    }\n}"
+    },
+    {
+      "id": "M032",
+      "category": "medium",
+      "name": "Subscription with Plan",
+      "input": "Subscription aggregate with subscriptionId UUID identity, plan text, userId UUID. When activated, emit Subscribed event.",
+      "expectedOutput": "BoundedContext BillingContext {\n    Aggregate Subscription {\n        @identity subscriptionId: UUID\n        plan: String\n        userId: UUID\n        events { Subscribed }\n    }\n}"
+    },
+    {
+      "id": "M033",
+      "category": "medium",
+      "name": "Comment Thread with Replies",
+      "input": "CommentThread with threadId UUID identity, comments List[Comment], each Comment with commenter text, message text.",
+      "expectedOutput": "BoundedContext ContentContext {\n    Aggregate CommentThread {\n        @identity threadId: UUID\n        comments: List[Comment]\n    }\n    Entity Comment { commenter: String; message: String }\n}"
+    },
+    {
+      "id": "M034",
+      "category": "medium",
+      "name": "FAQ with Topics",
+      "input": "FAQ aggregate with faqId UUID identity, topics List[String], answer text.",
+      "expectedOutput": "BoundedContext HelpContext {\n    Aggregate FAQ {\n        @identity faqId: UUID\n        topics: List[String]\n        answer: String\n    }\n}"
+    },
+    {
+      "id": "M035",
+      "category": "medium",
+      "name": "Blog with Tags",
+      "input": "Blog aggregate with blogId UUID identity, tags List[String], content text.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Aggregate Blog {\n        @identity blogId: UUID\n        tags: List[String]\n        content: String\n    }\n}"
+    },
+    {
+      "id": "M036",
+      "category": "medium",
+      "name": "Invoice with LineItems",
+      "input": "Invoice aggregate with invoiceId UUID identity, items List[LineItem], total decimal. LineItem with description text, amount decimal.",
+      "expectedOutput": "BoundedContext FinanceContext {\n    Aggregate Invoice {\n        @identity invoiceId: UUID\n        items: List[LineItem]\n        total: Decimal\n    }\n    Entity LineItem { description: String; amount: Decimal }\n}"
+    },
+    {
+      "id": "M037",
+      "category": "medium",
+      "name": "Reservation with Seats",
+      "input": "Reservation aggregate with reservationId UUID identity, seats List[Seat], status text. Seat with seatNumber int.",
+      "expectedOutput": "BoundedContext BookingContext {\n    Aggregate Reservation {\n        @identity reservationId: UUID\n        seats: List[Seat]\n        status: String\n    }\n    Entity Seat { seatNumber: Int }\n}"
+    },
+    {
+      "id": "M038",
+      "category": "medium",
+      "name": "ProductCategory with Hierarchy",
+      "input": "ProductCategory with categoryId UUID identity, parentId UUID optional, name text.",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate ProductCategory {\n        @identity categoryId: UUID\n        parentId: UUID?\n        name: String\n    }\n}"
+    },
+    {
+      "id": "M039",
+      "category": "medium",
+      "name": "CustomerSearch Service",
+      "input": "Service CustomerSearch with query text, results List[Customer], page int, pageSize int.",
+      "expectedOutput": "BoundedContext CustomerContext {\n    Service CustomerSearch {\n        query: String\n        results: List[Customer]\n        paging { page: Int; pageSize: Int }\n    }\n}"
+    },
+    {
+      "id": "M040",
+      "category": "medium",
+      "name": "AuditLog with Timestamps",
+      "input": "AuditLog entity with logId UUID identity, action text, timestamp datetime.",
+      "expectedOutput": "BoundedContext AuditContext {\n    Entity AuditLog {\n        @identity logId: UUID\n        action: String\n        timestamp: DateTime\n    }\n}"
+    },
+    {
+      "id": "H003",
+      "category": "hard",
+      "name": "ComplexEcosystem with BoundedContexts",
+      "input": "Ecosystem with 3 bounded contexts: SalesContext, ShippingContext, InventoryContext. Each with at least 2 aggregates and domain events. Complex cross-context interactions via events and repositories.",
+      "expectedOutput": "BoundedContext Ecosystem {\n    Context SalesContext { aggregates: [Order, Customer], events: [OrderPlaced, CustomerCreated] }\n    Context ShippingContext { aggregates: [Shipment], events: [ShipmentSent] }\n    Context InventoryContext { aggregates: [Product], events: [StockUpdated] }\n}"
+    },
+    {
+      "id": "H004",
+      "category": "hard",
+      "name": "Run-on Sentence with Abbreviations",
+      "input": "Create a ProdCat with catId UUID, name text, desc text; on upd, update stock-qty etc, ensure consistent invariants across systems (E2E).",
+      "expectedOutput": "BoundedContext CatalogContext {\n    Aggregate ProdCat {\n        @identity catId: UUID\n        name: String\n        desc: String\n        invariants { stockInvariant }\n    }\n}"
+    },
+    {
+      "id": "H005",
+      "category": "hard",
+      "name": "Complex Event Chain",
+      "input": "Event chain: UserCreated -> UserGrantedRole -> AccessChecked with role hierarchy across domains.",
+      "expectedOutput": "BoundedContext IdentityContext {\n    DomainEvent UserCreated { userId: UUID }\n    DomainEvent UserGrantedRole { userId: UUID, role: String }\n    DomainEvent AccessChecked { userId: UUID, access: String }\n}"
+    },
+    {
+      "id": "H006",
+      "category": "hard",
+      "name": "Ambiguous Names with Typos",
+      "input": "Create an Entty with entiyId UUID; mis-spelled fields test for parser resilience.",
+      "expectedOutput": "BoundedContext TestContext {\n    Entity Entty {\n        @identity entiyId: UUID\n        misSpelledField: String\n    }\n}"
+    },
+    {
+      "id": "H007",
+      "category": "hard",
+      "name": "High-Complexity Cross-Entity Relations",
+      "input": "Order with items, shipments, taxes; multiple relations across Inventory, Billing, and Shipping domains; ensure referential integrity and cascade behaviors.",
+      "expectedOutput": "BoundedContext ComplexContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        items: List[OrderItem]\n        shipments: List[Shipment]\n        taxes: List[Tax]\n    }\n}"
+    },
+    {
+      "id": "H008",
+      "category": "hard",
+      "name": "Multi-Root Aggregates",
+      "input": "Bounded contexts with multiple root aggregates in a single context: Customer, Order, Payment all under EcommerceContext.",
+      "expectedOutput": "BoundedContext EcommerceContext {\n    Aggregate Customer { @identity customerId: UUID }\n    Aggregate Order { @identity orderId: UUID }\n    Aggregate Payment { @identity paymentId: UUID }\n}"
+    },
+    {
+      "id": "H009",
+      "category": "hard",
+      "name": "Temporal Queries",
+      "input": "Domain supports time-bounded queries: orders in last 30 days, shipments pending, etc.",
+      "expectedOutput": "BoundedContext TemporalContext {\n    Queries { OrdersLast30Days, ShipmentsPending }\n}"
+    },
+    {
+      "id": "H010",
+      "category": "hard",
+      "name": "Security with Roles",
+      "input": "Security domain with roles: Admin, Manager, User; access rules per role across resources.",
+      "expectedOutput": "BoundedContext SecurityContext {\n    Roles { Admin, Manager, User }\n    AccessRules { /* role-based */ }\n}"
+    },
+    {
+      "id": "H011",
+      "category": "hard",
+      "name": "Migration Plan",
+      "input": "Migration plan from v1 to v2 with data mapping across entities; preserve identity; run in batches.",
+      "expectedOutput": "BoundedContext MigrationContext {\n    Plan v2 { batchSize: Int }\n    Mappings { /* mapping rules */ }\n}"
+    },
+    {
+      "id": "H012",
+      "category": "hard",
+      "name": "Monolith to Microservice",
+      "input": "Refactor a monolith into 3 microservices with explicit service boundaries and communication via events.",
+      "expectedOutput": "BoundedContext ArchitectureContext {\n    ServiceA { boundaries: [...] }\n    ServiceB { boundaries: [...] }\n    ServiceC { boundaries: [...] }\n    Events { domainEvents }\n}"
+    },
+    {
+      "id": "H013",
+      "category": "hard",
+      "name": "Unknown Token Handling",
+      "input": "Parser must handle unknown tokens gracefully and continue parsing subsequent tokens without failing.",
+      "expectedOutput": "BoundedContext ParserContext {\n    allowUnknownTokens: true\n}"
+    },
+    {
+      "id": "H014",
+      "category": "hard",
+      "name": "Cross-Context Validation",
+      "input": "Validation across 2 bounded contexts for shared value objects; ensure consistency.",
+      "expectedOutput": "BoundedContext ValidationContext {\n    ContextA: ContextB.sharedValueObject -> consistentAcrossContexts()\n}"
+    },
+    {
+      "id": "H015",
+      "category": "hard",
+      "name": "Async Domain Commands",
+      "input": "Commands processed asynchronously with eventual consistency across services.",
+      "expectedOutput": "BoundedContext AsyncContext {\n    Command Processor { async: true; eventualConsistency: true }\n}"
+    },
+    {
+      "id": "H016",
+      "category": "hard",
+      "name": "Temporal Data Versioning",
+      "input": "Entities support historical versions with version fields; queries can access previous versions.",
+      "expectedOutput": "BoundedContext TemporalContext {\n    Entity VersionedEntity { version: Int; data: String; timestamp: DateTime }\n}"
+    },
+    {
+      "id": "H017",
+      "category": "hard",
+      "name": "Complex Aggregation",
+      "input": "Complex aggregation across 4 aggregates with cross references; ensure cycles are avoided by design.",
+      "expectedOutput": "BoundedContext AnalyticsContext {\n    Aggregates: [A1, A2, A3, A4]\n    crossReferences: false\n}"
+    },
+    {
+      "id": "H018",
+      "category": "hard",
+      "name": "Schema Evolution",
+      "input": "Schema evolves with deprecation of fields; provide migration plan and backward compatibility.",
+      "expectedOutput": "BoundedContext EvolutionContext {\n    Deprecations: [ DeprecatedFieldX ]\n    MigrationPlan: { }\n}"
+    },
+    {
+      "id": "H019",
+      "category": "hard",
+      "name": "Eventually Consistent Cache",
+      "input": "Cache layer with eventual consistency for read-heavy aggregates; invalidation strategy per event.",
+      "expectedOutput": "BoundedContext CacheContext {\n    Cache: EventualConsistency; Invalidation on events\n}"
+    },
+    {
+      "id": "H020",
+      "category": "hard",
+      "name": "Multi-Table Joins in DSL",
+      "input": "DSL supports multi-entity joins across tables; ensure join syntax is unambiguous.",
+      "expectedOutput": "BoundedContext DSLContext {\n    Joins: MultiTable { /* join rules */ }\n}"
+    },
+    {
+      "id": "H021",
+      "category": "hard",
+      "name": "Backwards Compatibility",
+      "input": "Maintain backwards compatibility for API consumers during refactor.",
+      "expectedOutput": "BoundedContext CompatibilityContext {\n    version: \"v2\"; backwardCompatibility: true }"
+    },
+    {
+      "id": "H022",
+      "category": "hard",
+      "name": "Distributed Tracing",
+      "input": "Instrument calls with distributed tracing across services.",
+      "expectedOutput": "BoundedContext TracingContext { traceId: String; spans: List[String] }"
+    },
+    {
+      "id": "H023",
+      "category": "hard",
+      "name": "SchemaValidation",
+      "input": "DDL-like validations for schema correctness with constraint propagation.",
+      "expectedOutput": "BoundedContext ValidationContext {\n    constraints: [SchemaConstraint]\n}"
+    },
+    {
+      "id": "H024",
+      "category": "hard",
+      "name": "Orchestration with Deadlines",
+      "input": "Orchestrator ensures tasks complete within deadlines; timeout handling.",
+      "expectedOutput": "BoundedContext OrchestrationContext {\n    tasks: List[Task]; deadline: DateTime; timeout: Duration }"
+    },
+    {
+      "id": "H025",
+      "category": "hard",
+      "name": "Data Consistency across Boundaries",
+      "input": "Cross-context data consistency with saga pattern.",
+      "expectedOutput": "BoundedContext ConsistencyContext {\n    SagaPattern: enabled; crossContext: true }"
+    },
+    {
+      "id": "H026",
+      "category": "hard",
+      "name": "Rich Domain Model",
+      "input": "Rich domain model with multiple value objects and complex invariants.",
+      "expectedOutput": "BoundedContext DomainModelContext {\n    Entities: [E1, E2]; ValueObjects: [VO1, VO2] }"
+    },
+    {
+      "id": "H027",
+      "category": "hard",
+      "name": "Dynamic DSL Extensions",
+      "input": "DSL supports dynamic extension modules for new domains at runtime.",
+      "expectedOutput": "BoundedContext DSLContext {\n    Extensions: [DynamicModule] }"
+    },
+    {
+      "id": "H028",
+      "category": "hard",
+      "name": "Fault Tolerance",
+      "input": "System tolerates partial failures; circuit breakers per service.",
+      "expectedOutput": "BoundedContext ResilienceContext {\n    circuits: List[CircuitBreaker] }"
+    },
+    {
+      "id": "H029",
+      "category": "hard",
+      "name": "Load Testing Scenarios",
+      "input": "Load test scenario with 100 concurrent users; measure latency and error rate.",
+      "expectedOutput": "BoundedContext TestingContext {\n    Scenarios: [LoadTest100Users] }"
+    },
+    {
+      "id": "H030",
+      "category": "hard",
+      "name": "Global Configuration",
+      "input": "Global configuration for all bounded contexts: timeouts, retry counts, feature toggles.",
+      "expectedOutput": "BoundedContext GlobalConfig {\n    timeouts: { http: 5000 }\n    retries: { max: 3 }\n    featureToggles: { all: true } }"
+    },
+    {
+      "id": "M001",
+      "category": "medium",
+      "name": "Blog with Behaviors",
+      "input": "BlogPost aggregate with postId UUID identity, title text required max 200 chars, content text, status text default DRAFT. When publishing, require that title not empty and content not empty, then set status to PUBLISHED, emit PostPublished event.",
+      "expectedOutput": "BoundedContext BlogContext {\n    Aggregate BlogPost {\n        @identity postId: UUID\n        title: String @required @maxLength(200)\n        content: String\n        status: String\n        \n        operations {\n            when publishing {\n                require that title is not empty\n                require that content is not empty\n                then set status to \"PUBLISHED\"\n                emit event PostPublished\n            }\n        }\n    }\n    \n    DomainEvent PostPublished {\n        postId: UUID\n    }\n}"
+    },
+    {
+      "id": "M002",
+      "category": "medium",
+      "name": "Order with Items",
+      "input": "Order aggregate with orderId UUID identity, customerId UUID required, totalAmount decimal min 0, orderDate datetime. Contains OrderItem entity with itemId UUID identity, productName text required, quantity integer min 1, unitPrice decimal. When adding item, require quantity greater than 0, then add to items list, recalculate total.",
+      "expectedOutput": "BoundedContext OrderContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        customerId: UUID @required\n        totalAmount: Decimal @min(0)\n        orderDate: DateTime\n        \n        Entity OrderItem {\n            @identity itemId: UUID\n            productName: String @required\n            quantity: Int @min(1)\n            unitPrice: Decimal\n        }\n        \n        operations {\n            when adding item {\n                require that quantity is greater than 0\n                then add to items\n            }\n        }\n    }\n}"
+    },
+    {
+      "id": "H001",
+      "category": "hard",
+      "name": "E-Commerce Platform",
+      "input": "Create an e-commerce platform with Order aggregate containing orderId UUID identity, customerId UUID, items list of OrderItem, totalAmount decimal, status text. OrderItem entity with productId UUID, productName text, quantity integer, unitPrice decimal. When placing order, require items not empty, calculate total from sum of item prices, then set status to PENDING, emit OrderPlaced. Repository OrderRepository for Order with findByCustomerId, findByStatus.",
+      "expectedOutput": "BoundedContext ECommerceContext {\n    Aggregate Order {\n        @identity orderId: UUID\n        customerId: UUID\n        items: List<OrderItem>\n        totalAmount: Decimal\n        status: String\n        \n        Entity OrderItem {\n            productId: UUID\n            productName: String\n            quantity: Int\n            unitPrice: Decimal\n        }\n        \n        operations {\n            when placing order {\n                require that items is not empty\n                then calculate total from sum of item prices\n                then set status to \"PENDING\"\n                emit event OrderPlaced\n            }\n        }\n    }\n    \n    Repository OrderRepository for Order {\n        findByCustomerId(customerId: UUID): List<Order>\n        findByStatus(status: String): List<Order>\n    }\n}"
+    },
+    {
+      "id": "H002",
+      "category": "hard",
+      "name": "Banking System",
+      "input": "Banking system with Account aggregate containing accountId UUID identity, customerId UUID, accountNumber text, balance decimal min 0. When opening, require balance greater than minimum deposit, then set status to ACTIVE, emit AccountOpened. When withdrawing with amount, require balance greater than amount, then decrease balance by amount, emit WithdrawalMade.",
+      "expectedOutput": "BoundedContext BankingContext {\n    Aggregate Account {\n        @identity accountId: UUID\n        customerId: UUID\n        accountNumber: String\n        balance: Decimal @min(0)\n        \n        operations {\n            when opening {\n                require that balance is greater than minimum deposit\n                then set status to \"ACTIVE\"\n                emit event AccountOpened\n            }\n            \n            when withdrawing with amount {\n                require that balance is greater than amount\n                then decrease balance by amount\n                emit event WithdrawalMade\n            }\n        }\n    }\n}"
+    }
+  ]
+}

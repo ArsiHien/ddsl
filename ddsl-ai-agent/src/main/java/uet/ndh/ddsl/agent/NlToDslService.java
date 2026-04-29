@@ -6,7 +6,6 @@ import org.bsc.langgraph4j.StateGraph;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,11 +16,11 @@ import java.util.Map;
 @Slf4j
 public class NlToDslService {
 
-    private final CompiledGraph<EnhancedDslState> compiledGraph;
+    private final CompiledGraph<DdslState> compiledGraph;
 
-    public NlToDslService(StateGraph<EnhancedDslState> stateGraph) throws Exception {
+    public NlToDslService(StateGraph<DdslState> stateGraph) throws Exception {
         this.compiledGraph = stateGraph.compile();
-        log.info("NlToDslService: compiled LangGraph4j pipeline (retriever → normalizer → synthesizer → judge)");
+        log.info("NlToDslService: compiled LangGraph4j pipeline (retriever → synthesizer → judge)");
     }
 
     /**
@@ -36,11 +35,11 @@ public class NlToDslService {
                 naturalLanguageInput.length(), maxRetriesPerAgent);
 
         Map<String, Object> initialState = new HashMap<>();
-        initialState.put(EnhancedDslState.KEY_USER_INPUT, naturalLanguageInput);
-        initialState.put(EnhancedDslState.KEY_MAX_RETRIES_PER_AGENT, maxRetriesPerAgent);
+        initialState.put("userInput", naturalLanguageInput);
+        initialState.put("maxRetries", maxRetriesPerAgent);
 
         try {
-            EnhancedDslState finalState = null;
+            DdslState finalState = null;
 
             for (var nodeOutput : compiledGraph.stream(initialState)) {
                 log.debug("Graph node output: {}", nodeOutput.node());
@@ -61,38 +60,5 @@ public class NlToDslService {
 
     public NlToDslResult translate(String naturalLanguageInput) {
         return translate(naturalLanguageInput, 2);
-    }
-
-    /**
-     * Result record for NL → DSL translation.
-     */
-    public record NlToDslResult(
-            boolean success,
-            String dsl,
-            List<String> errors,
-            int retrieverRetries,
-            int normalizerRetries,
-            int synthesizerRetries,
-            double retrievalQuality,
-            String errorStage
-    ) {
-        public static NlToDslResult from(EnhancedDslState state) {
-            return new NlToDslResult(
-                    state.isSuccessful(),
-                    state.isSuccessful() ? state.finalDsl() : state.currentDsl(),
-                    state.errorLogs(),
-                    state.retrieverRetries(),
-                    state.normalizerRetries(),
-                    state.synthesizerRetries(),
-                    state.retrievalQuality(),
-                    state.errorStage()
-            );
-        }
-
-        public static NlToDslResult failure(String errorMessage) {
-            return new NlToDslResult(
-                    false, "", List.of(errorMessage), 0, 0, 0, 0.0, "SERVICE"
-            );
-        }
     }
 }

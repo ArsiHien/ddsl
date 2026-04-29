@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
-import uet.ndh.ddsl.agent.EnhancedDslState;
+import uet.ndh.ddsl.agent.DdslState;
 import uet.ndh.ddsl.agent.prompt.PromptManager;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Component
 @Slf4j
-public class SynthesizerNode implements NodeAction<EnhancedDslState> {
+public class SynthesizerNode implements NodeAction<DdslState> {
 
     private final ChatClient chatClient;
     private final PromptManager promptManager;
@@ -34,16 +34,18 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
     }
 
     @Override
-    public Map<String, Object> apply(EnhancedDslState state) {
+    public Map<String, Object> apply(DdslState state) {
         int retryCount = state.synthesizerRetries();
-        String normalizedContext = state.normalizedContext();
+        String userInput = state.userInput();
+        String retrievedContext = state.retrievedContext();
         String previousDsl = state.currentDsl();
         
         log.info("SynthesizerNode: generating DDSL (attempt={})", retryCount);
 
-        if (normalizedContext == null || normalizedContext.isBlank()) {
-            log.warn("SynthesizerNode: empty normalized context");
-            return createErrorResult("Empty normalized context", retryCount);
+        // Validate inputs: userInput and retrievedContext must be present
+        if ((userInput == null || userInput.isBlank()) || (retrievedContext == null || retrievedContext.isBlank())) {
+            log.warn("SynthesizerNode: missing userInput or retrievedContext");
+            return createErrorResult("Missing userInput or retrievedContext", retryCount);
         }
 
         try {
@@ -65,8 +67,8 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
             log.info("SynthesizerNode: generated draft ({} chars)", cleaned.length());
 
             Map<String, Object> updates = new HashMap<>();
-            updates.put(EnhancedDslState.KEY_CURRENT_DSL, cleaned);
-            updates.put(EnhancedDslState.KEY_SYNTHESIZER_RETRIES, retryCount + 1);
+            updates.put("currentDsl", cleaned);
+            updates.put("synthesizerRetries", retryCount + 1);
             return updates;
 
         } catch (Exception e) {
@@ -75,7 +77,10 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
         }
     }
 
-    private String buildUserMessage(EnhancedDslState state, int retryCount) {
+    private String buildUserMessage(DdslState state, int retryCount) {
+        String userInput = state.userInput();
+        String retrievedContext = state.retrievedContext();
+        String compilerFeedback = state.compilerFeedback();
         StringBuilder sb = new StringBuilder();
         
         if (retryCount > 0) {
@@ -83,7 +88,7 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
             sb.append("## RETRY ATTEMPT - STRICT MODE\n");
             sb.append("Previous attempt had errors. Follow grammar EXACTLY.\n\n");
             
-            if (!state.errorLogs().isEmpty()) {
+            if (state.errorLogs() != null && !state.errorLogs().isEmpty()) {
                 sb.append("## Previous Errors (FIX THESE)\n");
                 for (String err : state.errorLogs()) {
                     sb.append("- ").append(err).append("\n");
@@ -92,11 +97,18 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
             }
             
             sb.append("## Previous Draft (for reference only)\n");
-            sb.append("```ddsl\n").append(state.currentDsl()).append("\n```\n\n");
+            sb.append("```ddsl\n").append(state.currentDsl()).append("\n```").append("\n\n");
+            // Include compiler feedback on retry if available
+            if (compilerFeedback != null && !compilerFeedback.isBlank()) {
+                sb.append("## Compiler Feedback\n");
+                sb.append(compilerFeedback).append("\n\n");
+            }
         }
-        
-        sb.append("## Structured Domain Context\n");
-        sb.append(state.normalizedContext()).append("\n\n");
+        // Combine raw user input with retrieved context directly
+        sb.append("## User Input\n");
+        sb.append(userInput).append("\n\n");
+        sb.append("## Retrieved Context\n");
+        sb.append(retrievedContext).append("\n\n");
         
         if (retryCount == 0) {
             sb.append("## Instructions\n");
@@ -117,10 +129,10 @@ public class SynthesizerNode implements NodeAction<EnhancedDslState> {
 
     private Map<String, Object> createErrorResult(String error, int retryCount) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put(EnhancedDslState.KEY_CURRENT_DSL, "");
-        updates.put(EnhancedDslState.KEY_SYNTHESIZER_RETRIES, retryCount + 1);
-        updates.put(EnhancedDslState.KEY_LAST_ERROR, error);
-        updates.put(EnhancedDslState.KEY_ERROR_STAGE, "SYNTHESIZER");
+        updates.put("currentDsl", "");
+        updates.put("synthesizerRetries", retryCount + 1);
+        updates.put("lastError", error);
+        updates.put("errorStage", "SYNTHESIZER");
         return updates;
     }
 

@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import uet.ndh.ddsl.agent.NlToDslService;
-import uet.ndh.ddsl.agent.NlToDslService.NlToDslResult;
+import uet.ndh.ddsl.agent.NlToDslResult;
 import uet.ndh.ddsl.parser.DdslParser;
 import uet.ndh.ddsl.parser.ParseException;
 
@@ -431,7 +431,7 @@ class TranslationAccuracyBenchmarkTest {
                 long elapsed = System.currentTimeMillis() - start;
 
                 boolean valid = result.success();
-                int retries = result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries();
+                int retries = result.retrieverRetries() + result.synthesizerRetries();
                 boolean wasPass1 = (retries <= 1 && valid);
                 int tokens = estimateTokens(tc.prompt(), result.dsl())
                         * Math.max(1, retries);
@@ -512,7 +512,7 @@ class TranslationAccuracyBenchmarkTest {
 
             for (var tc : cases) {
                 NlToDslResult result = nlToDslService.translate(tc.prompt(), 3);
-                int iters = result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries();
+                int iters = result.retrieverRetries() + result.synthesizerRetries();
                 itersByComplexity.get(tc.complexity()).add(iters);
                 successByComplexity.get(tc.complexity()).add(result.success());
 
@@ -582,17 +582,17 @@ class TranslationAccuracyBenchmarkTest {
                 long t1 = System.currentTimeMillis();
                 NlToDslResult proposed = nlToDslService.translate(tc.prompt(), 3);
                 long proposedMs = System.currentTimeMillis() - t1;
-                boolean pPass1 = (proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries() <= 1 && proposed.success());
+                boolean pPass1 = (proposed.retrieverRetries() + proposed.synthesizerRetries() <= 1 && proposed.success());
                 boolean pHealed = proposed.success();
                 int pTokens = estimateTokens(tc.prompt(), proposed.dsl())
-                        * Math.max(1, proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries());
+                        * Math.max(1, proposed.retrieverRetries() + proposed.synthesizerRetries());
                 if (pPass1) proposedPass1++;
                 if (pHealed) proposedHealed++;
                 proposedTotalTokens += pTokens;
 
                 System.out.printf("  Proposed:  %s (%d iter, %d ms, ~%d tok)%n",
                         pHealed ? "✅" : "❌",
-                        proposed.retrieverRetries() + proposed.normalizerRetries() + proposed.synthesizerRetries(),
+                        proposed.retrieverRetries() + proposed.synthesizerRetries(),
                         proposedMs, pTokens);
             }
 
@@ -652,7 +652,7 @@ class TranslationAccuracyBenchmarkTest {
                 System.out.printf("%n┌─ [%s] %s (%s)%n", tc.id(), tc.name(), tc.complexity());
                 System.out.printf("│  Success: %s  |  Iterations: %d%n",
                         result.success() ? "✅" : "❌",
-                        result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
+                        result.retrieverRetries() + result.synthesizerRetries());
 
                 if (result.success()) {
                     // Show first lines of the generated DSL
@@ -790,7 +790,7 @@ class TranslationAccuracyBenchmarkTest {
 
             System.out.printf("  Simple prompt: %s (retries=%d)%n",
                     result.success() ? "✅" : "❌",
-                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
+                    result.retrieverRetries() + result.synthesizerRetries());
             if (result.success()) {
                 System.out.printf("  DSL: %s%n", truncate(result.dsl(), 200));
                 assertTrue(hardCompilerValidation(result.dsl()),
@@ -819,7 +819,7 @@ class TranslationAccuracyBenchmarkTest {
 
             System.out.printf("  Complex prompt: %s (retries=%d)%n",
                     result.success() ? "✅" : "❌",
-                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
+                    result.retrieverRetries() + result.synthesizerRetries());
 
             if (result.success()) {
                 assertTrue(hardCompilerValidation(result.dsl()),
@@ -846,7 +846,7 @@ class TranslationAccuracyBenchmarkTest {
 
             System.out.printf("  Tricky prompt: %s (retries=%d)%n",
                     result.success() ? "✅" : "❌",
-                    result.retrieverRetries() + result.normalizerRetries() + result.synthesizerRetries());
+                    result.retrieverRetries() + result.synthesizerRetries());
 
             if (result.success()) {
                 assertTrue(hardCompilerValidation(result.dsl()),

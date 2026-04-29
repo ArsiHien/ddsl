@@ -58,7 +58,7 @@ class HotelBookingAgentFixTest {
     private NlToDslService nlToDslService;
 
     // Shared across ordered tests
-    private static NlToDslService.NlToDslResult agentResult;
+    private static NlToDslResult agentResult;
     private static long agentDurationMs;
 
     // ═════════════════════════════════════════════════════════════════════
@@ -96,7 +96,7 @@ class HotelBookingAgentFixTest {
         System.out.println("╠════════════════════════════════════════════════════════════════════╣");
         System.out.printf("║  Success:       %-49s ║%n", agentResult.success() ? "✅ YES" : "❌ NO");
         System.out.printf("║  Retries:       %-49d ║%n",
-                agentResult.retrieverRetries() + agentResult.normalizerRetries() + agentResult.synthesizerRetries());
+                agentResult.retrieverRetries() + agentResult.synthesizerRetries());
         System.out.printf("║  Agent time:    %,d ms %44s ║%n", agentDurationMs, "");
         System.out.printf("║  Output size:   %,d chars %40s ║%n",
                 agentResult.dsl().length(), "");
@@ -207,7 +207,7 @@ class HotelBookingAgentFixTest {
                 "TOTAL (agent + pipeline)", agentDurationMs + (pipelineNanos / 1_000_000));
         System.out.println("╠════════════════════════════════════════════════════════════════════╣");
         System.out.printf("║  Agent retries:        %-43d ║%n",
-                agentResult.retrieverRetries() + agentResult.normalizerRetries() + agentResult.synthesizerRetries());
+                agentResult.retrieverRetries() + agentResult.synthesizerRetries());
         System.out.printf("║  Artifacts generated:  %-43d ║%n", artifacts.size());
         System.out.printf("║  Files on disk:        %-43d ║%n", totalFilesOnDisk);
         System.out.printf("║  Total lines of code:  %-43d ║%n", totalLines);

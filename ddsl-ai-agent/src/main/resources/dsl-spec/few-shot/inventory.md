@@ -4,8 +4,10 @@ category: FEW_SHOT
 subcategory: informal_types_and_constraints
 language: en
 complexity: basic
+version: 3.0
 ---
-This example shows how to translate very informal type names, constraints, and shorthand descriptions into valid DDSL.
+
+This example shows how to translate very informal type names, constraints, and shorthand descriptions into valid DDSL using the natural format.
 
 User input (heavily informal types and constraints):
 ```
@@ -57,11 +59,11 @@ BoundedContext Inventory {
 ```
 
 Corrected DDSL output:
-```
+```ddsl
 BoundedContext Inventory {
     domain {
         Aggregate Product {
-            @identity productId: UUID
+            productId: UUID @identity
             name: String @required @maxLength(200)
             sku: String @required @pattern("[A-Z]{3}-[0-9]{6}")
             price: Decimal @min(0)
@@ -78,16 +80,14 @@ BoundedContext Inventory {
             }
 
             operations {
-                when adding stock with quantity {
-                    require that quantity must be positive
-                    then increase stock by quantity amount
-                }
-                when removing stock with quantity {
-                    require that quantity must be positive
-                    require that stock must have enough
-                    then decrease stock by quantity
-                    emit event StockLow with productId, stock
-                }
+                when adding stock with quantity:
+                    require that quantity is greater than 0
+                    set stock to stock plus quantity
+
+                when removing stock with quantity:
+                    require that quantity is greater than 0 and stock is at least quantity
+                    set stock to stock minus quantity
+                    emit StockLow with productId and stock
             }
         }
     }
@@ -120,5 +120,8 @@ Key transformations:
 - `format "AAA-000000"` → `@pattern("[A-Z]{3}-[0-9]{6}")` — format description→regex pattern
 - `cannot be negative` / `no negatives` → `@min(0)`
 - `mandatory` → `@required`
-- Compressed `quantity must be positive and stock must have enough, decrease stock by quantity, fire StockLow alert...` → split into separate `require that` / `then` / `emit event` clauses
-- `fire StockLow alert with productId and remaining stock` → `emit event StockLow with productId, stock` — "fire"→"emit", "alert"→"event", "and"→comma
+- Compressed `quantity must be positive and stock must have enough, decrease stock by quantity, fire StockLow alert...` → natural format: `require that quantity is greater than 0 and stock is at least quantity` (combined with "and"), then `set stock to stock minus quantity`, then `emit StockLow with productId and stock`
+- `fire StockLow alert with productId and remaining stock` → `emit StockLow with productId and stock` — "fire"→"emit", "alert"→"event"
+- `increase stock by quantity amount` → `set stock to stock plus quantity`
+- `decrease stock by quantity` → `set stock to stock minus quantity`
+- **Natural format**: Combined requires with "and", no bullet points, actions as readable sentences

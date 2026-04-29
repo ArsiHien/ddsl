@@ -20,21 +20,18 @@ public class PromptManager {
 
     private final String synthesizerSystemPrompt;
     private final String synthesizerStrictPrompt;
-    private final String normalizerSystemPrompt;
     private final String defaultSystemPrompt;
 
     public PromptManager(
             @Value("classpath:prompts/synthesizer-system.st") Resource synthesizerSystem,
             @Value("classpath:prompts/synthesizer-strict.st") Resource synthesizerStrict,
-            @Value("classpath:prompts/normalizer-system.st") Resource normalizerSystem,
             @Value("classpath:prompts/default-system.st") Resource defaultSystem
     ) throws IOException {
         this.synthesizerSystemPrompt = loadResource(synthesizerSystem, "synthesizer-system.st");
         this.synthesizerStrictPrompt = loadResource(synthesizerStrict, "synthesizer-strict.st");
-        this.normalizerSystemPrompt = loadResource(normalizerSystem, "normalizer-system.st");
         this.defaultSystemPrompt = loadResource(defaultSystem, "default-system.st");
 
-        log.info("PromptManager: loaded 4 prompt templates from classpath:prompts/");
+        log.info("PromptManager: loaded 3 prompt templates from classpath:prompts/");
     }
 
     public String synthesizerSystemPrompt() {
@@ -43,10 +40,6 @@ public class PromptManager {
 
     public String synthesizerStrictPrompt() {
         return synthesizerStrictPrompt;
-    }
-
-    public String normalizerSystemPrompt() {
-        return normalizerSystemPrompt;
     }
 
     public String defaultSystemPrompt() {

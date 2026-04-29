@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.retry.support.RetryTemplate;
+import uet.ndh.ddsl.agent.cache.RetrievalCache;
 import uet.ndh.ddsl.agent.prompt.PromptManager;
 
 /**
@@ -97,6 +98,15 @@ public class SpringAiConfig {
         return builder
                 .defaultSystem(promptManager.defaultSystemPrompt())
                 .build();
+    }
+
+    /**
+     * Caffeine-based cache for Qdrant retrieval results.
+     * Uses SHA-256 hash of userInput as cache key.
+     */
+    @Bean
+    public RetrievalCache retrievalCache() {
+        return new RetrievalCache();
     }
 
 }

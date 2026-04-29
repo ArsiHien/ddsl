@@ -4,8 +4,10 @@ category: FEW_SHOT
 subcategory: informal_behaviors
 language: vi
 complexity: intermediate
+version: 3.0
 ---
-This example shows how to translate very informal behavior descriptions into valid DDSL operations syntax. Input uses Vietnamese-style shorthand and compressed sentence descriptions.
+
+This example shows how to translate very informal behavior descriptions into valid DDSL operations syntax using the natural format without bullet points. Input uses Vietnamese-style shorthand and compressed sentence descriptions.
 
 User input (highly informal / sentence-style behaviors):
 ```
@@ -61,11 +63,11 @@ BoundedContext BlogManagement {
 ```
 
 Corrected DDSL output:
-```
+```ddsl
 BoundedContext BlogManagement {
     domain {
         Aggregate Post {
-            @identity postId: UUID
+            postId: UUID @identity
             title: String @required @maxLength(200)
             content: String @required
             author: Author
@@ -74,23 +76,21 @@ BoundedContext BlogManagement {
             status: String
 
             operations {
-                when publishing post {
-                    require that title is not empty
-                    require that content is not empty
-                    then set status to "PUBLISHED"
-                    then set publishedAt to now
-                    emit event PostPublished with postId, title
-                }
-                when adding comment with author, text {
+                when publishing post:
+                    require that title is not empty and content is not empty
+                    set status to "PUBLISHED"
+                    set publishedAt to now
+                    emit PostPublished with postId and title
+
+                when adding comment with author and text:
                     require that text is not empty
-                    then create new Comment
-                    then add it to comments list
-                }
+                    create Comment
+                    add Comment to comments
             }
         }
 
         Entity Comment {
-            @identity commentId: UUID
+            commentId: UUID @identity
             author: String @required
             text: String @required
             createdAt: DateTime
@@ -120,14 +120,15 @@ BoundedContext BlogManagement {
 ```
 
 Key transformations:
-- Compressed sentence `title and content must not be empty, change status to "PUBLISHED", set publishedAt to now, fire PostPublished event with postId and title` → expanded into separate clauses: `require that` + `then set` + `emit event`
-- `fire PostPublished event with postId and title` → `emit event PostPublished with postId, title` — "fire"→"emit", "and"→comma
-- `adding comment with author and text` → `when adding comment with author, text` — add "when", "and"→comma in param list
-- `text cannot be empty, create new Comment, add it to comments list` → 3 separate clauses with `require that` / `then`
-- `post id is UUID for identity` → `@identity postId: UUID`
+- Compressed sentence `title and content must not be empty, change status to "PUBLISHED", set publishedAt to now, fire PostPublished event with postId and title` → natural format: `require that title is not empty and content is not empty` (combined with "and"), then actions flow as sentences
+- `fire PostPublished event with postId and title` → `emit PostPublished with postId and title` — "fire"→"emit"
+- `adding comment with author and text` → `when adding comment with author and text:` — add "when", use colon
+- `text cannot be empty, create new Comment, add it to comments list` → natural flow: `require that text is not empty` then `create Comment` then `add Comment to comments`
+- `post id is UUID for identity` → `postId: UUID @identity`
 - `title is text, required, max 200` → `title: String @required @maxLength(200)` — "max 200"→@maxLength(200)
 - `author is Author type` → `author: Author` — drop "type" suffix
 - `comments is list of Comment` → `comments: List<Comment>`
 - `published at is optional datetime` → `publishedAt: DateTime?` — "optional"→?
 - `must be valid email` → `@email`
 - `mandatory` → `@required`
+- **Natural format**: Combined requires with "and", no bullet points, actions as readable sentences

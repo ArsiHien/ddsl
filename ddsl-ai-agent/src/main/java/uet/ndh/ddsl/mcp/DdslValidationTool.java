@@ -1,6 +1,7 @@
 package uet.ndh.ddsl.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,9 @@ import uet.ndh.ddsl.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+// Import new error model
 /**
  * <b>MCP Tool — validateDSL</b>
  * <p>
@@ -49,7 +52,7 @@ public class DdslValidationTool {
         var result = new ValidationResult();
 
         if (code == null || code.isBlank()) {
-            result.errors.add("Input code is empty");
+            result.errors.add(new DdslValidationError(ErrorCategory.SYNTAX_ERROR, "unknown", "Input code is empty", "Provide non-empty DDSL code"));
             return toJson(result);
         }
 
@@ -61,25 +64,34 @@ public class DdslValidationTool {
             // Check for collected errors (parser may not throw but still record errors)
             if (parser.hasErrors()) {
                 for (var error : parser.getErrors()) {
-                    result.errors.add(formatParseError(error));
+                    if (error instanceof DdslParser.ParseError pe) {
+                        result.errors.add(makeSyntaxError(pe));
+                    } else {
+                        // Fallback generic error string
+                        result.errors.add(new DdslValidationError(ErrorCategory.SYNTAX_ERROR, "unknown", error.toString(), null));
+                    }
                 }
             } else {
                 // Semantic pass: undefined identifiers in behavior scopes.
                 var behaviorSemanticValidator = new BehaviorSemanticValidator();
                 model.accept(behaviorSemanticValidator);
                 behaviorSemanticValidator.errors().forEach(d ->
-                        result.errors.add(formatSemanticError(d))
+                        result.errors.add(makeSemanticError(d))
                 );
             }
         } catch (ParseException e) {
-            for (var parseError : e.getErrors()) {
-                result.errors.add(formatParseError(parseError));
+            for (Object parseError : e.getErrors()) {
+                if (parseError instanceof DdslParser.ParseError pe) {
+                    result.errors.add(makeSyntaxError(pe));
+                } else {
+                    result.errors.add(new DdslValidationError(ErrorCategory.SYNTAX_ERROR, "unknown", parseError.toString(), null));
+                }
             }
             if (result.errors.isEmpty()) {
-                result.errors.add("Parse error: " + e.getMessage());
+                result.errors.add(new DdslValidationError(ErrorCategory.SYNTAX_ERROR, "unknown", "Parse error: " + e.getMessage(), null));
             }
         } catch (Exception e) {
-            result.errors.add("Unexpected parse error: " + e.getMessage());
+            result.errors.add(new DdslValidationError(ErrorCategory.SYNTAX_ERROR, "unknown", "Unexpected parse error: " + e.getMessage(), null));
         }
 
         result.valid = result.errors.isEmpty();
@@ -91,13 +103,41 @@ public class DdslValidationTool {
 
     // ── Internals ───────────────────────────────────────────────────────
 
-    private String formatParseError(Object error) {
-        if (error instanceof DdslParser.ParseError pe) {
-            return String.format("Parse error at line %d, col %d: %s",
-                    pe.line(), pe.column(), pe.message());
+    private DdslValidationError makeSyntaxError(DdslParser.ParseError pe) {
+        String location = (pe.line() > 0 && pe.column() > 0) ? String.format("%d:%d", pe.line(), pe.column()) : "unknown";
+        String message = pe.message();
+        String suggestion = generateSyntaxSuggestion(pe);
+        return new DdslValidationError(ErrorCategory.SYNTAX_ERROR, location, message, suggestion);
+    }
+
+    private String generateSyntaxSuggestion(DdslParser.ParseError pe) {
+        // Basic heuristic: point at location; add generic tip
+        if (pe == null) return null;
+        String token = null;
+        String m = pe.message();
+        // Try to extract a token from quotes if present in message
+        int idx = m.indexOf('\'');
+        if (idx != -1) {
+            int end = m.indexOf('\'', idx + 1);
+            if (end > idx) token = m.substring(idx + 1, end);
         }
-        if (error instanceof String s) return s;
-        return error.toString();
+        if (token != null) {
+            return "Check surrounding token '" + token + "' for correctness.";
+        }
+        return "Review syntax around the reported location.";
+    }
+
+    private DdslValidationError makeSemanticError(uet.ndh.ddsl.analysis.validator.Diagnostic diagnostic) {
+        if (diagnostic == null) {
+            return new DdslValidationError(ErrorCategory.SEMANTIC_ERROR, "unknown", "Semantic error", null);
+        }
+        int line = diagnostic.location() != null ? diagnostic.location().startLine() : 0;
+        int col = diagnostic.location() != null ? diagnostic.location().startColumn() : 0;
+        String location = (line > 0 && col > 0) ? String.format("%d:%d", line, col) : "unknown";
+        String ruleId = diagnostic.ruleId() != null ? diagnostic.ruleId() : "SEM";
+        String message = diagnostic.message();
+        String suggestion = "Review semantic rule " + ruleId + ".";
+        return new DdslValidationError(ErrorCategory.SEMANTIC_ERROR, location, message, suggestion);
     }
 
     private String formatSemanticError(uet.ndh.ddsl.analysis.validator.Diagnostic diagnostic) {
@@ -125,6 +165,6 @@ public class DdslValidationTool {
      */
     static class ValidationResult {
         public boolean valid = false;
-        public List<String> errors = new ArrayList<>();
+        public List<DdslValidationError> errors = new ArrayList<>();
     }
 }
