@@ -5,6 +5,7 @@ import uet.ndh.ddsl.ast.SourceSpan;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
@@ -12,6 +13,7 @@ import uet.ndh.ddsl.ast.model.specification.SpecificationDecl;
 import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.ast.application.ApplicationServiceDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
 import uet.ndh.ddsl.ast.visitor.AstVisitor;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public record BoundedContextDecl(
     List<ValueObjectDecl> valueObjects,
     List<DomainServiceDecl> domainServices,
     List<DomainEventDecl> domainEvents,
+    List<EventHandlerContainerDecl> eventHandlers,
     List<RepositoryDecl> repositories,
     List<FactoryDecl> factories,
     List<StateMachineDecl> stateMachines,
@@ -46,11 +49,14 @@ public record BoundedContextDecl(
         valueObjects = valueObjects != null ? List.copyOf(valueObjects) : List.of();
         domainServices = domainServices != null ? List.copyOf(domainServices) : List.of();
         domainEvents = domainEvents != null ? List.copyOf(domainEvents) : List.of();
+        eventHandlers = eventHandlers != null ? List.copyOf(eventHandlers) : List.of();
         repositories = repositories != null ? List.copyOf(repositories) : List.of();
         factories = factories != null ? List.copyOf(factories) : List.of();
         stateMachines = stateMachines != null ? List.copyOf(stateMachines) : List.of();
         specifications = specifications != null ? List.copyOf(specifications) : List.of();
         applicationServices = applicationServices != null ? List.copyOf(applicationServices) : List.of();
+        eventHandlers = eventHandlers != null ? List.copyOf(eventHandlers) : List.of();
+        
     }
     
     @Override

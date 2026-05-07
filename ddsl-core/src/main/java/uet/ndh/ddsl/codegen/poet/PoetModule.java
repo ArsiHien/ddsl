@@ -16,6 +16,7 @@ import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.scaffold.ScaffoldGenerator;
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
 import uet.ndh.ddsl.codegen.poet.translator.*;
 
 import java.util.ArrayList;
@@ -134,6 +135,12 @@ public class PoetModule {
                     ? stateMachine.forField()
                     : (stateMachine.name() != null && !stateMachine.name().isBlank() ? stateMachine.name() : "State");
                 artifacts.addAll(generateStateMachine(stateMachine, ownerName));
+            }
+
+            // Generate event handlers
+            for (EventHandlerContainerDecl eventHandlerContainer : boundedContext.eventHandlers()) {
+                EventHandlerTranslator handlerTranslator = new EventHandlerTranslator(typeMapper);
+                artifacts.addAll(handlerTranslator.translate(eventHandlerContainer));
             }
         }
 

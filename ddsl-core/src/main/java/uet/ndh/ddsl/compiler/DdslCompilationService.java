@@ -69,6 +69,23 @@ public class DdslCompilationService {
             TypeResolver typeResolver = new TypeResolver(symbolTable);
             model.accept(typeResolver);
 
+            // EmitParameterResolver: resolve event field parameters against available scope
+            // and surface any unresolved bindings as SEM301 diagnostics.
+            var emitResolver = new uet.ndh.ddsl.analysis.resolver.EmitParameterResolver(symbolTable);
+            model.accept(emitResolver);
+            if (emitResolver.hasErrors()) {
+                for (var err : emitResolver.errors()) {
+                    allDiagnostics.add(new CompileResponse.DiagnosticMessage(
+                            err.message(),
+                            "ERROR",
+                            err.location() != null ? err.location().startLine() : 0,
+                            err.location() != null ? err.location().startColumn() : 0,
+                            // Attach SEM301 as the rule id for unresolved/semantic issues in emit resolution
+                            "SEM301"
+                    ));
+                }
+            }
+
             typeResolver.errors().forEach(err -> allDiagnostics.add(
                     new CompileResponse.DiagnosticMessage(
                             err.message(),

@@ -21,6 +21,7 @@ import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
@@ -78,6 +79,9 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
         }
         for (var domainEvent : decl.domainEvents()) {
             result = aggregateResult(result, domainEvent.accept(this));
+        }
+        for (EventHandlerContainerDecl eventHandler : decl.eventHandlers()) {
+            result = aggregateResult(result, eventHandler.accept(this));
         }
         for (var repository : decl.repositories()) {
             result = aggregateResult(result, repository.accept(this));

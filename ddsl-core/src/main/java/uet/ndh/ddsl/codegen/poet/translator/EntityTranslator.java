@@ -475,6 +475,7 @@ public class EntityTranslator {
         formatArgs.add(INSTANT);
 
         for (FieldDecl field : event.fields()) {
+            if (isTemporalType(field.type().name())) continue;
             TypeName fieldType = typeMapper.mapType(field.type());
             factoryMethod.addParameter(fieldType, field.name());
             args.append(", $N");
@@ -491,6 +492,12 @@ public class EntityTranslator {
         factoryMethod.addStatement(format, allArgs);
 
         return factoryMethod.build();
+    }
+
+    private boolean isTemporalType(String typeName) {
+        return "Instant".equals(typeName) || "LocalDateTime".equals(typeName)
+                || "DateTime".equals(typeName) || "Timestamp".equals(typeName)
+                || "LocalDate".equals(typeName) || "Date".equals(typeName);
     }
 
     private CodeBlock generateJavadoc(String documentation, String defaultDoc) {

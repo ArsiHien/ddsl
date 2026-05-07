@@ -266,14 +266,13 @@ public class EnumTranslator {
         method.addStatement("throw new $T($S)", IllegalArgumentException.class, "Value cannot be null");
         method.endControlFlow();
         
-        method.beginControlFlow("return switch (value.toUpperCase().replace($S, $S).replace($S, $S))", " ", "_", "-", "_");
+        method.addCode("return switch (value.toUpperCase().replace(\" \", \"_\").replace(\"-\", \"_\")) {\n");
         for (String value : values) {
             String constant = toEnumConstant(value);
-            method.addStatement("case $S -> $L", constant, constant);
+            method.addCode("    case \"$L\" -> $L;\n", constant, constant);
         }
-        method.addStatement("default -> throw new $T($S + value)", 
-                IllegalArgumentException.class, "Unknown value: ");
-        method.endControlFlow();
+        method.addCode("    default -> throw new IllegalArgumentException(\"Unknown value: \" + value);\n");
+        method.addStatement("}");
         
         return method.build();
     }

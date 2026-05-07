@@ -23,6 +23,7 @@ public record Symbol(
         VALUE_OBJECT,
         DOMAIN_SERVICE,
         DOMAIN_EVENT,
+        EVENT_HANDLER,
         REPOSITORY,
         FACTORY,
         SPECIFICATION,

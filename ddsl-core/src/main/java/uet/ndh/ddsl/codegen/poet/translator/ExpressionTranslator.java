@@ -15,6 +15,7 @@ import javax.lang.model.element.Modifier;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -524,20 +525,56 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
     private CodeBlock translateEmitClause(EmitClause emitClause) {
         CodeBlock.Builder code = CodeBlock.builder();
         code.add("// Emit domain events\n");
-        
-        // EmitClause has eventName and eventArguments (simple strings)
+
         String eventType = emitClause.eventName();
         ClassName eventClass = typeMapper.resolveDomainClassName(eventType);
-        
-        // Build event constructor arguments from argument names
-        if (!emitClause.eventArguments().isEmpty()) {
-            String args = String.join(", ", emitClause.eventArguments());
-            code.addStatement("registerEvent($T.now($L))", eventClass, args);
+
+        // Get resolved bindings (may be null if resolver hasn't run)
+        Map<String, ResolvedParameterBinding> resolved = emitClause.resolvedParameters();
+
+        if (resolved == null || resolved.isEmpty()) {
+            // Fallback to old behavior for backward compatibility
+            if (!emitClause.eventArguments().isEmpty()) {
+                String args = String.join(", ", emitClause.eventArguments());
+                code.addStatement("registerEvent($T.now($L))", eventClass, args);
+            } else {
+                code.addStatement("registerEvent($T.now())", eventClass);
+            }
         } else {
-            code.addStatement("registerEvent($T.now())", eventClass);
+            // Build argument list from resolved bindings
+            List<String> argList = new ArrayList<>();
+
+            for (ResolvedParameterBinding binding : resolved.values()) {
+                String arg = switch (binding.kind()) {
+                    case EXPLICIT, PARAMETER, FIELD, GIVEN_LOCAL ->
+                        binding.sourceName();  // Variable name
+                    case TEMPORAL_NOW ->
+                        "$T.now()";
+                    case UNRESOLVED ->
+                        "null /* unresolved: " + binding.parameterName() + " */";
+                };
+                argList.add(arg);
+            }
+
+            // Build the statement with proper formatting
+            if (argList.isEmpty()) {
+                code.addStatement("registerEvent($T.now())", eventClass);
+            } else {
+                String args = String.join(", ", argList);
+                // Check if we need to format Instant.now()
+                if (args.contains("$T.now()")) {
+                    // Use CodeBlock to handle the $T placeholder
+                    CodeBlock argsBlock = CodeBlock.builder()
+                        .add(args, INSTANT)
+                        .build();
+                    code.addStatement("registerEvent($T.now($L))", eventClass, argsBlock);
+                } else {
+                    code.addStatement("registerEvent($T.now($L))", eventClass, args);
+                }
+            }
         }
+
         code.add("\n");
-        
         return code.build();
     }
     

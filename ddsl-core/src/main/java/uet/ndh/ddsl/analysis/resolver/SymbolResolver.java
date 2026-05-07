@@ -9,6 +9,9 @@ import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
+import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
@@ -153,7 +156,34 @@ public class SymbolResolver extends TreeWalkingVisitor<Void> {
                      Symbol.TypeInfo.simple(decl.name()));
         return null;
     }
-    
+
+    @Override
+    public Void visitEventHandlerContainer(EventHandlerContainerDecl decl) {
+        // Just traverse handlers - container doesn't define a symbol
+        for (EventHandlerDecl handler : decl.handlers()) {
+            handler.accept(this);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitEventHandler(EventHandlerDecl decl) {
+        defineSymbol(decl.name(), Symbol.SymbolKind.EVENT_HANDLER, decl,
+                     Symbol.TypeInfo.simple(decl.targetEventName()));
+
+        // Enter handler scope for behaviors
+        symbolTable.enterScope(decl.name(), Scope.ScopeKind.HANDLER);
+        try {
+            // Traverse behaviors
+            for (BehaviorDecl behavior : decl.behaviors()) {
+                behavior.accept(this);
+            }
+        } finally {
+            symbolTable.exitScope();
+        }
+        return null;
+    }
+
     @Override
     public Void visitRepository(RepositoryDecl decl) {
         defineSymbol(decl.name(), Symbol.SymbolKind.REPOSITORY, decl,

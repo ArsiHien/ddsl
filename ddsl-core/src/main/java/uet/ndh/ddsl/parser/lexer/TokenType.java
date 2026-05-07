@@ -38,6 +38,13 @@ public enum TokenType {
     
     /** Use cases section */
     USE_CASES,
+
+    /** Event handlers section */
+    EVENT_HANDLERS,
+    /** Event handler declaration */
+    EVENT_HANDLER,
+    /** Optional keyword used in 'when handling' clauses */
+    HANDLER,
     
     // ========== DOMAIN MODEL KEYWORDS ==========
     

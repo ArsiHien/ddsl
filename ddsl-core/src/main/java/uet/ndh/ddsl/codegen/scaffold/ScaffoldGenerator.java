@@ -66,9 +66,12 @@ public class ScaffoldGenerator {
         // Generate base exception
         artifacts.add(generateDomainException(context));
         
-        // Generate specification pattern base
+// Generate specification pattern base
         artifacts.add(generateSpecificationInterface(context));
-        
+
+        // Generate event publisher interface
+        artifacts.add(generateEventPublisherInterface(context));
+
         log.info("Generated {} scaffold artifacts for package {}", artifacts.size(), basePackage);
         return artifacts;
     }
@@ -201,10 +204,27 @@ public class ScaffoldGenerator {
             "interfaceName", "Specification",
             "description", "Specification pattern interface for business rule encapsulation."
         );
-        
+
         String content = processTemplate("specification.ftl", model);
         return new CodeArtifact(
             "Specification",
+            context.sharedPackage(),
+            content,
+            CodeArtifact.ArtifactType.INTERFACE
+        );
+    }
+
+    private CodeArtifact generateEventPublisherInterface(TemplateContext context) {
+        Map<String, Object> model = Map.of(
+            "packageName", context.sharedPackage(),
+            "interfaceName", "EventPublisher",
+            "description", "Interface for publishing domain events. " +
+                          "Implementations handle the actual event dispatch mechanism."
+        );
+
+        String content = processTemplate("event-publisher.ftl", model);
+        return new CodeArtifact(
+            "EventPublisher",
             context.sharedPackage(),
             content,
             CodeArtifact.ArtifactType.INTERFACE
@@ -246,6 +266,7 @@ public class ScaffoldGenerator {
             case "repository.ftl" -> generateRepositoryCode(packageName, description);
             case "domain-exception.ftl" -> generateDomainExceptionCode(packageName, description);
             case "specification.ftl" -> generateSpecificationCode(packageName, description);
+            case "event-publisher.ftl" -> generateEventPublisherCode(packageName, description);
             default -> "// Template not found: " + templateName;
         };
     }
@@ -390,12 +411,12 @@ public class ScaffoldGenerator {
             """.formatted(packageName, description);
     }
     
-    private String generateSpecificationCode(String packageName, String description) {
+private String generateSpecificationCode(String packageName, String description) {
         return """
             package %s;
-            
+
             import java.util.function.Predicate;
-            
+
             /**
              * %s
              *
@@ -403,31 +424,31 @@ public class ScaffoldGenerator {
              */
             @FunctionalInterface
             public interface Specification<T> extends Predicate<T> {
-                
+
                 /**
                  * Check if the candidate satisfies this specification.
                  */
                 boolean isSatisfiedBy(T candidate);
-                
+
                 @Override
                 default boolean test(T candidate) {
                     return isSatisfiedBy(candidate);
                 }
-                
+
                 /**
                  * Combine this specification with another using AND logic.
                  */
                 default Specification<T> and(Specification<T> other) {
                     return candidate -> this.isSatisfiedBy(candidate) && other.isSatisfiedBy(candidate);
                 }
-                
+
                 /**
                  * Combine this specification with another using OR logic.
                  */
                 default Specification<T> or(Specification<T> other) {
                     return candidate -> this.isSatisfiedBy(candidate) || other.isSatisfiedBy(candidate);
                 }
-                
+
                 /**
                  * Negate this specification.
                  */
@@ -436,6 +457,27 @@ public class ScaffoldGenerator {
                 }
             }
             """.formatted(packageName, description);
+    }
+
+    private String generateEventPublisherCode(String packageName, String description) {
+        return """
+            package %s;
+
+            import %s.DomainEvent;
+            import java.util.List;
+
+            /**
+             * %s
+             */
+            public interface EventPublisher {
+
+                void publish(DomainEvent event);
+
+                default void publishAll(List<? extends DomainEvent> events) {
+                    events.forEach(this::publish);
+                }
+            }
+            """.formatted(packageName, packageName, description);
     }
     
     /**

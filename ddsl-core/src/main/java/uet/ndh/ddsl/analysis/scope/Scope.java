@@ -23,6 +23,7 @@ public class Scope {
         ENTITY,
         VALUE_OBJECT,
         SERVICE,
+        HANDLER,
         METHOD,
         BLOCK
     }

@@ -55,6 +55,8 @@ import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.entity.IdentityFieldDecl;
 import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryCreationRuleDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryMethodDecl;
@@ -250,6 +252,7 @@ public class DdslParser {
         List<StateMachineDecl> stateMachines = new ArrayList<>();
         List<SpecificationDecl> specifications = new ArrayList<>();
         List<ApplicationServiceDecl> applicationServices = new ArrayList<>();
+        List<EventHandlerContainerDecl> eventHandlers = new ArrayList<>();
         
         // Parse sections in any order
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
@@ -268,6 +271,13 @@ public class DdslParser {
                 parseRepositoriesSection(repositories);
             } else if (check(TokenType.SPECIFICATIONS)) {
                 parseSpecificationsSection(specifications);
+            } else if (check(TokenType.EVENT_HANDLERS)) {
+                SourceSpan handlerSpan = currentSpan();
+                List<EventHandlerDecl> handlers = new ArrayList<>();
+                parseEventHandlersSection(handlers);
+                if (!handlers.isEmpty()) {
+                    eventHandlers.add(new EventHandlerContainerDecl(handlerSpan, handlers, null));
+                }
             } else if (check(TokenType.USE_CASES)) {
                 parseUseCasesSection(applicationServices);
             } else {
@@ -280,7 +290,7 @@ public class DdslParser {
         
         return new BoundedContextDecl(
             span, name, modules, aggregates, enums, valueObjects, domainServices,
-            domainEvents, repositories, factories, stateMachines, specifications, applicationServices, null
+            domainEvents, eventHandlers, repositories, factories, stateMachines, specifications, applicationServices, null
         );
     }
     
@@ -1166,6 +1176,102 @@ public class DdslParser {
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of event");
         
         return new DomainEventDecl(span, name, fields, null, null);
+    }
+
+    // Event-handlers parsing
+    private void parseEventHandlersSection(List<EventHandlerDecl> handlers) {
+        advance(); // consume 'event-handlers'
+        consume(TokenType.LEFT_BRACE, "Expected '{' after 'event-handlers'");
+        
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            EventHandlerDecl handler = eventHandlerDeclaration();
+            if (handler != null) {
+                handlers.add(handler);
+            }
+        }
+        
+        consume(TokenType.RIGHT_BRACE, "Expected '}' at end of event-handlers section");
+    }
+
+    private EventHandlerDecl eventHandlerDeclaration() {
+        SourceSpan span = currentSpan();
+
+        if (!check(TokenType.EVENT_HANDLER)) {
+            error("Expected 'EventHandler'");
+            return null;
+        }
+        advance(); // consume 'EventHandler'
+
+        Token nameToken = consume(TokenType.IDENTIFIER, "Expected handler name");
+        String name = nameToken != null ? nameToken.getLexeme() : "UnknownHandler";
+
+        consume(TokenType.FOR, "Expected 'for' after handler name");
+
+        Token eventToken = consume(TokenType.IDENTIFIER, "Expected event name");
+        String eventName = eventToken != null ? eventToken.getLexeme() : "UnknownEvent";
+
+        consume(TokenType.LEFT_BRACE, "Expected '{' after event name");
+
+        List<BehaviorDecl> behaviors = parseHandlerBehaviors();
+
+        consume(TokenType.RIGHT_BRACE, "Expected '}' at end of event handler");
+
+        return new EventHandlerDecl(span, name, eventName, behaviors, null);
+    }
+
+    private List<BehaviorDecl> parseHandlerBehaviors() {
+        List<BehaviorDecl> behaviors = new ArrayList<>();
+
+        GivenClause givenClause = null;
+        if (check(TokenType.GIVEN)) {
+            givenClause = givenClause();
+        }
+
+        List<ThenClause> thenClauses = new ArrayList<>();
+        while (check(TokenType.THEN)) {
+            thenClauses.add(thenClause());
+        }
+
+        while (check(TokenType.WHEN)) {
+            BehaviorDecl behavior = behaviorDeclaration();
+            if (behavior != null) {
+                behaviors.add(behavior);
+            }
+        }
+
+        if (!thenClauses.isEmpty() && behaviors.isEmpty()) {
+            NaturalLanguagePhrase phrase = NaturalLanguagePhrase.from(currentSpan(), "handle");
+
+            BehaviorDecl behavior = new BehaviorDecl(
+                currentSpan(),
+                phrase,
+                List.of(),
+                null,
+                null,
+                givenClause,
+                thenClauses,
+                null,
+                null,
+                null
+            );
+            behaviors.add(behavior);
+        } else if (!behaviors.isEmpty() && givenClause != null) {
+            BehaviorDecl first = behaviors.get(0);
+            behaviors.set(0, new BehaviorDecl(
+                first.span(),
+                first.phrase(),
+                first.parameters(),
+                first.requireClause(),
+                first.errorAccumulationClause(),
+                givenClause,
+                first.thenClauses(),
+                first.emitClause(),
+                first.returnClause(),
+                first.documentation()
+            ));
+        }
+
+        return behaviors;
     }
     
     private void parseFactoriesSection(List<FactoryDecl> factories) {
@@ -3119,7 +3225,7 @@ public class DdslParser {
             }
         }
         
-        return new EmitClause(span, eventName, eventArgs, propertyMappings);
+        return new EmitClause(span, eventName, eventArgs, propertyMappings, java.util.Map.of());
     }
     
     private ReturnClause returnClause() {

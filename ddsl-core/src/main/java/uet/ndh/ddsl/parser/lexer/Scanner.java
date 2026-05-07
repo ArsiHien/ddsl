@@ -88,6 +88,11 @@ public class Scanner {
         KEYWORDS.put("return", TokenType.RETURN);
         KEYWORDS.put("that", TokenType.THAT);
         KEYWORDS.put("event", TokenType.EVENT);
+        // Event-handlers block and declarations
+        KEYWORDS.put("event-handlers", TokenType.EVENT_HANDLERS);
+        KEYWORDS.put("EventHandler", TokenType.EVENT_HANDLER);
+        // Optional helper for 'when handling' phrases
+        KEYWORDS.put("handling", TokenType.HANDLER);
         
         // Factory keywords
         KEYWORDS.put("creating", TokenType.CREATING);

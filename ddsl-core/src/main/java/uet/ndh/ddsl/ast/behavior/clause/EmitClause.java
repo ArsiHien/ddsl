@@ -4,6 +4,7 @@ import uet.ndh.ddsl.ast.SourceSpan;
 import uet.ndh.ddsl.ast.expr.Expr;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an emit clause that handles the generation of domain events.
@@ -30,27 +31,36 @@ import java.util.List;
 public record EmitClause(
     SourceSpan span,
     String eventName,
-    List<String> eventArguments,          // Simple argument names: "reason", "updatedFields"
-    List<EventPropertyMapping> propertyMappings  // Complex property mappings
+    List<String> eventArguments,                      // Simple argument names: "reason", "updatedFields"
+    List<EventPropertyMapping> propertyMappings,      // Complex property mappings
+    Map<String, ResolvedParameterBinding> resolvedParameters  // Auto-resolved bindings from semantic analysis
 ) implements Clause {
-    
+
     public EmitClause {
         eventArguments = eventArguments != null ? List.copyOf(eventArguments) : List.of();
         propertyMappings = propertyMappings != null ? List.copyOf(propertyMappings) : List.of();
+        resolvedParameters = resolvedParameters != null ? Map.copyOf(resolvedParameters) : Map.of();
     }
     
     /**
      * Simple constructor for emit without arguments.
      */
     public static EmitClause simple(SourceSpan span, String eventName) {
-        return new EmitClause(span, eventName, List.of(), List.of());
+        return new EmitClause(span, eventName, List.of(), List.of(), Map.of());
     }
-    
+
     /**
      * Constructor for emit with simple argument names.
      */
     public static EmitClause withArguments(SourceSpan span, String eventName, List<String> arguments) {
-        return new EmitClause(span, eventName, arguments, List.of());
+        return new EmitClause(span, eventName, arguments, List.of(), Map.of());
+    }
+
+    /**
+     * Creates a copy of this EmitClause with resolved parameter bindings.
+     */
+    public EmitClause withResolvedParameters(Map<String, ResolvedParameterBinding> resolved) {
+        return new EmitClause(span, eventName, eventArguments, propertyMappings, resolved);
     }
     
     @Override

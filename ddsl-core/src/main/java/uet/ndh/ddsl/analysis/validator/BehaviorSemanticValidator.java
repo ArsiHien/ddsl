@@ -2,6 +2,7 @@ package uet.ndh.ddsl.analysis.validator;
 
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.behavior.clause.GivenClause;
+import uet.ndh.ddsl.ast.behavior.clause.ResolvedParameterBinding;
 import uet.ndh.ddsl.ast.behavior.clause.ReturnClause;
 import uet.ndh.ddsl.ast.behavior.clause.ThenClause;
 import uet.ndh.ddsl.ast.expr.BinaryExpr;
@@ -31,6 +32,8 @@ import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.member.ParameterDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.visitor.TreeWalkingVisitor;
@@ -56,6 +59,10 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
     private static final String UNDEFINED_IDENTIFIER_RULE_ID = "SEM108";
     private static final String UNDEFINED_METHOD_RULE_ID = "SEM202";
     private static final String METHOD_ARITY_MISMATCH_RULE_ID = "SEM204";
+    private static final String EMIT_ARG_NOT_IN_SCOPE_RULE_ID = "SEM301";
+    private static final String EMIT_BINDING_NOT_IN_SCOPE_RULE_ID = "SEM302";
+    private static final String EMIT_FIELD_UNRESOLVED_RULE_ID = "SEM303";
+    private static final String UNKNOWN_EVENT_TYPE_RULE_ID = "SEM401";
 
     private static final Set<String> RESERVED_WORDS = Set.of(
             "a", "all", "an", "and", "any", "as", "at", "before", "after", "ago",
@@ -254,9 +261,50 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         }
 
         if (decl.emitClause() != null) {
-            for (String eventArg : decl.emitClause().eventArguments()) {
-                validateIdentifierText(eventArg, validTargets, decl.emitClause().span(), "emit argument");
+            // Get resolved bindings from EmitClause (populated by EmitParameterResolver)
+            Map<String, ResolvedParameterBinding> resolved = decl.emitClause().resolvedParameters();
+
+            if (resolved == null || resolved.isEmpty()) {
+                // Fallback to old validation if resolver hasn't run
+                for (String eventArg : decl.emitClause().eventArguments()) {
+                    validateIdentifierText(eventArg, validTargets, decl.emitClause().span(), "emit argument");
+                }
+            } else {
+                // New validation using resolved bindings
+                for (var entry : resolved.entrySet()) {
+                    ResolvedParameterBinding binding = entry.getValue();
+
+                    switch (binding.kind()) {
+                        case EXPLICIT -> {
+                            // Validate explicit argument exists in scope
+                            if (!validTargets.contains(binding.sourceName())) {
+                                addDiagnosticOnce(binding.span(),
+                                        "Emit argument '" + binding.sourceName() + "' not found in scope",
+                                        EMIT_ARG_NOT_IN_SCOPE_RULE_ID);
+                            }
+                        }
+                        case PARAMETER, FIELD, GIVEN_LOCAL -> {
+                            // Already validated by resolver, but double-check
+                            if (!validTargets.contains(binding.sourceName())) {
+                                addDiagnosticOnce(binding.span(),
+                                        "Resolved binding source '" + binding.sourceName() + "' not found in scope",
+                                        EMIT_BINDING_NOT_IN_SCOPE_RULE_ID);
+                            }
+                        }
+                        case TEMPORAL_NOW -> {
+                            // Auto-generated, no validation needed
+                        }
+                        case UNRESOLVED -> {
+                            // Already reported by resolver, but add here too
+                            addDiagnosticOnce(binding.span(),
+                                    "Cannot resolve event field '" + binding.parameterName() + "'",
+                                    EMIT_FIELD_UNRESOLVED_RULE_ID);
+                        }
+                    }
+                }
             }
+
+            // Keep existing property mapping validation
             for (var mapping : decl.emitClause().propertyMappings()) {
                 validateExpressionReferences(mapping.sourceExpression(), validTargets, mapping.span(), "emit mapping");
             }
@@ -267,6 +315,84 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         }
 
         return super.visitBehavior(decl);
+    }
+
+    @Override
+    public Void visitEventHandler(EventHandlerDecl decl) {
+        DomainEventDecl eventDecl = findDomainEvent(decl.targetEventName());
+        if (eventDecl == null) {
+            addDiagnosticOnce(decl.span(),
+                "Unknown event type: '" + decl.targetEventName() + "'",
+                UNKNOWN_EVENT_TYPE_RULE_ID);
+            return null;
+        }
+
+        Set<String> eventFieldTargets = new HashSet<>();
+        for (var field : eventDecl.fields()) {
+            eventFieldTargets.add(field.name());
+        }
+
+        OwnerContext previous = currentOwner;
+        currentOwner = new OwnerContext(
+            "EventHandler",
+            decl.name(),
+            eventFieldTargets,
+            Map.of(),
+            copyReceiverMethodIndex()
+        );
+
+        try {
+            for (BehaviorDecl behavior : decl.behaviors()) {
+                validateEventHandlerBehavior(behavior, eventFieldTargets);
+            }
+        } finally {
+            currentOwner = previous;
+        }
+
+        return null;
+    }
+
+    private void validateEventHandlerBehavior(BehaviorDecl behavior, Set<String> eventFieldTargets) {
+        Set<String> validTargets = new HashSet<>(eventFieldTargets);
+
+        for (ParameterDecl param : behavior.parameters()) {
+            if (param.name() != null && !param.name().isBlank()) {
+                validTargets.add(param.name());
+            }
+        }
+
+        if (behavior.givenClause() != null) {
+            for (GivenClause.GivenStatement given : behavior.givenClause().statements()) {
+                validateExpressionReferences(given.expression(), validTargets, given.span(), "given expression");
+                if (given.identifier() != null && !given.identifier().isBlank()) {
+                    validTargets.add(given.identifier());
+                }
+            }
+        }
+
+        for (ThenClause thenClause : behavior.thenClauses()) {
+            for (ThenClause.ThenStatement stmt : thenClause.statements()) {
+                validateThenStatement(stmt, validTargets);
+            }
+        }
+
+        if (behavior.emitClause() != null) {
+            uet.ndh.ddsl.ast.behavior.clause.EmitClause emitClause = behavior.emitClause();
+            for (String eventArg : emitClause.eventArguments()) {
+                validateIdentifierText(eventArg, validTargets, emitClause.span(), "emit argument");
+            }
+            for (var mapping : emitClause.propertyMappings()) {
+                validateExpressionReferences(mapping.sourceExpression(), validTargets, mapping.span(), "emit mapping");
+            }
+        }
+
+        if (behavior.returnClause() != null) {
+            validateReturnClause(behavior.returnClause(), validTargets);
+        }
+    }
+
+    private DomainEventDecl findDomainEvent(String eventName) {
+        return null;
     }
 
     private void validateBehaviorParameters(List<ParameterDecl> parameters, Set<String> validTargets) {

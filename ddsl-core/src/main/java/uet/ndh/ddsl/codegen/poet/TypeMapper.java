@@ -60,7 +60,8 @@ public class TypeMapper {
         Map.entry("UUID", ClassName.get(UUID.class)),
         Map.entry("BigDecimal", ClassName.get(BigDecimal.class)),
         Map.entry("Object", ClassName.get(Object.class)),
-        Map.entry("Optional", ClassName.get(Optional.class))
+        Map.entry("Optional", ClassName.get(Optional.class)),
+        Map.entry("Void", ClassName.get(Void.class))
     );
     
     // Temporal type mappings
@@ -278,7 +279,14 @@ public class TypeMapper {
     public String packageForSpecifications() {
         return basePackage + "." + SPECIFICATION_SUBPACKAGE;
     }
-    
+
+    /**
+     * Get the listener package for event handlers.
+     */
+    public String getListenerPackage() {
+        return basePackage + ".listener";
+    }
+
     /**
      * Get the base package.
      */

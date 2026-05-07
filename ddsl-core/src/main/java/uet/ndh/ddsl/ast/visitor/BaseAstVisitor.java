@@ -25,6 +25,8 @@ import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.enumeration.EnumDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
 import uet.ndh.ddsl.ast.model.factory.FactoryDecl;
 import uet.ndh.ddsl.ast.model.repository.RepositoryDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
@@ -96,6 +98,22 @@ public abstract class BaseAstVisitor<R> implements AstVisitor<R> {
     @Override
     public R visitDomainEvent(DomainEventDecl decl) {
         return defaultResult();
+    }
+
+    @Override
+    public R visitEventHandlerContainer(EventHandlerContainerDecl decl) {
+        for (EventHandlerDecl handler : decl.handlers()) {
+            handler.accept(this);
+        }
+        return null;
+    }
+
+    @Override
+    public R visitEventHandler(EventHandlerDecl decl) {
+        for (BehaviorDecl behavior : decl.behaviors()) {
+            behavior.accept(this);
+        }
+        return null;
     }
     
     @Override

@@ -8,8 +8,12 @@ import uet.ndh.ddsl.ast.member.MethodDecl;
 import uet.ndh.ddsl.ast.member.ParameterDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
+import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerContainerDecl;
+import uet.ndh.ddsl.ast.model.event.EventHandlerDecl;
 import uet.ndh.ddsl.ast.model.service.DomainServiceDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
+import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.visitor.TreeWalkingVisitor;
 
 import java.util.ArrayList;
@@ -106,7 +110,32 @@ public class TypeResolver extends TreeWalkingVisitor<Void> {
         }
         return super.visitDomainService(decl);
     }
-    
+
+    @Override
+    public Void visitEventHandlerContainer(EventHandlerContainerDecl decl) {
+        for (EventHandlerDecl handler : decl.handlers()) {
+            handler.accept(this);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitEventHandler(EventHandlerDecl decl) {
+        // Resolve target event
+        if (!symbolTable.isTypeDefined(decl.targetEventName())) {
+            errors.add(new TypeResolutionError(
+                decl.span(),
+                "Unknown event type: '" + decl.targetEventName() + "'"
+            ));
+        }
+
+        // Traverse behaviors
+        for (BehaviorDecl behavior : decl.behaviors()) {
+            behavior.accept(this);
+        }
+        return null;
+    }
+
     @Override
     public Void visitNewInstanceExpr(NewInstanceExpr expr) {
         resolveType(expr.type(), expr);
