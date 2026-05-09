@@ -2,7 +2,7 @@ plugins {
     java
     application
     id("org.graalvm.buildtools.native") version "0.10.6"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 group = "uet.ndh"

@@ -1182,14 +1182,19 @@ public class DdslParser {
     private void parseEventHandlersSection(List<EventHandlerDecl> handlers) {
         advance(); // consume 'event-handlers'
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'event-handlers'");
-        
+
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            int before = current;
             EventHandlerDecl handler = eventHandlerDeclaration();
             if (handler != null) {
                 handlers.add(handler);
             }
+            // Safety: if no progress was made, skip the token to avoid infinite loop
+            if (current == before) {
+                advance();
+            }
         }
-        
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at end of event-handlers section");
     }
 

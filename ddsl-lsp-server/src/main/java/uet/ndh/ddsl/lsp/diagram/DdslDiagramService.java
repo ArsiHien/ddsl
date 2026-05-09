@@ -325,9 +325,13 @@ public class DdslDiagramService {
         }
 
         private void buildEventHandlerIndex() {
+            log.debug("Building event handler index for context: {}, eventHandlers count: {}",
+                    context.name(), context.eventHandlers().size());
             for (EventHandlerContainerDecl container : context.eventHandlers()) {
+                log.debug("Processing handler container with {} handlers", container.handlers().size());
                 for (EventHandlerDecl handler : container.handlers()) {
                     String eventName = handler.targetEventName();
+                    log.debug("Found handler: {} for event: {}", handler.name(), eventName);
                     if (eventName != null && !eventName.isBlank()) {
                         EventHandlerInfo info = new EventHandlerInfo(
                                 handler.name(),
@@ -335,9 +339,11 @@ public class DdslDiagramService {
                                 "boundedContext"
                         );
                         eventToHandler.put(eventName, info);
+                        log.debug("Registered handler for event: {}", eventName);
                     }
                 }
             }
+            log.debug("Event handler index built with {} entries", eventToHandler.size());
         }
 
         private void collectAllBehaviorFlows() {
@@ -402,12 +408,15 @@ public class DdslDiagramService {
         }
 
         private List<EventNode> buildEventNodes() {
+            log.debug("Building event nodes. Events in map: {}, Handlers in map: {}",
+                    eventToAggregate.size(), eventToHandler.size());
             return eventToAggregate.entrySet().stream()
                     .map(entry -> {
                         String eventName = entry.getKey();
                         String aggregateName = entry.getValue();
                         EventHandlerInfo handler = eventToHandler.get(eventName);
                         boolean isHandled = handler != null;
+                        log.debug("Event: {}, Handler: {}, isHandled: {}", eventName, handler, isHandled);
                         return new EventNode(eventName, aggregateName, handler, isHandled);
                     })
                     .toList();
