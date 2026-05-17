@@ -1,10 +1,6 @@
 package uet.ndh.ddsl.compiler;
 
-import uet.ndh.ddsl.analysis.resolver.SymbolResolver;
-import uet.ndh.ddsl.analysis.resolver.TypeResolver;
-import uet.ndh.ddsl.analysis.scope.SymbolTable;
-import uet.ndh.ddsl.analysis.validator.BehaviorSemanticValidator;
-import uet.ndh.ddsl.analysis.validator.DddValidator;
+import uet.ndh.ddsl.analysis.SemanticAnalyzer;
 import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.poet.PoetModule;
@@ -52,67 +48,8 @@ public class DdslCompilationService {
         List<CompileResponse.DiagnosticMessage> allDiagnostics = new ArrayList<>();
 
         try {
-            SymbolTable symbolTable = new SymbolTable();
-            SymbolResolver symbolResolver = new SymbolResolver(symbolTable);
-            model.accept(symbolResolver);
-
-            symbolResolver.errors().forEach(err -> allDiagnostics.add(
-                    new CompileResponse.DiagnosticMessage(
-                            err.message(),
-                            "ERROR",
-                            err.location() != null ? err.location().startLine() : 0,
-                            err.location() != null ? err.location().startColumn() : 0,
-                            null
-                    )
-            ));
-
-            TypeResolver typeResolver = new TypeResolver(symbolTable);
-            model.accept(typeResolver);
-
-            // EmitParameterResolver: resolve event field parameters against available scope
-            // and surface any unresolved bindings as SEM301 diagnostics.
-            var emitResolver = new uet.ndh.ddsl.analysis.resolver.EmitParameterResolver(symbolTable);
-            model.accept(emitResolver);
-            if (emitResolver.hasErrors()) {
-                for (var err : emitResolver.errors()) {
-                    allDiagnostics.add(new CompileResponse.DiagnosticMessage(
-                            err.message(),
-                            "ERROR",
-                            err.location() != null ? err.location().startLine() : 0,
-                            err.location() != null ? err.location().startColumn() : 0,
-                            // Attach SEM301 as the rule id for unresolved/semantic issues in emit resolution
-                            "SEM301"
-                    ));
-                }
-            }
-
-            typeResolver.errors().forEach(err -> allDiagnostics.add(
-                    new CompileResponse.DiagnosticMessage(
-                            err.message(),
-                            "ERROR",
-                            err.location() != null ? err.location().startLine() : 0,
-                            err.location() != null ? err.location().startColumn() : 0,
-                            null
-                    )
-            ));
-
-            DddValidator dddValidator = new DddValidator();
-            model.accept(dddValidator);
-
-            dddValidator.diagnostics().forEach(d -> allDiagnostics.add(
-                    new CompileResponse.DiagnosticMessage(
-                            d.message(),
-                            d.severity().name(),
-                            d.location() != null ? d.location().startLine() : 0,
-                            d.location() != null ? d.location().startColumn() : 0,
-                            d.ruleId()
-                    )
-            ));
-
-            BehaviorSemanticValidator behaviorSemanticValidator = new BehaviorSemanticValidator();
-            model.accept(behaviorSemanticValidator);
-
-            behaviorSemanticValidator.diagnostics().forEach(d -> allDiagnostics.add(
+            var analysisResult = new SemanticAnalyzer().analyze(model);
+            analysisResult.diagnostics().forEach(d -> allDiagnostics.add(
                     new CompileResponse.DiagnosticMessage(
                             d.message(),
                             d.severity().name(),

@@ -163,9 +163,15 @@ public class ServiceTranslator {
         ClassName baseRepository = ClassName.get(typeMapper.getBasePackage() + ".shared", "Repository");
         
         TypeSpec.Builder interfaceBuilder = TypeSpec.interfaceBuilder(repository.name())
-            .addModifiers(Modifier.PUBLIC)
-            .addSuperinterface(ParameterizedTypeName.get(baseRepository, aggregateType, idType))
-            .addJavadoc("Repository for $L aggregates.\n", repository.aggregateType().name());
+            .addModifiers(Modifier.PUBLIC);
+        
+        // Only add superinterface if aggregate type is valid (not null/void)
+        if (repository.aggregateType() != null && !aggregateType.equals(TypeName.VOID)) {
+            interfaceBuilder.addSuperinterface(ParameterizedTypeName.get(baseRepository, aggregateType, idType))
+                .addJavadoc("Repository for $L aggregates.\n", repository.aggregateType().name());
+        } else {
+            interfaceBuilder.addJavadoc("Repository for aggregates.\n");
+        }
         
         // Add custom query methods
         for (RepositoryMethodDecl method : repository.methods()) {

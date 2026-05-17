@@ -100,11 +100,9 @@ public abstract class TreeWalkingVisitor<R> extends BaseAstVisitor<R> {
     
     @Override
     public R visitModule(ModuleDecl decl) {
-        R result = defaultResult();
-        for (var context : decl.boundedContexts()) {
-            result = aggregateResult(result, context.accept(this));
-        }
-        return result;
+        // Intentionally not traversing boundedContexts to avoid infinite recursion
+        // (BoundedContextDecl.modules contains this module as parent reference).
+        return defaultResult();
     }
     
     @Override

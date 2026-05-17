@@ -445,10 +445,10 @@ public class DdslParser {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
             } else if (check(TokenType.OPERATIONS)) {
-                // Parse operations block containing 'when' behaviors
-                advance(); // consume 'operations'
+                advance();
                 consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
                 while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+                    int before = current;
                     if (check(TokenType.WHEN)) {
                         BehaviorDecl behavior = behaviorDeclaration();
                         if (behavior != null) behaviors.add(behavior);
@@ -456,13 +456,17 @@ public class DdslParser {
                         error("Expected 'when' in operations block");
                         advance();
                     }
+                    if (current == before) {
+                        advance();
+                    }
                 }
                 consume(TokenType.RIGHT_BRACE, "Expected '}' at end of operations block");
             } else if (check(TokenType.WHEN)) {
                 BehaviorDecl behavior = behaviorDeclaration();
-                behaviors.add(behavior);
+                if (behavior != null) {
+                    behaviors.add(behavior);
+                }
             } else if (check(TokenType.STATE) && checkNext(TokenType.MACHINE)) {
-                // Aggregate-local state machine declaration (currently parsed and ignored at aggregate level)
                 stateMachineDeclaration();
             } else if (check(TokenType.ENTITY)) {
                 EntityDecl entity = entityDeclaration();
@@ -541,15 +545,18 @@ public class DdslParser {
             if (check(TokenType.INVARIANTS)) {
                 invariants.addAll(invariantsBlock());
             } else if (check(TokenType.OPERATIONS)) {
-                // Parse operations block containing 'when' behaviors
-                advance(); // consume 'operations'
+                advance();
                 consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
                 while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+                    int before = current;
                     if (check(TokenType.WHEN)) {
                         BehaviorDecl behavior = behaviorDeclaration();
                         if (behavior != null) behaviors.add(behavior);
                     } else {
                         error("Expected 'when' in operations block");
+                        advance();
+                    }
+                    if (current == before) {
                         advance();
                     }
                 }
@@ -560,7 +567,6 @@ public class DdslParser {
                     behaviors.add(behavior);
                 }
             } else if (check(TokenType.STATE) && checkNext(TokenType.MACHINE)) {
-                // Entity-local state machine declaration (currently parsed and ignored at entity level)
                 stateMachineDeclaration();
             } else if (check(TokenType.AT_SIGN)) {
                 // Leading annotations (e.g. @identity) before a field
@@ -1012,9 +1018,22 @@ public class DdslParser {
         consume(TokenType.LEFT_BRACE, "Expected '{' after 'operations'");
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-            OperationDecl operation = operationDeclaration();
-            if (operation != null) {
-                operations.add(operation);
+            int before = current;
+            
+            if (check(TokenType.WHEN)) {
+                BehaviorDecl behavior = behaviorDeclaration();
+                if (behavior != null) {
+                    operations.add(behaviorToOperation(behavior));
+                }
+            } else {
+                OperationDecl operation = operationDeclaration();
+                if (operation != null) {
+                    operations.add(operation);
+                }
+            }
+            
+            if (current == before) {
+                advance();
             }
         }
         
@@ -1023,6 +1042,25 @@ public class DdslParser {
         return operations;
     }
     
+    private OperationDecl behaviorToOperation(BehaviorDecl behavior) {
+        Expr returnExpr = null;
+        if (!behavior.thenClauses().isEmpty() && !behavior.thenClauses().get(0).statements().isEmpty()) {
+            var stmt = behavior.thenClauses().get(0).statements().get(0);
+            returnExpr = stmt.expression();
+        }
+
+        String name = behavior.phrase() != null ? behavior.phrase().toMethodName() : "unknown";
+
+        return new OperationDecl(
+            behavior.span(),
+            name,
+            null,
+            behavior.parameters(),
+            returnExpr,
+            behavior.documentation()
+        );
+    }
+
     /**
      * OperationDeclaration ::=
      *     Identifier '(' ParameterList? ')' ':' TypeReference '{'
@@ -1099,6 +1137,7 @@ public class DdslParser {
         
         while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && 
                !check(TokenType.INVARIANTS) && !isAtEnd()) {
+            int before = current;
             if (check(TokenType.REQUIRE)) {
                 requireClauseVal = requireClause();
             } else if (check(TokenType.COLLECT)) {
@@ -1108,7 +1147,7 @@ public class DdslParser {
             } else if (check(TokenType.THEN)) {
                 thenClauses.add(thenClause());
             } else if (check(TokenType.AND) && checkNext(TokenType.EMIT)) {
-                advance(); // consume 'and'
+                advance();
                 emitClauseVal = emitClause();
             } else if (check(TokenType.EMIT)) {
                 emitClauseVal = emitClause();
@@ -1117,6 +1156,9 @@ public class DdslParser {
                 break;
             } else {
                 break;
+            }
+            if (current == before) {
+                advance();
             }
         }
         
@@ -1393,10 +1435,12 @@ public class DdslParser {
         
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected repository name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
-        
-        consume(TokenType.FOR, "Expected 'for' after repository name");
-        
-        TypeRef aggregateType = typeReference();
+
+        TypeRef aggregateType = null;
+        if (check(TokenType.FOR)) {
+            advance();
+            aggregateType = typeReference();
+        }
         
         consume(TokenType.LEFT_BRACE, "Expected '{' after aggregate type");
         
@@ -2283,7 +2327,7 @@ public class DdslParser {
             }
             
             SourceSpan paramSpan = currentSpan();
-            Token nameToken = consume(TokenType.IDENTIFIER, "Expected parameter name");
+            Token nameToken = consumeIdentifierLike("Expected parameter name");
             if (nameToken == null) break;
             
             TypeRef type = null;
@@ -2386,12 +2430,28 @@ public class DdslParser {
         }
 
         // String conditions
+        if (matchTokenSequence(tokens, TokenType.DOES, TokenType.NOT, TokenType.CONTAINS)) {
+            int doesPos = findToken(tokens, TokenType.DOES);
+            String subject = buildText(tokens, 0, doesPos);
+            String literal = extractLiteralValue(tokens, doesPos + 3);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.doesNotContain(span, new VariableExpr(span, subject), literal));
+        }
+
         int containsPos = findToken(tokens, TokenType.CONTAINS);
         if (containsPos >= 1 && containsPos + 1 < tokens.size()) {
             String subject = buildText(tokens, 0, containsPos);
             String literal = extractLiteralValue(tokens, containsPos + 1);
             return NaturalLanguageCondition.simple(span, rawText,
                 StringCondition.contains(span, new VariableExpr(span, subject), literal));
+        }
+
+        if (matchTokenSequence(tokens, TokenType.DOES, TokenType.NOT, TokenType.MATCH)) {
+            int doesPos = findToken(tokens, TokenType.DOES);
+            String subject = buildText(tokens, 0, doesPos);
+            String pattern = extractLiteralValue(tokens, doesPos + 3);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.doesNotMatch(span, new VariableExpr(span, subject), pattern));
         }
 
         int matchesPos = findToken(tokens, TokenType.MATCHES);
@@ -2418,6 +2478,34 @@ public class DdslParser {
                 StringCondition.endsWith(span, new VariableExpr(span, subject), suffix));
         }
 
+        if (matchTokenSequence(tokens, TokenType.IS, TokenType.NOT, TokenType.EMPTY)) {
+            int isPos = findToken(tokens, TokenType.IS);
+            String subject = buildText(tokens, 0, isPos);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isNotEmpty(span, new VariableExpr(span, subject)));
+        }
+
+        if (matchTokenSequence(tokens, TokenType.IS, TokenType.EMPTY)) {
+            int isPos = findToken(tokens, TokenType.IS);
+            String subject = buildText(tokens, 0, isPos);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isEmpty(span, new VariableExpr(span, subject)));
+        }
+
+        if (matchTokenSequence(tokens, TokenType.IS, TokenType.NOT, TokenType.BLANK)) {
+            int isPos = findToken(tokens, TokenType.IS);
+            String subject = buildText(tokens, 0, isPos);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isNotBlank(span, new VariableExpr(span, subject)));
+        }
+
+        if (matchTokenSequence(tokens, TokenType.IS, TokenType.BLANK)) {
+            int isPos = findToken(tokens, TokenType.IS);
+            String subject = buildText(tokens, 0, isPos);
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isBlank(span, new VariableExpr(span, subject)));
+        }
+
         int hasPos = findToken(tokens, TokenType.HAS);
         if (hasPos >= 1 && hasPos + 3 < tokens.size()
             && tokens.get(hasPos + 1).getType() == TokenType.VALID
@@ -2435,6 +2523,44 @@ public class DdslParser {
             };
             return NaturalLanguageCondition.simple(span, rawText,
                 StringCondition.hasValidFormat(span, new VariableExpr(span, subject), formatType));
+        }
+
+        int isValidPos = findToken(tokens, TokenType.IS);
+        if (isValidPos >= 1 && isValidPos + 2 < tokens.size()
+            && tokens.get(isValidPos + 1).getType() == TokenType.VALID
+            && lexemeEquals(tokens.get(tokens.size() - 1), "format")) {
+            String subject = buildText(tokens, 0, isValidPos);
+            String formatText = buildText(tokens, isValidPos + 2, tokens.size() - 1).toLowerCase();
+            StringCondition.FormatType formatType = switch (formatText) {
+                case "email" -> StringCondition.FormatType.EMAIL;
+                case "phone", "phone number" -> StringCondition.FormatType.PHONE_NUMBER;
+                case "url" -> StringCondition.FormatType.URL;
+                case "uuid" -> StringCondition.FormatType.UUID;
+                case "date", "datetime" -> StringCondition.FormatType.DATE;
+                case "numeric" -> StringCondition.FormatType.NUMERIC;
+                default -> StringCondition.FormatType.ALPHANUMERIC;
+            };
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isValidFormat(span, new VariableExpr(span, subject), formatType));
+        }
+
+        if (isValidPos >= 1 && isValidPos + 3 < tokens.size()
+            && tokens.get(isValidPos + 1).getType() == TokenType.NOT
+            && tokens.get(isValidPos + 2).getType() == TokenType.VALID
+            && lexemeEquals(tokens.get(tokens.size() - 1), "format")) {
+            String subject = buildText(tokens, 0, isValidPos);
+            String formatText = buildText(tokens, isValidPos + 3, tokens.size() - 1).toLowerCase();
+            StringCondition.FormatType formatType = switch (formatText) {
+                case "email" -> StringCondition.FormatType.EMAIL;
+                case "phone", "phone number" -> StringCondition.FormatType.PHONE_NUMBER;
+                case "url" -> StringCondition.FormatType.URL;
+                case "uuid" -> StringCondition.FormatType.UUID;
+                case "date", "datetime" -> StringCondition.FormatType.DATE;
+                case "numeric" -> StringCondition.FormatType.NUMERIC;
+                default -> StringCondition.FormatType.ALPHANUMERIC;
+            };
+            return NaturalLanguageCondition.simple(span, rawText,
+                StringCondition.isNotValidFormat(span, new VariableExpr(span, subject), formatType));
         }
 
         if (hasPos >= 1 && hasPos + 5 < tokens.size()
@@ -2726,10 +2852,10 @@ public class DdslParser {
         List<GivenClause.GivenStatement> statements = new ArrayList<>();
         
         while (check(TokenType.DASH)) {
-            advance(); // consume '-'
-            
+            advance();
+
             SourceSpan stmtSpan = currentSpan();
-            Token identToken = consume(TokenType.IDENTIFIER, "Expected identifier");
+            Token identToken = consumeIdentifierLike("Expected identifier");
             if (identToken == null) continue;
             
             GivenClause.GivenStatement.GivenStatementType type = GivenClause.GivenStatement.GivenStatementType.AS;
@@ -2780,9 +2906,13 @@ public class DdslParser {
         List<ThenClause.ThenStatement> statements = new ArrayList<>();
         
         while (check(TokenType.DASH)) {
+            int before = current;
             ThenClause.ThenStatement statement = parseThenStatement();
             if (statement != null) {
                 statements.add(statement);
+            }
+            if (current == before) {
+                advance();
             }
         }
         
@@ -2824,15 +2954,21 @@ public class DdslParser {
             type = ThenClause.ThenStatement.ThenStatementType.CALCULATE;
             Token targetToken = consumeIdentifierLike("Expected identifier after 'calculate'");
             target = targetToken != null ? targetToken.getLexeme() : "";
-            consume(TokenType.AS, "Expected 'as' after identifier");
+            if (!(match(TokenType.AS) || match(TokenType.FROM))) {
+                error("Expected 'as' or 'from' after identifier, got '" + peek().getLexeme() + "'");
+            }
             value = expression();
         } else if (check(TokenType.CREATE)) {
             advance();
             type = ThenClause.ThenStatement.ThenStatementType.CREATE;
             Token targetToken = consumeIdentifierLike("Expected identifier after 'create'");
             target = targetToken != null ? targetToken.getLexeme() : "";
-            consume(TokenType.FROM, "Expected 'from' after identifier");
-            value = expression();
+            if (match(TokenType.FROM)) {
+                value = expression();
+            } else {
+                TypeRef typeRef = new TypeRef(span, target, null, false, false, null);
+                value = new NewInstanceExpr(span, typeRef, List.of());
+            }
         } else if (check(TokenType.ADD)) {
             advance();
             type = ThenClause.ThenStatement.ThenStatementType.ADD;
@@ -3105,6 +3241,12 @@ public class DdslParser {
             break;
         }
 
+        // For publish/notify methods, consume 'event' keyword if present
+        if (("publish".equals(methodName) || "notify".equals(methodName))
+                && check(TokenType.EVENT)) {
+            advance();
+        }
+
         Expr callExpr = new MethodCallExpr(span, null, methodName, arguments);
         return ThenClause.ThenStatement.simple(
             span,
@@ -3339,6 +3481,7 @@ public class DdslParser {
 
             if (!(check(TokenType.IS) || check(TokenType.EQUALS) ||
                     check(TokenType.GT) || check(TokenType.LT) ||
+                    check(TokenType.RIGHT_ANGLE) || check(TokenType.LEFT_ANGLE) ||
                     check(TokenType.GTE) || check(TokenType.LTE) ||
                     check(TokenType.NEQ) || check(TokenType.EQ) ||
                     check(TokenType.EXCEEDS))) {
@@ -3391,6 +3534,15 @@ public class DdslParser {
     private Expr parseExtendedPostfixExpression(Expr subject) {
         SourceSpan span = currentSpan();
         int saved = current;
+
+        if (match(TokenType.COUNT)) {
+            return new MethodCallExpr(span, subject, "count", List.of());
+        }
+
+        if (check(TokenType.IDENTIFIER) && "size".equalsIgnoreCase(peek().getLexeme())) {
+            advance();
+            return new MethodCallExpr(span, subject, "count", List.of());
+        }
 
         TemporalExpr temporal = parseTemporalExpression(span, subject);
         if (temporal != null) {
@@ -3617,9 +3769,15 @@ public class DdslParser {
                 // Use IndexExpr or just FieldAccess for now
                 expr = new FieldAccessExpr(currentSpan(), expr, "[index]");
             } else if ((expr instanceof VariableExpr || expr instanceof FieldAccessExpr)
-                    && checkIdentifierLike() && isLikelyWhitespacePropertyAccessBoundary()) {
+                    && checkIdentifierLike()
+                    && !isStringPostfixKeyword(peek())
+                    && isLikelyWhitespacePropertyAccessBoundary()) {
                 Token nameToken = advance();
                 expr = new FieldAccessExpr(currentSpan(), expr, nameToken.getLexeme());
+            } else if (check(TokenType.BY)) {
+                advance();
+                Expr keyExpr = expression();
+                expr = new MethodCallExpr(currentSpan(), expr, "findBy", List.of(keyExpr));
             } else {
                 break;
             }
@@ -3698,7 +3856,7 @@ public class DdslParser {
             }
             Token typeToken = consume(TokenType.IDENTIFIER, "Expected type after 'new'");
             String typeName = typeToken != null ? typeToken.getLexeme() : "";
-            
+
             List<Expr> args = new ArrayList<>();
             if (check(TokenType.LEFT_PAREN)) {
                 advance();
@@ -3710,7 +3868,42 @@ public class DdslParser {
                 }
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after constructor arguments");
             }
-            
+
+            TypeRef type = new TypeRef(span, typeName, null, false, false, null);
+            return new NewInstanceExpr(span, type, args);
+        }
+
+        if (check(TokenType.CREATE)) {
+            advance();
+
+            if (check(TokenType.IDENTIFIER) && "instance".equals(peek().getLexeme())
+                    && checkNext(TokenType.OF)) {
+                advance();
+                advance();
+            }
+
+            Token typeToken = consume(TokenType.IDENTIFIER, "Expected type after 'create'");
+            String typeName = typeToken != null ? typeToken.getLexeme() : "";
+
+            List<Expr> args = new ArrayList<>();
+            if (check(TokenType.WITH)) {
+                advance();
+                do {
+                    if (check(TokenType.AND) || check(TokenType.COMMA)) {
+                        advance();
+                    }
+                    if (checkIdentifierLike()) {
+                        Token argToken = advance();
+                        args.add(new VariableExpr(currentSpan(), argToken.getLexeme()));
+                    } else if (check(TokenType.STRING_LITERAL) || check(TokenType.INTEGER_LITERAL)
+                            || check(TokenType.DECIMAL_LITERAL)) {
+                        args.add(primaryExpression());
+                    } else {
+                        break;
+                    }
+                } while (check(TokenType.AND) || check(TokenType.COMMA));
+            }
+
             TypeRef type = new TypeRef(span, typeName, null, false, false, null);
             return new NewInstanceExpr(span, type, args);
         }
@@ -3840,13 +4033,17 @@ public class DdslParser {
             return TemporalRange.between(span, subject, startExpr, endExpr);
         }
         
-        if (matchSequence(TokenType.IS, TokenType.MORE, TokenType.THAN)) {
+        if (checkSequence(TokenType.IS, TokenType.MORE, TokenType.THAN)
+                && checkAhead(3, TokenType.INTEGER_LITERAL)) {
+            matchSequence(TokenType.IS, TokenType.MORE, TokenType.THAN);
             Duration duration = parseDuration(span);
             TemporalRelative.RelativeDirection direction = parseTemporalDirection();
             return new TemporalRelative(span, subject, TemporalRelative.RelativeOp.MORE_THAN, duration, direction);
         }
         
-        if (matchSequence(TokenType.IS, TokenType.LESS, TokenType.THAN)) {
+        if (checkSequence(TokenType.IS, TokenType.LESS, TokenType.THAN)
+                && checkAhead(3, TokenType.INTEGER_LITERAL)) {
+            matchSequence(TokenType.IS, TokenType.LESS, TokenType.THAN);
             Duration duration = parseDuration(span);
             TemporalRelative.RelativeDirection direction = parseTemporalDirection();
             return new TemporalRelative(span, subject, TemporalRelative.RelativeOp.LESS_THAN, duration, direction);
@@ -3978,6 +4175,11 @@ public class DdslParser {
      *   expression has length greater than N
      */
     public StringCondition parseStringCondition(SourceSpan span, Expr subject) {
+        if (matchSequence(TokenType.DOES, TokenType.NOT, TokenType.CONTAINS)) {
+            String value = parseStringLiteralValue();
+            return StringCondition.doesNotContain(span, subject, value);
+        }
+
         if (match(TokenType.CONTAINS)) {
             String value = parseStringLiteralValue();
             return StringCondition.contains(span, subject, value);
@@ -3997,13 +4199,37 @@ public class DdslParser {
             String pattern = parseStringLiteralValue();
             return StringCondition.matches(span, subject, pattern);
         }
+
+        if (matchSequence(TokenType.DOES, TokenType.NOT, TokenType.MATCH)) {
+            String pattern = parseStringLiteralValue();
+            return StringCondition.doesNotMatch(span, subject, pattern);
+        }
+
+        if (matchSequence(TokenType.DOES, TokenType.NOT, TokenType.MATCHES)) {
+            String pattern = parseStringLiteralValue();
+            return StringCondition.doesNotMatch(span, subject, pattern);
+        }
+
+        if (matchSequence(TokenType.IS, TokenType.NOT, TokenType.EMPTY)) {
+            return StringCondition.isNotEmpty(span, subject);
+        }
         
         if (matchSequence(TokenType.IS, TokenType.EMPTY)) {
             return StringCondition.isEmpty(span, subject);
         }
+
+        if (matchSequence(TokenType.IS, TokenType.NOT, TokenType.BLANK)) {
+            return StringCondition.isNotBlank(span, subject);
+        }
         
         if (matchSequence(TokenType.IS, TokenType.BLANK)) {
             return StringCondition.isBlank(span, subject);
+        }
+
+        if (matchSequence(TokenType.IS, TokenType.NOT, TokenType.VALID)) {
+            StringCondition.FormatType formatType = parseFormatType();
+            consume(TokenType.FORMAT, "Expected 'format' after format type");
+            return StringCondition.isNotValidFormat(span, subject, formatType);
         }
         
         if (matchSequence(TokenType.HAS, TokenType.VALID)) {
@@ -4033,6 +4259,12 @@ public class DdslParser {
                 int value = parseIntegerLiteralValue();
                 return StringCondition.hasLengthExactly(span, subject, value);
             }
+            if (match(TokenType.BETWEEN)) {
+                int min = parseIntegerLiteralValue();
+                consume(TokenType.AND, "Expected 'and' in length range");
+                int max = parseIntegerLiteralValue();
+                return StringCondition.hasLengthBetween(span, subject, min, max);
+            }
         }
         
         return null;
@@ -4048,6 +4280,18 @@ public class DdslParser {
      *   expression concatenated with "suffix"
      */
     public StringOperation parseStringOperation(SourceSpan span, Expr subject) {
+        if (matchLexeme("converted")) {
+            consume(TokenType.TO, "Expected 'to' after 'converted'");
+            if (matchLexeme("uppercase")) {
+                return StringOperation.toUppercase(span, subject);
+            }
+            if (matchLexeme("lowercase")) {
+                return StringOperation.toLowercase(span, subject);
+            }
+            error("Expected 'uppercase' or 'lowercase' after 'converted to'");
+            return null;
+        }
+
         if (check(TokenType.TO)) {
             advance();
             if (peek().getLexeme().equalsIgnoreCase("uppercase")) {
@@ -4058,6 +4302,10 @@ public class DdslParser {
                 advance();
                 return StringOperation.toLowercase(span, subject);
             }
+        }
+
+        if (matchLexeme("trimmed")) {
+            return StringOperation.trimmed(span, subject);
         }
         
         if (match(TokenType.TRUNCATED)) {
@@ -4071,6 +4319,11 @@ public class DdslParser {
             consume(TokenType.WITH, "Expected 'with' after 'concatenated'");
             String suffix = parseStringLiteralValue();
             return StringOperation.concatenatedWith(span, subject, suffix);
+        }
+
+        if (matchLexeme("without")) {
+            String text = parseStringLiteralValue();
+            return StringOperation.without(span, subject, text);
         }
         
         if (match(TokenType.REPLACED)) {
@@ -4491,12 +4744,19 @@ public class DdslParser {
         if (tokens.size() < types.length) {
             return false;
         }
-        for (int i = 0; i < types.length; i++) {
-            if (tokens.get(i).getType() != types[i]) {
-                return false;
+        for (int start = 0; start <= tokens.size() - types.length; start++) {
+            boolean matched = true;
+            for (int i = 0; i < types.length; i++) {
+                if (tokens.get(start + i).getType() != types[i]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private int findTokenFrom(List<Token> tokens, TokenType type, int startIndex) {
@@ -4624,7 +4884,26 @@ public class DdslParser {
         }
         return false;
     }
-    
+
+    private boolean matchLexeme(String lexeme) {
+        if (!isAtEnd() && lexemeEquals(peek(), lexeme)) {
+            advance();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isStringPostfixKeyword(Token token) {
+        if (token == null || token.getLexeme() == null) {
+            return false;
+        }
+        String lexeme = token.getLexeme().toLowerCase();
+        return switch (lexeme) {
+            case "converted", "trimmed", "truncated", "concatenated", "without", "replaced" -> true;
+            default -> false;
+        };
+    }
+
     private boolean matchSequence(TokenType... types) {
         int savedPosition = current;
         for (TokenType type : types) {
@@ -4635,6 +4914,23 @@ public class DdslParser {
             advance();
         }
         return true;
+    }
+
+    private boolean checkSequence(TokenType... types) {
+        for (int i = 0; i < types.length; i++) {
+            if (!checkAhead(i, types[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkAhead(int offset, TokenType type) {
+        int index = current + offset;
+        if (index >= tokens.size()) {
+            return false;
+        }
+        return tokens.get(index).getType() == type;
     }
     
     // ========== Helper Methods ==========
@@ -4684,7 +4980,7 @@ public class DdslParser {
                next == TokenType.WHERE || next == TokenType.AND || next == TokenType.OR ||
                next == TokenType.COLON || next == TokenType.RIGHT_PAREN ||
                next == TokenType.RIGHT_BRACKET || next == TokenType.RIGHT_BRACE ||
-               next == TokenType.EOF;
+               next == TokenType.DASH || next == TokenType.EOF;
     }
 
     private boolean isIndexableExpression(Expr expr) {

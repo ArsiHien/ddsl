@@ -3,10 +3,13 @@ package uet.ndh.ddsl.codegen.poet.translator;
 import com.palantir.javapoet.*;
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.common.Constraint;
+import uet.ndh.ddsl.ast.expr.StringOperation;
+import uet.ndh.ddsl.ast.expr.VariableExpr;
 import uet.ndh.ddsl.ast.member.FieldDecl;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.entity.IdentityFieldDecl;
 import uet.ndh.ddsl.ast.model.event.DomainEventDecl;
+import uet.ndh.ddsl.ast.model.valueobject.OperationDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
 import uet.ndh.ddsl.codegen.CodeArtifact;
 import uet.ndh.ddsl.codegen.poet.TypeMapper;
@@ -156,10 +159,25 @@ public class EntityTranslator {
         boolean hasFieldConstraints = valueObject.fields().stream()
                 .anyMatch(f -> !f.constraints().isEmpty());
         boolean hasInvariants = !valueObject.invariants().isEmpty();
+        boolean hasNormalizations = valueObject.operations().stream()
+                .anyMatch(operation -> normalizationStatement(valueObject, operation) != null);
 
-        if (hasFieldConstraints || hasInvariants) {
+        if (hasFieldConstraints || hasInvariants || hasNormalizations) {
             MethodSpec.Builder compactConstructor = MethodSpec.compactConstructorBuilder()
                     .addModifiers(Modifier.PUBLIC);
+
+            if (hasNormalizations) {
+                compactConstructor.addCode("// Field normalization\n");
+                for (OperationDecl operation : valueObject.operations()) {
+                    CodeBlock normalization = normalizationStatement(valueObject, operation);
+                    if (normalization != null) {
+                        compactConstructor.addCode(normalization);
+                    }
+                }
+                if (hasFieldConstraints || hasInvariants) {
+                    compactConstructor.addCode("\n");
+                }
+            }
 
             // Generate field constraint validations
             if (hasFieldConstraints) {
@@ -189,6 +207,66 @@ public class EntityTranslator {
                 .skipJavaLangImports(true)
                 .indent("    ")
                 .build();
+    }
+
+    private CodeBlock normalizationStatement(ValueObjectDecl valueObject, OperationDecl operation) {
+        if (!(operation.expression() instanceof StringOperation stringOperation)) {
+            return null;
+        }
+
+        FieldDecl targetField = normalizationTargetField(valueObject, operation, stringOperation);
+        if (targetField == null) {
+            return null;
+        }
+
+        String fieldName = targetField.name();
+        return switch (stringOperation.type()) {
+            case TO_UPPERCASE -> CodeBlock.of("$N = $N == null ? null : $N.toUpperCase();\n",
+                    fieldName, fieldName, fieldName);
+            case TO_LOWERCASE -> CodeBlock.of("$N = $N == null ? null : $N.toLowerCase();\n",
+                    fieldName, fieldName, fieldName);
+            case TRIMMED -> CodeBlock.of("$N = $N == null ? null : $N.trim();\n",
+                    fieldName, fieldName, fieldName);
+            case TRUNCATED_TO, FIRST_N_CHARACTERS -> CodeBlock.of(
+                    "$N = $N == null ? null : $N.substring(0, $T.min($N.length(), $L));\n",
+                    fieldName, fieldName, fieldName, Math.class, fieldName, stringOperation.lengthValue());
+            case LAST_N_CHARACTERS -> CodeBlock.of(
+                    "$N = $N == null ? null : $N.substring($T.max(0, $N.length() - $L));\n",
+                    fieldName, fieldName, fieldName, Math.class, fieldName, stringOperation.lengthValue());
+            case WITHOUT -> CodeBlock.of("$N = $N == null ? null : $N.replace($S, \"\");\n",
+                    fieldName, fieldName, fieldName, stringOperation.literal());
+            case REPLACED -> CodeBlock.of("$N = $N == null ? null : $N.replace($S, $S);\n",
+                    fieldName, fieldName, fieldName, stringOperation.literal(), stringOperation.replacement());
+            case CONCATENATED_WITH -> {
+                if (stringOperation.literal() == null) {
+                    yield null;
+                }
+                yield CodeBlock.of("$N = $N == null ? null : $N + $S;\n",
+                        fieldName, fieldName, fieldName, stringOperation.literal());
+            }
+        };
+    }
+
+    private FieldDecl normalizationTargetField(ValueObjectDecl valueObject, OperationDecl operation,
+            StringOperation stringOperation) {
+        if (operation.parameters().size() != 1
+                || !(stringOperation.stringExpr() instanceof VariableExpr sourceVariable)) {
+            return null;
+        }
+
+        String parameterName = operation.parameters().get(0).name();
+        if (!parameterName.equals(sourceVariable.name())) {
+            return null;
+        }
+
+        if (valueObject.fields().size() == 1) {
+            return valueObject.fields().get(0);
+        }
+
+        return valueObject.fields().stream()
+                .filter(field -> field.name().equals(parameterName))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

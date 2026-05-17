@@ -586,6 +586,9 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             CodeBlock value = translateExpression(returnClause.expression());
             return CodeBlock.of("return $L;\n", value);
         }
+        if (returnClause.returnType() == ReturnClause.ReturnType.SUCCESS) {
+            return CodeBlock.of("return null;\n");
+        }
         return CodeBlock.of("return;\n");
     }
     

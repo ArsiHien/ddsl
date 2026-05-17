@@ -36,6 +36,7 @@ public class TypeMapper {
     // Primitive type mappings
     private static final Map<String, TypeName> PRIMITIVE_TYPES = Map.ofEntries(
         Map.entry("int", TypeName.INT),
+        Map.entry("Int", TypeName.INT.box()),
         Map.entry("Integer", TypeName.INT.box()),
         Map.entry("long", TypeName.LONG),
         Map.entry("Long", TypeName.LONG.box()),
