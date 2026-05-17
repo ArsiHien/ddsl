@@ -7,7 +7,13 @@ complexity: basic
 version: 3.0
 ---
 
-This example shows how to translate very informal type names, constraints, and shorthand descriptions into valid DDSL using the natural format.
+This example shows how to translate very informal type names, constraints, and shorthand descriptions into valid DDSL.
+
+IMPORTANT parser-compatible syntax:
+- Invariants must be `"Message": condition`, not bare lines.
+- Behavior clauses must use `require that:` and `then:` with dash-prefixed items.
+- Events use `emit EventName`, not `emit event EventName`.
+- Any older natural-format snippets in historical examples must be normalized to this parser-compatible shape before output.
 
 User input (heavily informal types and constraints):
 ```

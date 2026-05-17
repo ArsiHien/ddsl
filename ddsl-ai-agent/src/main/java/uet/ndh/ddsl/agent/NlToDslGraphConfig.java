@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.StateGraph;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uet.ndh.ddsl.agent.node.JudgeNode;
+import uet.ndh.ddsl.agent.node.OrchestratorNode;
 import uet.ndh.ddsl.agent.node.RetrieverNode;
 import uet.ndh.ddsl.agent.node.SynthesizerNode;
 import uet.ndh.ddsl.agent.DdslState;
@@ -22,11 +23,11 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
  * <p>
 * Flow:
      * <pre>
-     * START → Retriever → [Quality Check]
-     *                         ↓ Good
-     *                       Synthesizer → Judge → {Valid?}
-     *                          ↑ No          ↓ Yes
-     *                       [Retry]      Return DSL
+     * START → Orchestrator → Retriever → Orchestrator → Synthesizer
+     *          ↑                                          ↓
+     *          └──────── Judge ← Orchestrator ←───────────┘
+     *
+     * Orchestrator creates chunk plan, merges chunks, and scopes repair loops.
  * </pre>
  * <p>
  * Retry limits per agent: 2
@@ -38,72 +39,59 @@ public class NlToDslGraphConfig {
     public static final String NODE_RETRIEVER = "retriever";
     public static final String NODE_SYNTHESIZER = "synthesizer";
     public static final String NODE_JUDGE = "judge";
+    public static final String NODE_ORCHESTRATOR = "orchestrator";
 
     @Bean
     public StateGraph<DdslState> nlToDslGraph(
             RetrieverNode retrieverNode,
             SynthesizerNode synthesizerNode,
-            JudgeNode judgeNode
+            JudgeNode judgeNode,
+            OrchestratorNode orchestratorNode
     ) throws Exception {
 
-        Map<String, Channel<?>> schema = Map.of();
+        Map<String, Channel<?>> schema = DdslState.SCHEMA;
         var graph = new StateGraph<>(schema, DdslState::from)
                 // Nodes
+                .addNode(NODE_ORCHESTRATOR, node_async(orchestratorNode))
                 .addNode(NODE_RETRIEVER, node_async(retrieverNode))
                 .addNode(NODE_SYNTHESIZER, node_async(synthesizerNode))
                 .addNode(NODE_JUDGE, node_async(judgeNode))
                 
                 // Start
-                .addEdge(START, NODE_RETRIEVER)
-                
-                // Retriever → Quality Check
+                .addEdge(START, NODE_ORCHESTRATOR)
+
                 .addConditionalEdges(
-                    NODE_RETRIEVER,
-                    state -> {
-                        double quality = state.retrievalQuality();
-                        int retries = state.retrieverRetries();
-                        int maxRetries = state.maxRetries();
-                        
-                        if (quality >= 0.6) {
-                            log.info("Retriever: quality good ({}), proceeding", quality);
-                            return CompletableFuture.completedFuture("good");
-                        }
-                        if (retries < maxRetries) {
-                            log.info("Retriever: quality low ({}), retrying ({}/{})", 
-                                quality, retries, maxRetries);
-                            return CompletableFuture.completedFuture("retry");
-                        }
-                        log.warn("Retriever: quality low after max retries, proceeding with low quality");
-                        return CompletableFuture.completedFuture("good");
-                    },
-                    Map.of("good", NODE_SYNTHESIZER, "retry", NODE_RETRIEVER)
+                        NODE_ORCHESTRATOR,
+                        state -> CompletableFuture.completedFuture(state.orchestratorRoute()),
+                        Map.of(
+                                OrchestratorNode.ROUTE_RETRIEVER, NODE_RETRIEVER,
+                                OrchestratorNode.ROUTE_SYNTHESIZER, NODE_SYNTHESIZER,
+                                OrchestratorNode.ROUTE_JUDGE, NODE_JUDGE,
+                                OrchestratorNode.ROUTE_END, END
+                        )
                 )
-                
-                // Synthesizer → Judge
-                .addEdge(NODE_SYNTHESIZER, NODE_JUDGE)
-                
-                // Judge → Validation Check
+
                 .addConditionalEdges(
-                    NODE_JUDGE,
-                    state -> {
-                        boolean valid = state.isSuccessful();
-                        int retries = state.synthesizerRetries();
-                        int maxRetries = state.maxRetries();
-                        
-                        if (valid) {
-                            log.info("Judge: DSL valid, completing");
-                            return CompletableFuture.completedFuture("valid");
-                        }
-                        if (retries < maxRetries) {
-                            log.info("Judge: DSL invalid, retrying synthesis ({}/{})", 
-                                retries, maxRetries);
+                        NODE_RETRIEVER,
+                        state -> {
+                            double quality = state.retrievalQuality();
+                            int retries = state.retrieverRetries();
+                            int maxRetries = state.maxRetries();
+
+                            if (quality >= 0.6 || retries >= maxRetries) {
+                                if (quality < 0.6) {
+                                    log.warn("Retriever: low quality ({}) after retry budget, proceeding", quality);
+                                }
+                                return CompletableFuture.completedFuture("continue");
+                            }
+                            log.info("Retriever: quality low ({}), retrying ({}/{})", quality, retries, maxRetries);
                             return CompletableFuture.completedFuture("retry");
-                        }
-                        log.warn("Judge: DSL invalid after max retries, returning best effort");
-                        return CompletableFuture.completedFuture("fail");
-                    },
-                    Map.of("valid", END, "retry", NODE_SYNTHESIZER, "fail", END)
-                );
+                        },
+                        Map.of("continue", NODE_ORCHESTRATOR, "retry", NODE_RETRIEVER)
+                )
+
+                .addEdge(NODE_SYNTHESIZER, NODE_ORCHESTRATOR)
+                .addEdge(NODE_JUDGE, NODE_ORCHESTRATOR);
 
         return graph;
     }

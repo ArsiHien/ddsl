@@ -32,6 +32,8 @@ Relevant DDSL examples, patterns, and reference implementations retrieved from t
 5. **Apply fuzzy type normalization** — map informal types to canonical DDSL types.
 6. **Preserve ALL domain content** — every field, behavior, event, invariant the user described must appear in the output.
 7. **Interpret user intent** — translate informal descriptions to formal DDSL syntax. Do not add new domain concepts not described by the user.
+8. **Do not invent declarations for empty chunks** — if a chunk task asks for services/events/repositories/value objects and the user did not request any, output empty text for that chunk.
+9. **ValueObjects never use `@identity`** — `@identity` belongs only to Aggregate/Entity fields.
 
 # DDSL Grammar Reference (Compact)
 
@@ -58,21 +60,21 @@ Constraint      ::= '@min(' NUM ')' | '@max(' NUM ')' | '@minLength(' NUM ')'
                   | '@maxLength(' NUM ')' | '@pattern(' STRING ')' | '@email'
                   | '@required' | '@immutable' | '@computed'
 
-Invariants      ::= 'invariants' '{' NLCondition* '}'
+Invariants      ::= 'invariants' '{' StringLiteral ':' Expression* '}'
 Operations      ::= 'operations' '{' Behavior* '}'
 
-Behavior        ::= 'when' NLPhrase ('with' Params)? '{' Clause* '}'
+Behavior        ::= 'when' NLPhrase ('with' Params)? ':' Clause*
 Clause          ::= RequireClause | GivenClause | ThenClause | EmitClause | ReturnClause
-RequireClause   ::= 'require' 'that' NLCondition
-ThenClause      ::= 'then' Action
-EmitClause      ::= 'emit' 'event' IDENTIFIER ('with' PropertyList)?
+RequireClause   ::= 'require' 'that' ':' NLConditionList
+ThenClause      ::= 'then' ':' ActionList
+EmitClause      ::= 'emit' IDENTIFIER ('with' PropertyList)?
 ReturnClause    ::= 'return' Expression
 
 DomainEvent     ::= 'DomainEvent' IDENTIFIER '{' Field* '}'
 Factory         ::= 'Factory' IDENTIFIER 'for' IDENTIFIER '{' FactoryBody '}'
 Repository      ::= 'Repository' IDENTIFIER 'for' IDENTIFIER '{' RepoMethod* '}'
-Specification   ::= 'Specification' IDENTIFIER 'for' IDENTIFIER '{'
-                      'matches' 'when' NLCondition '}'
+Specification   ::= 'Specification' IDENTIFIER '{'
+                      'matches' TypeRef 'where' ':' ('-' Expression)* '}'
 
 RepoMethod      ::= IDENTIFIER '(' Params ')' ':' TypeRef
 ```
@@ -129,26 +131,42 @@ Users describe fields as natural sentences. Translate them into `Annotation* IDE
 Users compress entire behaviors into comma-separated sentences. Expand them into proper clauses:
 - `publishing post { title and content must not empty, change status to PUBLISHED, publish event PostPublished }` →
   ```
-  when publishing post {
-      require that title is not empty
-      require that content is not empty
-      then set status to "PUBLISHED"
-      emit event PostPublished
-  }
+  when publishing post:
+      require that:
+          - title is not empty
+          - content is not empty
+      then:
+          - set status to "PUBLISHED"
+      emit PostPublished
   ```
 - `X and Y must not be empty` → split into: `require that X is not empty` + `require that Y is not empty`
 - `change/set X to Y` → `then set X to Y`
-- `publish/fire/send/notify event E with A and B` → `emit event E with A, B` — always use "emit event", "and"→comma
+- `publish/fire/send/notify event E with A and B` → `emit E with A, B` — use `emit EventName`, "and"→comma
 - `create new X, add it to Y` → `then create new X` + `then add it to Y`
 - `activate the user` → `then set active to true` — interpret intent
 - `record registration time` → `then set registeredAt to now` — interpret intent
+- `current time` / `timestamp now` / `now()` → `now` — use the temporal keyword without parentheses
 - `calculate total from item prices` → `then calculate total from item prices`
 
 ## Legacy Syntax Errors (also fix these)
 - `name is String` → `name: String` (use colon, not "is")
 - `name - String` → `name: String` (use colon, not dash)
 - `id: UUID identity` → `@identity id: UUID` (annotation goes BEFORE name)
+- `ValueObject CustomerId { @identity id: UUID }` → invalid. ValueObject must not contain `@identity`; use `ValueObject CustomerId { value: UUID }` only when the user explicitly requested a value object.
 - `name: string` → `name: String` (PascalCase for all types)
+- `balance must not be negative` inside `invariants` → invalid. Use `"Balance must not be negative": balance >= 0`
+- `status must be one of OPEN, FROZEN, CLOSED` inside `invariants` → invalid. Use a quoted message plus a parser-compatible expression, or model it as field constraints/operation requirements if enum syntax is not available.
+- `require that: amount > 0` → invalid. Use:
+  ```
+  require that:
+      - amount > 0
+  ```
+- `then: set status to "ACTIVE"` → invalid. Use:
+  ```
+  then:
+      - set status to "ACTIVE"
+  ```
+- `Specification ActiveShipment for Shipment` → invalid. Use `Specification ActiveShipment { matches Shipment where: ... }`
 
 ## Constraint Normalization
 - `required` / `mandatory` → `@required`
@@ -170,8 +188,33 @@ Users compress entire behaviors into comma-separated sentences. Expand them into
 - Missing `that`: `require X is Y` → `require that X is Y`
 - Missing `then`: `set status to "X"` → `then set status to "X"`
 - Missing `then`: `create X ...` → `then create X ...`
-- Missing `then`: `add X to Y` → `then add X to Y`
-- Missing `event`: `emit OrderPlaced` → `emit event OrderPlaced`
+- Missing `then`: `add X to Y` → `then: - add X to Y`
+- Legacy extra `event`: `emit event OrderPlaced` → `emit OrderPlaced`
+- Legacy temporal call: `now()` → `now`
+
+## Parser-Compatible Blocks
+Use these exact shapes when emitting these blocks:
+```
+invariants {
+    "Balance must not be negative": balance >= 0
+}
+
+operations {
+    when depositing with amount:
+        require that:
+            - amount is required
+            - amount > 0
+        then:
+            - increase balance by amount
+        emit AccountDeposited with amount
+}
+
+Specification ActiveShipment {
+    matches Shipment where:
+        - status is not "DELIVERED"
+        - status is not "CANCELLED"
+}
+```
 
 # Input Processing Note
 The userInput may contain grammar variations, punctuation inconsistencies, and informal phrasing. The content is structurally complete but requires normalization to strict DDSL syntax. Your task is to interpret the semantic intent and produce syntactically correct DDSL that adheres to the grammar exactly.

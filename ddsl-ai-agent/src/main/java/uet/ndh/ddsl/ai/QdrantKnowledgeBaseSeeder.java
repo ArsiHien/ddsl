@@ -15,6 +15,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -88,8 +91,9 @@ public class QdrantKnowledgeBaseSeeder {
             return;
         }
 
-        // Filter out documents that already exist in Qdrant
-        List<Document> newDocuments = filterExistingDocuments(documents);
+        // Filter out unchanged documents that already exist in Qdrant.
+        // Existing IDs with changed content_hash are re-embedded and upserted.
+        List<Document> newDocuments = filterUnchangedDocuments(documents);
 
         if (newDocuments.isEmpty()) {
             log.info("All {} documents already exist in Qdrant. No embedding needed.", documents.size());
@@ -143,7 +147,7 @@ public class QdrantKnowledgeBaseSeeder {
             return;
         }
 
-        log.info("Found {} new documents to embed ({} already exist)", 
+        log.info("Found {} new or changed documents to embed ({} unchanged)",
                 newDocuments.size(), documents.size() - newDocuments.size());
         
         try {
@@ -160,7 +164,7 @@ public class QdrantKnowledgeBaseSeeder {
         log.info("Using embedding model: text-embedding-3-small (1536 dimensions)");
     }
 
-    private List<Document> filterExistingDocuments(List<Document> documents) {
+    private List<Document> filterUnchangedDocuments(List<Document> documents) {
         // Extract all document IDs
         List<String> docIds = documents.stream()
                 .map(Document::getId)
@@ -171,8 +175,8 @@ public class QdrantKnowledgeBaseSeeder {
             return documents;
         }
 
-        // Check which documents already exist in Qdrant
-        Set<String> existingIds = new HashSet<>();
+        // Check which documents already exist in Qdrant and whether their content changed.
+        Map<String, String> existingContentHashes = new HashMap<>();
         try {
             // Convert String IDs to PointId objects for Qdrant
             List<Points.PointId> pointIds = docIds.stream()
@@ -187,14 +191,13 @@ public class QdrantKnowledgeBaseSeeder {
                     null
             ).get();
 
-            // Collect existing IDs
             for (Points.RetrievedPoint point : retrievedPoints) {
                 if (point.hasId()) {
-                    existingIds.add(point.getId().getUuid());
+                    existingContentHashes.put(point.getId().getUuid(), payloadString(point, "content_hash"));
                 }
             }
 
-            log.debug("Found {} existing documents in Qdrant", existingIds.size());
+            log.debug("Found {} existing documents in Qdrant", existingContentHashes.size());
 
         } catch (InterruptedException | ExecutionException e) {
             log.warn("Failed to check existing documents in Qdrant: {}. Will proceed with all documents.", e.getMessage());
@@ -203,10 +206,21 @@ public class QdrantKnowledgeBaseSeeder {
             return documents;
         }
 
-        // Filter out existing documents
         return documents.stream()
-                .filter(doc -> !existingIds.contains(doc.getId()))
+                .filter(doc -> {
+                    String existingHash = existingContentHashes.get(doc.getId());
+                    String currentHash = String.valueOf(doc.getMetadata().getOrDefault("content_hash", ""));
+                    return existingHash == null || !existingHash.equals(currentHash);
+                })
                 .collect(Collectors.toList());
+    }
+
+    private String payloadString(Points.RetrievedPoint point, String key) {
+        var value = point.getPayloadMap().get(key);
+        if (value == null || !value.hasStringValue()) {
+            return "";
+        }
+        return value.getStringValue();
     }
 
     private Document parseMarkdownDocument(Resource resource) throws IOException {
@@ -248,9 +262,19 @@ public class QdrantKnowledgeBaseSeeder {
         metadata.put("file", resource.getFilename());
         metadata.put("embedding_model", "text-embedding-3-small");
         metadata.put("dimensions", 1536);
+        metadata.put("content_hash", sha256(content));
 
         log.debug("Parsed document '{}' from {} ({} chars)", id, resource.getFilename(), content.length());
         return new Document(id, content, metadata);
+    }
+
+    private String sha256(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(content.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 digest is unavailable", e);
+        }
     }
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(QdrantKnowledgeBaseSeeder.class);

@@ -3,6 +3,8 @@ package uet.ndh.ddsl.agent;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
+import uet.ndh.ddsl.agent.dto.JudgeErrorReport;
+import uet.ndh.ddsl.agent.dto.PlanStep;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,21 @@ public class DdslState extends AgentState {
     public static final String KEY_COMPILER_FEEDBACK = "compilerFeedback";
     public static final String KEY_FINAL_DSL = "finalDsl";
     public static final String KEY_RETRIEVED_CONTEXT = "retrievedContext";
+    public static final String KEY_ORCHESTRATOR_ROUTE = "orchestratorRoute";
+    public static final String KEY_ORCHESTRATOR_PHASE = "orchestratorPhase";
+    public static final String KEY_PLAN_GRAPH = "planGraph";
+    public static final String KEY_CURRENT_CHUNK_ID = "currentChunkId";
+    public static final String KEY_CURRENT_CHUNK_TASK = "currentChunkTask";
+    public static final String KEY_CURRENT_CHUNK_CODE = "currentChunkCode";
+    public static final String KEY_CHUNK_OUTPUTS = "chunkOutputs";
+    public static final String KEY_CHUNK_CONTEXTS = "chunkContexts";
+    public static final String KEY_CHUNK_LINE_MAP = "chunkLineMap";
+    public static final String KEY_RETRIEVAL_QUERY = "retrievalQuery";
+    public static final String KEY_SYNTHESIS_MODE = "synthesisMode";
+    public static final String KEY_STRUCTURED_ERRORS = "structuredErrors";
+    public static final String KEY_REPAIR_HISTORY = "repairHistory";
+    public static final String KEY_SYNTHESIS_ARTIFACTS = "synthesisArtifacts";
+    public static final String KEY_JUDGE_ARTIFACTS = "judgeArtifacts";
 
     /**
      * Channel schema — every key uses last-value-wins semantics.
@@ -53,7 +70,22 @@ public class DdslState extends AgentState {
             Map.entry(KEY_RETRIEVAL_QUALITY, Channels.base(() -> 0.0)),
             Map.entry(KEY_COMPILER_FEEDBACK, Channels.base(() -> "")),
             Map.entry(KEY_FINAL_DSL, Channels.base(() -> "")),
-            Map.entry(KEY_RETRIEVED_CONTEXT, Channels.base(() -> ""))
+            Map.entry(KEY_RETRIEVED_CONTEXT, Channels.base(() -> "")),
+            Map.entry(KEY_ORCHESTRATOR_ROUTE, Channels.base(() -> "")),
+            Map.entry(KEY_ORCHESTRATOR_PHASE, Channels.base(() -> "")),
+            Map.entry(KEY_PLAN_GRAPH, Channels.base(() -> List.<Map<String, Object>>of())),
+            Map.entry(KEY_CURRENT_CHUNK_ID, Channels.base(() -> "")),
+            Map.entry(KEY_CURRENT_CHUNK_TASK, Channels.base(() -> "")),
+            Map.entry(KEY_CURRENT_CHUNK_CODE, Channels.base(() -> "")),
+            Map.entry(KEY_CHUNK_OUTPUTS, Channels.base(() -> Map.<String, String>of())),
+            Map.entry(KEY_CHUNK_CONTEXTS, Channels.base(() -> Map.<String, String>of())),
+            Map.entry(KEY_CHUNK_LINE_MAP, Channels.base(() -> Map.<String, Map<String, Integer>>of())),
+            Map.entry(KEY_RETRIEVAL_QUERY, Channels.base(() -> "")),
+            Map.entry(KEY_SYNTHESIS_MODE, Channels.base(() -> "GENERATE")),
+            Map.entry(KEY_STRUCTURED_ERRORS, Channels.base(() -> List.<Map<String, Object>>of())),
+            Map.entry(KEY_REPAIR_HISTORY, Channels.base(() -> List.<Map<String, Object>>of())),
+            Map.entry(KEY_SYNTHESIS_ARTIFACTS, Channels.base(() -> List.<Map<String, Object>>of())),
+            Map.entry(KEY_JUDGE_ARTIFACTS, Channels.base(() -> List.<Map<String, Object>>of()))
     );
 
     /**
@@ -115,5 +147,73 @@ public class DdslState extends AgentState {
 
     public String retrievedContext() {
         return this.<String>value(KEY_RETRIEVED_CONTEXT).orElse("");
+    }
+
+    public String orchestratorRoute() {
+        return this.<String>value(KEY_ORCHESTRATOR_ROUTE).orElse("");
+    }
+
+    public String orchestratorPhase() {
+        return this.<String>value(KEY_ORCHESTRATOR_PHASE).orElse("");
+    }
+
+    public List<Map<String, Object>> planGraph() {
+        return this.<List<Map<String, Object>>>value(KEY_PLAN_GRAPH).orElse(List.of());
+    }
+
+    public List<PlanStep> planSteps() {
+        return PlanStep.fromMaps(planGraph());
+    }
+
+    public String currentChunkId() {
+        return this.<String>value(KEY_CURRENT_CHUNK_ID).orElse("");
+    }
+
+    public String currentChunkTask() {
+        return this.<String>value(KEY_CURRENT_CHUNK_TASK).orElse("");
+    }
+
+    public String currentChunkCode() {
+        return this.<String>value(KEY_CURRENT_CHUNK_CODE).orElse("");
+    }
+
+    public Map<String, String> chunkOutputs() {
+        return this.<Map<String, String>>value(KEY_CHUNK_OUTPUTS).orElse(Map.of());
+    }
+
+    public Map<String, String> chunkContexts() {
+        return this.<Map<String, String>>value(KEY_CHUNK_CONTEXTS).orElse(Map.of());
+    }
+
+    public Map<String, Map<String, Integer>> chunkLineMap() {
+        return this.<Map<String, Map<String, Integer>>>value(KEY_CHUNK_LINE_MAP).orElse(Map.of());
+    }
+
+    public String retrievalQuery() {
+        return this.<String>value(KEY_RETRIEVAL_QUERY).orElse("");
+    }
+
+    public String synthesisMode() {
+        return this.<String>value(KEY_SYNTHESIS_MODE).orElse("GENERATE");
+    }
+
+    public List<Map<String, Object>> structuredErrors() {
+        return this.<List<Map<String, Object>>>value(KEY_STRUCTURED_ERRORS).orElse(List.of());
+    }
+
+    public List<JudgeErrorReport> judgeErrorReports() {
+        return JudgeErrorReport.fromMaps(structuredErrors());
+    }
+
+    public List<Map<String, Object>> repairHistory() {
+        return this.<List<Map<String, Object>>>value(KEY_REPAIR_HISTORY).orElse(List.of());
+    }
+
+    public List<Map<String, Object>> synthesisArtifacts() {
+        return this.<List<Map<String, Object>>>value(KEY_SYNTHESIS_ARTIFACTS).orElse(List.of());
+    }
+
+    public List<Map<String, Object>> judgeArtifacts() {
+        return this.<List<Map<String, Object>>>value(KEY_JUDGE_ARTIFACTS).orElse(List.of());
     }
 }

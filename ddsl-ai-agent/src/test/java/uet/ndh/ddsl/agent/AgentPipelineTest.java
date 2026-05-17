@@ -2,7 +2,9 @@ package uet.ndh.ddsl.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
+import uet.ndh.ddsl.agent.dto.PlanStep;
 import uet.ndh.ddsl.agent.node.JudgeNode;
+import uet.ndh.ddsl.agent.node.OrchestratorNode;
 import uet.ndh.ddsl.mcp.DdslValidationTool;
 
 import java.util.HashMap;
@@ -131,6 +133,209 @@ var state = new DdslState(Map.ofEntries(
         }
 
         @Test
+        @DisplayName("Temporal now keyword in behavior assignment is valid")
+        void temporalNowAssignmentIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Logistics {
+                        domain {
+                            Aggregate Shipment {
+                                @identity shipmentId: UUID
+                                status: String
+                                shippedAt: DateTime?
+
+                                operations {
+                                    when marking shipped:
+                                        require that:
+                                            - status is "CREATED"
+                                        then:
+                                            - set status to "SHIPPED"
+                                            - set shippedAt to now
+                                }
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Built-in temporal keyword now should be valid");
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Temporal now() call in behavior assignment is accepted for compatibility")
+        void temporalNowCallAssignmentIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Logistics {
+                        domain {
+                            Aggregate Shipment {
+                                @identity shipmentId: UUID
+                                status: String
+                                shippedAt: DateTime?
+
+                                operations {
+                                    when marking shipped:
+                                        require that:
+                                            - status is "CREATED"
+                                        then:
+                                            - set status to "SHIPPED"
+                                            - set shippedAt to now()
+                                }
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Built-in temporal now() should be accepted");
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Specification supports non-temporal less-than field comparison")
+        void specificationLessThanFieldComparisonIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Learning {
+                        domain {
+                            Aggregate CourseOffering {
+                                @identity offeringId: UUID
+                                status: String
+                                enrolledStudentsCount: Int
+                                capacity: Int
+                            }
+                        }
+
+                        specifications {
+                            Specification OpenForEnrollment {
+                                matches CourseOffering where:
+                                    - status is "PUBLISHED"
+                                    - enrolledStudentsCount is less than capacity
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Specification comparison should parse as a normal comparison");
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Course enrollment generated shape is valid")
+        void courseEnrollmentGeneratedShapeIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Learning {
+                        domain {
+                            Aggregate CourseOffering {
+                                @identity offeringId: UUID
+                                courseCode: String @required
+                                instructorId: String @required
+                                capacity: Int @min(1)
+                                enrolledStudents: Set<StudentEnrollment>
+                                waitlistedStudents: List<StudentEnrollment>
+                                status: String
+
+                                operations {
+                                    when enrolling student with studentId and enrolledAt:
+                                        require that:
+                                            - status is "PUBLISHED"
+                                            - studentId is required
+                                            - enrolledStudents size < capacity
+                                        then:
+                                            - create StudentEnrollment
+                                            - add StudentEnrollment to enrolledStudents
+                                        emit StudentEnrolled with offeringId, studentId, enrolledAt
+                                }
+                            }
+
+                            Entity StudentEnrollment {
+                                @identity enrollmentId: UUID
+                                studentId: String @required
+                                enrolledAt: DateTime @required
+                            }
+                        }
+
+                        events {
+                            DomainEvent StudentEnrolled {
+                                offeringId: UUID
+                                studentId: String
+                                enrolledAt: DateTime
+                            }
+                        }
+
+                        specifications {
+                            Specification OpenForEnrollment {
+                                matches CourseOffering where:
+                                    - status is "PUBLISHED"
+                                    - enrolledStudents count < capacity
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated course enrollment DSL should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Order placement generated shape is valid")
+        void orderPlacementGeneratedShapeIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Ordering {
+                        domain {
+                            Aggregate Order {
+                                orderId: UUID @identity
+                                customerId: String @required
+                                items: List<OrderItem>
+                                totalAmount: Decimal @min(0)
+                                status: String
+
+                                operations {
+                                    when placing order with customerId and items:
+                                        require that:
+                                            - customerId is required
+                                            - items is required
+                                        then:
+                                            - calculate totalAmount from sum of item prices
+                                            - set status to "PLACED"
+                                        emit OrderPlaced with orderId and totalAmount
+                                }
+                            }
+
+                            Entity OrderItem {
+                                itemId: UUID @identity
+                                productId: String @required
+                                quantity: Int @min(1)
+                                unitPrice: Decimal @min(0)
+                            }
+                        }
+
+                        events {
+                            DomainEvent OrderPlaced {
+                                orderId: UUID
+                                totalAmount: Decimal
+                                occurredAt: DateTime
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated order placement DSL should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
         @DisplayName("Empty input returns error")
         void emptyInput() throws Exception {
             String json = tool.validateDSL("");
@@ -159,15 +364,61 @@ var state = new DdslState(Map.ofEntries(
 
             assertFalse((Boolean) result.get("valid"));
             @SuppressWarnings("unchecked")
-            List<String> errors = (List<String>) result.get("errors");
+            List<Map<String, Object>> errors = (List<Map<String, Object>>) result.get("errors");
             assertFalse(errors.isEmpty());
             assertTrue(errors.stream().anyMatch(e ->
-                            e.toLowerCase().contains("error") || e.toLowerCase().contains("line")),
-                    "Error messages should contain 'error' or 'line'");
+                            String.valueOf(e.get("message")).toLowerCase().contains("error")
+                                    || String.valueOf(e.get("location")).contains(":")),
+                    "Structured errors should contain message or location info");
         }
     }
 
     // ─── JudgeNode tests ────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("OrchestratorNode")
+    class OrchestratorNodeTests {
+
+        private final OrchestratorNode orchestratorNode = new OrchestratorNode();
+
+        @Test
+        @DisplayName("Empty repair output does not overwrite an existing chunk")
+        void emptyRepairDoesNotOverwriteExistingChunk() throws Exception {
+            String existingDomainModel = """
+                    Aggregate CourseOffering {
+                        @identity offeringId: UUID
+                        capacity: Int
+                    }
+                    """;
+            List<PlanStep> plan = List.of(new PlanStep(
+                    "DomainModel",
+                    "Define domain model",
+                    List.of(),
+                    "RUNNING"
+            ));
+            var state = new DdslState(Map.ofEntries(
+                    Map.entry(DdslState.KEY_USER_INPUT, "course enrollment"),
+                    Map.entry(DdslState.KEY_CURRENT_DSL, ""),
+                    Map.entry(DdslState.KEY_PLAN_GRAPH, PlanStep.toMaps(plan)),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_ID, "DomainModel"),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_TASK, "Define domain model"),
+                    Map.entry(DdslState.KEY_CHUNK_OUTPUTS, Map.of("DomainModel", existingDomainModel)),
+                    Map.entry(DdslState.KEY_SYNTHESIS_MODE, "REPAIR"),
+                    Map.entry(DdslState.KEY_ORCHESTRATOR_PHASE, "SYNTHESIZING"),
+                    Map.entry(DdslState.KEY_REPAIR_HISTORY, List.of()),
+                    Map.entry(DdslState.KEY_STRUCTURED_ERRORS, List.of()),
+                    Map.entry(DdslState.KEY_ERROR_LOGS, List.of()),
+                    Map.entry(DdslState.KEY_IS_SUCCESSFUL, false)
+            ));
+
+            Map<String, Object> updates = orchestratorNode.apply(state);
+
+            @SuppressWarnings("unchecked")
+            Map<String, String> outputs = (Map<String, String>) updates.get(DdslState.KEY_CHUNK_OUTPUTS);
+            assertEquals(existingDomainModel, outputs.get("DomainModel"));
+            assertTrue(String.valueOf(updates.get(DdslState.KEY_CURRENT_DSL)).contains("Aggregate CourseOffering"));
+        }
+    }
 
     @Nested
     @DisplayName("JudgeNode")

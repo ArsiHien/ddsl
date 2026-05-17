@@ -7,7 +7,13 @@ complexity: intermediate
 version: 3.0
 ---
 
-This example shows how to handle a mix of very informal descriptions — compressed behaviors, loose field definitions, casual event and repository syntax — using the natural DDSL format.
+This example shows how to handle a mix of very informal descriptions: compressed behaviors, loose field definitions, casual event and repository syntax.
+
+IMPORTANT parser-compatible syntax:
+- Invariants must be `"Message": condition`, not bare lines.
+- Behavior clauses must use `require that:` and `then:` with dash-prefixed items.
+- Events use `emit EventName`, not `emit event EventName`.
+- Any older natural-format snippets in historical examples must be normalized to this parser-compatible shape before output.
 
 User input (mix of casual English and pseudo-DDSL):
 ```

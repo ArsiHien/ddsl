@@ -61,9 +61,12 @@ version: 3.0
 ### Template
 ```ddsl
 when <action> with <params>:
-    require that <condition> and <condition>
-    <action description>
-    <action description>
+    require that:
+        - <condition>
+        - <condition>
+    then:
+        - <action description>
+        - <action description>
     emit <Event> with <props>
 ```
 
@@ -80,7 +83,7 @@ when <action> with <params>:
 
 | Input | Output |
 |-------|--------|
-| `require A and B` | `require that A and B` |
+| `require A and B` | `require that:` followed by `- A` and `- B` |
 | `status is PENDING` | `status is "PENDING"` |
 | `items not empty` | `items is not empty` |
 | `price > 0` | `price is greater than 0` |
@@ -91,6 +94,7 @@ when <action> with <params>:
 |-------|--------|
 | `set status to CONFIRMED` | `set status to "CONFIRMED"` |
 | `record confirmed at as now` | `set confirmedAt to now` |
+| `set shipped at to now()` | `set shippedAt to now` |
 | `calculate total as sum of items` | `calculate total as sum of items` |
 | `emit Event with ID` | `emit Event with id` |
 
@@ -103,8 +107,11 @@ Aggregate Name {
     
     operations {
         when action with params:
-            require that condition and condition
-            set field to value
+            require that:
+                - condition
+                - condition
+            then:
+                - set field to value
             emit Event with props
     }
 }

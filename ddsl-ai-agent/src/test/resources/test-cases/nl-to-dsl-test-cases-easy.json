@@ -1,0 +1,60 @@
+{
+  "version": "4.0.0",
+  "totalCases": 7,
+  "categories": {
+    "easy": 7,
+    "medium": 0,
+    "hard": 0
+  },
+  "testCases": [
+    {
+      "id": "E001",
+      "category": "easy",
+      "name": "Customer Aggregate With Fuzzy Fields",
+      "input": "BoundedContext CustomerManagement { domain { Aggregate Customer { customerId is uuid and identity. text fullName can not null. emailAddress is text email required. optional phoneNumber text. createdAt datetime immutable. } } }",
+      "expectedOutput": "BoundedContext CustomerManagement {\n    domain {\n        Aggregate Customer {\n            customerId: UUID @identity\n            fullName: String @required\n            emailAddress: String @required @email\n            phoneNumber: String?\n            createdAt: DateTime @immutable\n        }\n    }\n}"
+    },
+    {
+      "id": "E002",
+      "category": "easy",
+      "name": "Address Value Object Normalization",
+      "input": "BoundedContext Shipping { domain { ValueObject Address { street text required, city is string not null, postalCode text maximum length 20, countryCode text exactly 2 chars, apartment can be null text. } } }",
+      "expectedOutput": "BoundedContext Shipping {\n    domain {\n        ValueObject Address {\n            street: String @required\n            city: String @required\n            postalCode: String @maxLength(20)\n            countryCode: String @minLength(2) @maxLength(2)\n            apartment: String?\n        }\n    }\n}"
+    },
+    {
+      "id": "E003",
+      "category": "easy",
+      "name": "Product Entity With Numeric Constraints",
+      "input": "BoundedContext Catalog { domain { Entity Product { productId uuid primary key. name text is mandatory. sku string unique. price decimal minimum 0. stock integer cannot be below 0. active boolean. } } }",
+      "expectedOutput": "BoundedContext Catalog {\n    domain {\n        Entity Product {\n            productId: UUID @identity\n            name: String @required\n            sku: String @unique\n            price: Decimal @min(0)\n            stock: Int @min(0)\n            active: Boolean\n        }\n    }\n}"
+    },
+    {
+      "id": "E004",
+      "category": "easy",
+      "name": "Money Value Object",
+      "input": "BoundedContext Payments { domain { ValueObject Money { amount decimal and must be at least 0. currency text required max 3 chars. } } }",
+      "expectedOutput": "BoundedContext Payments {\n    domain {\n        ValueObject Money {\n            amount: Decimal @min(0)\n            currency: String @required @maxLength(3)\n        }\n    }\n}"
+    },
+    {
+      "id": "E005",
+      "category": "easy",
+      "name": "Appointment Aggregate Dates",
+      "input": "BoundedContext Scheduling { domain { Aggregate Appointment { appointmentId uuid identity. patientName text can not null. scheduledAt datetime required. durationMinutes integer min 15 max 240. notes optional text. } } }",
+      "expectedOutput": "BoundedContext Scheduling {\n    domain {\n        Aggregate Appointment {\n            appointmentId: UUID @identity\n            patientName: String @required\n            scheduledAt: DateTime @required\n            durationMinutes: Int @min(15) @max(240)\n            notes: String?\n        }\n    }\n}"
+    },
+    {
+      "id": "E006",
+      "category": "easy",
+      "name": "Domain Event Fields",
+      "input": "BoundedContext Notifications { events { DomainEvent EmailQueued { eventId uuid identity-like value, recipient is email text required, subject text required, queuedAt datetime required, retryCount int minimum 0. } } }",
+      "expectedOutput": "BoundedContext Notifications {\n    events {\n        DomainEvent EmailQueued {\n            eventId: UUID\n            recipient: String @required @email\n            subject: String @required\n            queuedAt: DateTime @required\n            retryCount: Int @min(0)\n        }\n    }\n}"
+    },
+    {
+      "id": "E007",
+      "category": "easy",
+      "name": "Repository Method Normalization",
+      "input": "BoundedContext Catalog { domain { Aggregate Product { productId uuid identity. name text required. active boolean. } } repositories { ProductRepository for Product with methods: find by id takes UUID id and returns optional Product; find active returns list of Product; save product returns nothing. } }",
+      "expectedOutput": "BoundedContext Catalog {\n    domain {\n        Aggregate Product {\n            productId: UUID @identity\n            name: String @required\n            active: Boolean\n        }\n    }\n\n    repositories {\n        Repository ProductRepository for Product {\n            findById(id: UUID): Product?\n            findActive(): List<Product>\n            save(product: Product): Void\n        }\n    }\n}"
+    }
+  ]
+}

@@ -20,22 +20,38 @@ EVERY Aggregate/Entity MUST have:
 @identity fieldName: UUID
 ```
 @identity MUST come BEFORE the field name.
+ValueObject fields MUST NOT use @identity.
 
 ## 3. Behavior Syntax
 ```
-when actionName with param1, param2 {
-    require that condition
-    then set field to value
-    then action
-    emit event EventName with field1, field2
-}
+when actionName with param1, param2:
+    require that:
+        - condition
+    then:
+        - set field to value
+        - action
+    emit EventName with field1, field2
 ```
 
 REQUIRED keywords:
 - `when` before action name
 - `that` after `require`
-- `then` before every action
-- `event` after `emit`
+- every `require that:` item starts with `-`
+- `then:` block before actions
+- every `then:` action starts with `-`
+- `emit EventName`, not `emit event EventName`
+- use `now`, not `now()`
+
+## 3b. Invariant Syntax
+Invariants MUST use quoted message plus colon:
+```
+invariants {
+    "Balance must not be negative": balance >= 0
+}
+```
+- WRONG: `balance must not be negative`
+- WRONG: `status must be one of OPEN, FROZEN, CLOSED`
+- RIGHT: `"Balance must not be negative": balance >= 0`
 
 ## 4. Type Names
 MUST be PascalCase:
@@ -51,17 +67,29 @@ BoundedContext Name {
         @identity id: UUID
         field: Type
 
+        invariants {
+            "Rule message": field is not empty
+        }
+
         operations {
-            when action {
-                require that condition
-                then set field to value
-                emit event EventName
-            }
+            when action with param:
+                require that:
+                    - param is not empty
+                then:
+                    - set field to value
+                emit EventName
         }
     }
 
     DomainEvent EventName {
         field: Type
+    }
+
+    specifications {
+        Specification ActiveThing {
+            matches Thing where:
+                - status is not "CLOSED"
+        }
     }
 }
 ```

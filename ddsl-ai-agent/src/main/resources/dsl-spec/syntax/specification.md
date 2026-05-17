@@ -14,14 +14,15 @@ Specifications express domain predicates for querying and validation. They encap
 Syntax:
 ```
 specifications {
-    Specification <Name> [for <Type>] {
+    Specification <Name> {
         matches <Type> where:
-            <condition>
+            - <condition>
+            - <condition>
     }
     
     Specification <Name> given <params> {
         matches <Type> where:
-            <condition>
+            - <condition>
     }
 }
 ```
@@ -32,18 +33,21 @@ Key Points:
 - Used by repositories for complex queries
 - Named after the business concept they represent
 - Can accept parameters for dynamic specifications
+- Do not write `Specification <Name> for <Type>`; the parser expects the target type after `matches`.
+- Every condition under `matches <Type> where:` must start with `-`.
 
 Example - Simple Specification:
 ```ddsl
 specifications {
     Specification ActiveOrders {
-        matches orders where:
-            status is not "DELIVERED" and status is not "CANCELLED"
+        matches Order where:
+            - status is not "DELIVERED"
+            - status is not "CANCELLED"
     }
     
     Specification HighValueOrders {
-        matches orders where:
-            totalAmount is greater than 1000
+        matches Order where:
+            - totalAmount is greater than 1000
     }
 }
 ```
@@ -52,13 +56,13 @@ Example - Parameterized Specification:
 ```ddsl
 specifications {
     Specification OrdersForCustomer given customerId {
-        matches orders where:
-            customerId is customerId
+        matches Order where:
+            - customerId is customerId
     }
     
     Specification RecentOrders given days {
-        matches orders where:
-            createdAt is within last days
+        matches Order where:
+            - createdAt is within last days
     }
 }
 ```
@@ -68,8 +72,10 @@ Example - Using Specifications in Behaviors:
 Aggregate Order {
     operations {
         when processing order:
-            require that order satisfies ActiveOrders
-            set status to "PROCESSING"
+            require that:
+                - order satisfies ActiveOrders
+            then:
+                - set status to "PROCESSING"
     }
 }
 ```

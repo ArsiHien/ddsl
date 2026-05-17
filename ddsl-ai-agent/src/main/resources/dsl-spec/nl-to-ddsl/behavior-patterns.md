@@ -8,30 +8,34 @@ complexity: intermediate
 version: 3.0
 ---
 
-# Behavior Transformation Patterns - Natural Style
+# Behavior Transformation Patterns - Parser-Compatible Style
 
 ## Overview
 
-Transform natural language descriptions of domain behaviors into DDSL operations using a natural, readable format. Multiple conditions and actions can be combined in single lines for clarity.
+Transform natural language descriptions of domain behaviors into DDSL operations using the syntax accepted by the current parser. Do not combine preconditions or actions into bare natural-language lines; use `require that:` and `then:` blocks with dash-prefixed items.
 
-## Natural Behavior Structure
+## Parser-Compatible Behavior Structure
 
 ```ddsl
 operations {
     when <action description> with <parameters>:
-        require that <condition> and <condition>
-        <action description>
-        <action description>
+        require that:
+            - <condition>
+            - <condition>
+        then:
+            - <action description>
+            - <action description>
         emit <EventName> with <properties>
 }
 ```
 
 ## Key Principles
 
-1. **Combine related requires**: Use "and" to combine multiple preconditions
-2. **Natural action descriptions**: Write actions as readable sentences without bullet points
+1. **Split related requires**: Put each precondition on its own `-` item under `require that:`.
+2. **Dash-prefix actions**: Put each state change or calculation on its own `-` item under `then:`.
 3. **Preserve natural flow**: Keep the logical flow of the behavior description
 4. **CamelCase for identifiers**: Convert all field and parameter names to camelCase
+5. **Emit syntax**: Use `emit EventName`, not `emit event EventName`.
 
 ## When Clause
 
@@ -60,17 +64,17 @@ operations {
 
 | Natural Language | DDSL Require Clause |
 |------------------|---------------------|
-| `status is PENDING and payment is received` | `require that status is "PENDING" and payment is received` |
-| `customer is provided and items are not empty` | `require that customer is not empty and items is not empty` |
-| `quantity is greater than 0 and price is positive` | `require that quantity is greater than 0 and price is greater than 0` |
-| `email is valid and unique` | `require that email is not empty and email is unique` |
+| `status is PENDING and payment is received` | `require that:` then `- status is "PENDING"` and `- payment is received` |
+| `customer is provided and items are not empty` | `require that:` then `- customer is not empty` and `- items is not empty` |
+| `quantity is greater than 0 and price is positive` | `require that:` then `- quantity is greater than 0` and `- price is greater than 0` |
+| `email is valid and unique` | `require that:` then `- email is not empty` and `- email is unique` |
 
 ### Pattern: Conditions with error messages
 
 | Natural Language | DDSL Require Clause |
 |------------------|---------------------|
-| `items not empty, error: cart is empty` | `require that items is not empty otherwise "Cart cannot be empty"` |
-| `customer exists, otherwise throw error` | `require that customer exists otherwise "Customer not found"` |
+| `items not empty, error: cart is empty` | `require that:` then `- items is not empty, otherwise "Cart cannot be empty"` |
+| `customer exists, otherwise throw error` | `require that:` then `- customer exists, otherwise "Customer not found"` |
 
 ## Action Descriptions - Natural Format
 

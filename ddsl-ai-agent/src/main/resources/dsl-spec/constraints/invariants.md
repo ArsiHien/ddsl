@@ -17,12 +17,18 @@ invariants {
 }
 ```
 
+Parser Requirements:
+- The first token of each invariant must be a quoted string message.
+- The quoted message must be followed by `:`.
+- Do not write bare natural-language invariant lines such as `balance must not be negative`.
+- Prefer simple parser-compatible expressions such as `balance >= 0`, `totalAmount is greater than 0`, or `items is not empty`.
+
 Common Invariant Patterns:
 - Field must not be empty: "items cannot be empty": items is not empty
 - Field must be positive: "total must be positive": total is greater than 0
 - Field comparison: "end must be after start": endDate is greater than startDate
 - Collection size: "must have at least one item": count of items is at least 1
-- Enum validation: "status must be valid": status is one of ["PENDING", "CONFIRMED"]
+- Status validation: use field constraints or operation preconditions when enum/list syntax is uncertain.
 
 Examples:
 ```ddsl
@@ -34,7 +40,6 @@ Aggregate Order {
     invariants {
         "Order must have items": items is not empty
         "Total must be positive": totalAmount is greater than 0
-        "Status must be valid": status is one of ["PENDING", "CONFIRMED", "SHIPPED"]
     }
 }
 ```

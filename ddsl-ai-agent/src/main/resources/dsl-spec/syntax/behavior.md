@@ -7,24 +7,31 @@ complexity: intermediate
 version: 3.0
 ---
 
-DDSL Behavior (Operations) Syntax - Natural Format:
+DDSL Behavior (Operations) Syntax - Parser-Compatible Format:
 
-Behaviors define domain logic using natural-language clauses in a readable, flowing format without bullet points.
+Behaviors define domain logic using parser-compatible natural-language clauses. The current recursive-descent parser requires `require that:` and `then:` to be followed by dash-prefixed list items.
 
 Syntax inside 'operations { ... }':
 ```
 when <action phrase> with <params>:
-    require that <condition> and <condition>
-    <action description>
-    <action description>
+    require that:
+        - <condition>
+        - <condition>
+    then:
+        - <action description>
+        - <action description>
     emit <EventName> with <properties>
     [return <expression>]
 ```
 
-Natural Format Principles:
-1. Combine multiple requires with "and"
-2. Write actions as readable sentences without bullet points
-3. Flow naturally from requirement to action to event
+Parser Requirements:
+1. Use `when ...:` with a colon, not brace-style `when ... { ... }`.
+2. Use `require that:` with a colon.
+3. Every precondition under `require that:` must start with `-`.
+4. Use `then:` before state changes.
+5. Every action under `then:` must start with `-`.
+6. Use `emit EventName`, not `emit event EventName`.
+7. Use temporal keyword `now`, not method-call syntax `now()`.
 
 Action Types:
 - set <field> to <value>
@@ -35,33 +42,39 @@ Action Types:
 - if <condition> then <action>
 - for each <item> in <collection> <action>
 
-Example - Natural Format:
+Example - Parser-Compatible Format:
 ```ddsl
 operations {
     when placing order with customer and items:
-        require that customer is not empty and items is not empty
-        calculate total as sum of items price
-        set status to "PLACED"
-        set createdAt to now
+        require that:
+            - customer is not empty
+            - items is not empty
+        then:
+            - calculate total as sum of items price
+            - set status to "PLACED"
+            - set createdAt to now
         emit OrderPlaced with orderId and customer
 
     when confirming order:
-        require that status is "PENDING"
-        set status to "CONFIRMED"
-        set confirmedAt to now
+        require that:
+            - status is "PENDING"
+        then:
+            - set status to "CONFIRMED"
+            - set confirmedAt to now
         emit OrderConfirmed with orderId
 
     when calculating discount with customerTier:
-        if customerTier is "GOLD" then set discount to 20
-        if customerTier is "SILVER" then set discount to 10
-        otherwise set discount to 0
-        calculate finalPrice as total minus discount
+        then:
+            - if customerTier is "GOLD" then set discount to 20
+            - if customerTier is "SILVER" then set discount to 10
+            - otherwise set discount to 0
+            - calculate finalPrice as total minus discount
 }
 ```
 
-Comparison with Old Bulleted Style:
+Invalid Legacy Styles:
 
-Old Style:
+Brace-style behavior is invalid:
 ```ddsl
 when placing order with customer, items {
     require that customer is active
@@ -72,12 +85,24 @@ when placing order with customer, items {
 }
 ```
 
-New Natural Style:
+Natural no-bullet clauses are invalid for the current parser:
 ```ddsl
 when placing order with customer and items:
     require that customer is not empty and items is not empty
     calculate totalAmount as sum of item prices
     set status to "PLACED"
+    emit OrderPlaced with orderId and customer
+```
+
+Correct parser-compatible style:
+```ddsl
+when placing order with customer and items:
+    require that:
+        - customer is not empty
+        - items is not empty
+    then:
+        - calculate totalAmount as sum of item prices
+        - set status to "PLACED"
     emit OrderPlaced with orderId and customer
 ```
 
