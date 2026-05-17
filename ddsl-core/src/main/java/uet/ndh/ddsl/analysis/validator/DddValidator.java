@@ -1,9 +1,13 @@
 package uet.ndh.ddsl.analysis.validator;
 
+import uet.ndh.ddsl.analysis.graph.AcyclicDependencyRule;
+import uet.ndh.ddsl.analysis.graph.BoundedContextIsolationRule;
+import uet.ndh.ddsl.analysis.graph.DepGraph;
 import uet.ndh.ddsl.ast.AstNode;
 import uet.ndh.ddsl.ast.behavior.BehaviorDecl;
 import uet.ndh.ddsl.ast.model.aggregate.AggregateDecl;
 import uet.ndh.ddsl.ast.model.BoundedContextDecl;
+import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.ast.model.entity.EntityDecl;
 import uet.ndh.ddsl.ast.model.statemachine.StateMachineDecl;
 import uet.ndh.ddsl.ast.model.valueobject.ValueObjectDecl;
@@ -70,6 +74,22 @@ public class DddValidator extends TreeWalkingVisitor<Void> {
         }
     }
     
+    /**
+     * Registers graph-based validation rules for dependency analysis.
+     * This should be called after the DepGraph has been built.
+     */
+    public void registerGraphRules(DepGraph graph) {
+        register(new AcyclicDependencyRule(graph));
+        register(new BoundedContextIsolationRule(graph));
+    }
+
+    @Override
+    public Void visitDomainModel(DomainModel model) {
+        // Run domain model-level validation rules (including graph rules)
+        runRules(model);
+        return super.visitDomainModel(model);
+    }
+
     @Override
     public Void visitBoundedContext(BoundedContextDecl decl) {
         for (StateMachineDecl stateMachine : decl.stateMachines()) {

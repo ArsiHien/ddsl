@@ -72,7 +72,7 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
             "grouped", "has", "have", "if", "in", "is", "item", "items", "last", "least",
             "length", "less", "match", "matches", "maximum", "minimum", "more", "no", "not",
             "now", "null", "of", "on", "one", "only", "or", "otherwise", "present", "record",
-            "remove", "require", "return", "set", "starts", "status", "sum", "than", "that",
+            "remove", "require", "required", "return", "set", "starts", "status", "sum", "than", "that",
             "the", "then", "to", "today", "tomorrow", "true", "until", "valid", "warning",
             "warnings", "when", "where", "with", "within", "yesterday"
     );
@@ -401,21 +401,7 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
                 continue;
             }
 
-            boolean explicitlyTyped = parameter.type() != null
-                    && parameter.type().name() != null
-                    && !parameter.type().name().isBlank()
-                    && !"Object".equals(parameter.type().name());
-
-            if (explicitlyTyped || currentOwner.fieldTargets().contains(parameter.name())) {
-                validTargets.add(parameter.name());
-            } else {
-                addDiagnosticOnce(
-                        parameter.span(),
-                        "Identifier '%s' not found in scope of %s '%s'."
-                                .formatted(parameter.name(), currentOwner.kind(), currentOwner.name()),
-                        UNDEFINED_IDENTIFIER_RULE_ID
-                );
-            }
+            validTargets.add(parameter.name());
         }
     }
 
@@ -772,6 +758,9 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         int providedArgCount = callExpr.arguments() != null ? callExpr.arguments().size() : 0;
 
         if (!callExpr.hasReceiver()) {
+            if (isGlobalBuiltinMethod(callExpr.methodName(), providedArgCount)) {
+                return;
+            }
             Integer expectedArity = currentOwner.localMethodArities().get(callExpr.methodName());
             if (expectedArity == null) {
                 addDiagnosticOnce(
@@ -844,6 +833,10 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
                 );
             }
         }
+    }
+
+    private boolean isGlobalBuiltinMethod(String methodName, int providedArgCount) {
+        return "now".equals(methodName) && providedArgCount == 0;
     }
 
     private void collectBehaviorArities(List<BehaviorDecl> behaviors, Map<String, Integer> sink) {
