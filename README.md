@@ -7,8 +7,6 @@ DDSL is a domain-specific language for modeling Domain-Driven Design systems and
 - `ddsl-core` - lexer, parser, AST, symbol/type resolution, validation, and Java code generation.
 - `ddsl-lsp-server` - LSP server for editor integrations, with fat JAR and GraalVM native image targets.
 - `ddsl-ai-agent` - Spring Boot backend that uses OpenRouter, LangGraph4j, Qdrant, and an MCP syntax judge.
-- `ddsl-generated-tests` - JUnit tests for Java code generated from DDSL samples.
-- `samples/` - example `.ddsl` domain models.
 
 ## Requirements
 
