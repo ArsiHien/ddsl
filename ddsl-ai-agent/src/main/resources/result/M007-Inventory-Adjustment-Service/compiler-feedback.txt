@@ -1,0 +1,70 @@
+verdict: REJECT
+DDSL Compilation Errors (11 found):
+
+Error 1/11
+  Category: SYNTAX_ERROR
+  Location: 17:45
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 2/11
+  Category: SYNTAX_ERROR
+  Location: 17:48
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 3/11
+  Category: SYNTAX_ERROR
+  Location: 18:25
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 4/11
+  Category: SYNTAX_ERROR
+  Location: 18:27
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 5/11
+  Category: SYNTAX_ERROR
+  Location: 18:36
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 6/11
+  Category: SYNTAX_ERROR
+  Location: 18:53
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 7/11
+  Category: SYNTAX_ERROR
+  Location: 18:56
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 8/11
+  Category: SYNTAX_ERROR
+  Location: 19:21
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 9/11
+  Category: SYNTAX_ERROR
+  Location: 19:26
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 10/11
+  Category: SYNTAX_ERROR
+  Location: 19:40
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 11/11
+  Category: SYNTAX_ERROR
+  Location: 19:45
+  Message: Expected 'when' in operations block
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Please fix these errors and regenerate the DDSL code.

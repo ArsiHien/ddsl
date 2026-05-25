@@ -1,0 +1,5 @@
+Repository CourseOfferingRepository for CourseOffering {
+    findById(id: UUID): CourseOffering?
+    findByCourseCode(courseCode: String): List<CourseOffering>
+    save(courseOffering: CourseOffering): Void
+}

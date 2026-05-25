@@ -1,0 +1,34 @@
+BoundedContext Banking {
+
+    domain {
+        // @chunk:start DomainModel
+        Aggregate Account {
+            accountId: UUID @identity
+            ownerName: String @required
+            balance: Decimal @min(0)
+            status: String
+        
+            invariants {
+                "Balance must never be negative": balance >= 0
+                "Status must be one of OPEN, FROZEN, or CLOSED": status == "OPEN" or status == "FROZEN" or status == "CLOSED"
+            }
+        
+            operations {
+                when depositing with amount:
+                    require that:
+                        - amount is required
+                        - amount is greater than 0
+                    then:
+                        - increase balance by amount
+        
+                when freezing account:
+                    require that:
+                        - status is "OPEN"
+                    then:
+                        - set status to "FROZEN"
+            }
+        }
+        // @chunk:end DomainModel
+    }
+
+}

@@ -1,0 +1,11 @@
+DomainEvent PurchaseOrderSubmitted {
+    id: UUID
+    submittedAt: DateTime
+    total: Money
+}
+
+DomainEvent PurchaseOrderApproved {
+    id: UUID
+    approverId: String
+    approvedAt: DateTime
+}

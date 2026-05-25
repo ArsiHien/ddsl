@@ -1,0 +1,13 @@
+DomainEvent TicketReserved {
+    registrationId: UUID
+    eventId: UUID
+    expiresAt: DateTime
+}
+DomainEvent RegistrationConfirmed {
+    registrationId: UUID
+    confirmedAt: DateTime
+}
+DomainEvent AttendeeCheckedIn {
+    registrationId: UUID
+    checkedInAt: DateTime
+}

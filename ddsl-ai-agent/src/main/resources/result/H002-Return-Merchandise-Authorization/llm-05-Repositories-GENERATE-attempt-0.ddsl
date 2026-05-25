@@ -1,0 +1,5 @@
+Repository ReturnRequestRepository for ReturnRequest {
+    findById(id: UUID): ReturnRequest?
+    findByOrderId(orderId: UUID): List<ReturnRequest>
+    save(request: ReturnRequest): Void
+}

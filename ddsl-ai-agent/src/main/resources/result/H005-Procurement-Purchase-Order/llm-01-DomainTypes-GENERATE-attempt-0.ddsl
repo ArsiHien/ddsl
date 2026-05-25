@@ -1,0 +1,4 @@
+ValueObject Money {
+    amount: Decimal @min(0)
+    currency: String @required @maxLength(3)
+}

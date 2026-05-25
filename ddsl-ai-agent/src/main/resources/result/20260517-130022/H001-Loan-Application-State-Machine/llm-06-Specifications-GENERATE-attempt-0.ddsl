@@ -1,0 +1,5 @@
+Specification ApprovableLoan {
+    matches LoanApplication where:
+        - status is "SUBMITTED"
+        - creditScore is greater than 650
+}

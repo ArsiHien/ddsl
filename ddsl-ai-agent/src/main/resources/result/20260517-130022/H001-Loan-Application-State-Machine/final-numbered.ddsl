@@ -1,0 +1,77 @@
+      1 | BoundedContext Lending {
+      2 | 
+      3 |     domain {
+      4 |         // @chunk:start DomainModel
+      5 |         Aggregate LoanApplication {
+      6 |             @identity applicationId: UUID
+      7 |             applicantId: String @required
+      8 |             requestedAmount: Decimal @min(1000)
+      9 |             creditScore: Int @min(300) @max(850)
+     10 |             status: String @default("DRAFT")
+     11 |             submittedAt: DateTime?
+     12 |             approvedAt: DateTime?
+     13 |         
+     14 |             invariants {
+>>   15 |                 "Status must be one of DRAFT, SUBMITTED, APPROVED, REJECTED, WITHDRAWN": status == "DRAFT" or status == "SUBMITTED" or status == "APPROVED" or status == "REJECTED" or status == "WITHDRAWN"
+     16 |             }
+     17 |         
+     18 |             operations {
+     19 |                 when submitting application with submittedAt:
+     20 |                     require that:
+     21 |                         - applicantId is required
+     22 |                         - requestedAmount is required
+     23 |                         - creditScore is required
+     24 |                         - status is "DRAFT"
+     25 |                     then:
+     26 |                         - set status to "SUBMITTED"
+     27 |                         - set submittedAt to submittedAt
+     28 |                     emit LoanApplicationSubmitted with applicationId, submittedAt
+     29 |         
+     30 |                 when approving application with approvedAt:
+     31 |                     require that:
+     32 |                         - status is "SUBMITTED"
+     33 |                         - creditScore > 650
+     34 |                         - requestedAmount > 0
+     35 |                     then:
+     36 |                         - set status to "APPROVED"
+     37 |                         - set approvedAt to approvedAt
+     38 |                     emit LoanApplicationApproved with applicationId, approvedAt
+     39 |             }
+     40 |         }
+     41 |         // @chunk:end DomainModel
+     42 |     }
+     43 | 
+     44 |     events {
+     45 |         // @chunk:start DomainEvents
+     46 |         DomainEvent LoanApplicationSubmitted {
+     47 |             applicationId: UUID
+     48 |             submittedAt: DateTime
+     49 |         }
+     50 |         
+     51 |         DomainEvent LoanApplicationApproved {
+     52 |             applicationId: UUID
+     53 |             approvedAt: DateTime
+     54 |         }
+     55 |         // @chunk:end DomainEvents
+     56 |     }
+     57 | 
+     58 |     repositories {
+     59 |         // @chunk:start Repositories
+     60 |         Repository LoanApplicationRepository for LoanApplication {
+     61 |             findById(id: UUID): LoanApplication?
+     62 |             save(loanApplication: LoanApplication): Void
+     63 |         }
+     64 |         // @chunk:end Repositories
+     65 |     }
+     66 | 
+     67 |     specifications {
+     68 |         // @chunk:start Specifications
+     69 |         Specification ApprovableLoan {
+     70 |             matches LoanApplication where:
+     71 |                 - status is "SUBMITTED"
+     72 |                 - creditScore is greater than 650
+     73 |         }
+     74 |         // @chunk:end Specifications
+     75 |     }
+     76 | 
+     77 | }

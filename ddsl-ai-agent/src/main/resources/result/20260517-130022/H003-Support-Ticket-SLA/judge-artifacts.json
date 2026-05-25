@@ -1,0 +1,8 @@
+[ {
+  "valid" : true,
+  "compilerOutput" : "{\"valid\":true,\"errors\":[]}",
+  "dsl" : "BoundedContext Support {\n\n    domain {\n        // @chunk:start DomainServices\n        DomainService SlaPolicy {\n            when calculating first response due with priority: String and createdAt: DateTime:\n                then:\n                    - calculate firstResponseDueAt as createdAt plus priority duration\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent TicketAssigned {\n            ticketId: UUID\n            agentId: String\n            assignedAt: DateTime\n        }\n        DomainEvent TicketResolved {\n            ticketId: UUID\n            resolvedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n    specifications {\n        // @chunk:start Specifications\n        Specification OverdueTicket {\n            matches Ticket where:\n                - firstResponseDueAt is before now\n                - status is not \"RESOLVED\"\n        }\n        // @chunk:end Specifications\n    }\n\n}\n",
+  "chunkId" : "Specifications",
+  "attempt" : 0,
+  "compilerFeedback" : "verdict: ACCEPT"
+} ]

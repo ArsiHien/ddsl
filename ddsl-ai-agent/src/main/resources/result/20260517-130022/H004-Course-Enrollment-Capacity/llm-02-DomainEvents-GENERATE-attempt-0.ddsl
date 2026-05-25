@@ -1,0 +1,10 @@
+DomainEvent StudentEnrolled {
+    offeringId: UUID
+    studentId: String
+    enrolledAt: DateTime
+}
+DomainEvent StudentWaitlisted {
+    offeringId: UUID
+    studentId: String
+    waitlistedAt: DateTime
+}

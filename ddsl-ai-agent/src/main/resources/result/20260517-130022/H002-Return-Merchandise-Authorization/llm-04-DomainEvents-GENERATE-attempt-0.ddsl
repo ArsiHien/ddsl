@@ -1,0 +1,10 @@
+DomainEvent ReturnApproved {
+    returnId: UUID
+    refundAmount: Money
+    approvedAt: DateTime
+}
+DomainEvent ReturnRejected {
+    returnId: UUID
+    rejectionReason: String
+    rejectedAt: DateTime
+}

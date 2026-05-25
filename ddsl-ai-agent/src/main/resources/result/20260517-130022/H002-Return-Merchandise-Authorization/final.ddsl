@@ -1,0 +1,83 @@
+BoundedContext Returns {
+
+    domain {
+        // @chunk:start DomainTypes
+        ValueObject Money {
+            amount: Decimal @min(0)
+            currency: String @required @maxLength(3)
+        }
+        // @chunk:end DomainTypes
+        // @chunk:start DomainModel
+        Aggregate ReturnRequest {
+            @identity returnId: UUID
+            orderId: UUID @required
+            customerId: String @required
+            items: List<ReturnLine>
+            reason: String @required
+            status: String @default("REQUESTED")
+            requestedAt: DateTime
+            inspectedAt: DateTime?
+            refundAmount: Money
+        
+            invariants {
+                "All items must have quantity greater than zero": items.every(item -> item.quantity > 0)
+                "Reason must not be empty": reason is not empty
+            }
+        
+            operations {
+                when approving return with inspectedAt:
+                    require that:
+                        - status is "REQUESTED"
+                        - reason is not empty
+                    then:
+                        - calculate refundAmount as sum of items.lineRefund
+                        - set status to "APPROVED"
+                        - set inspectedAt to now
+                    emit ReturnApproved with returnId, refundAmount, approvedAt
+        
+                when rejecting return with rejectionReason:
+                    require that:
+                        - status is "REQUESTED"
+                        - rejectionReason is not empty
+                    then:
+                        - set status to "REJECTED"
+                    emit ReturnRejected with returnId, rejectionReason, rejectedAt
+            }
+        }
+        
+        Entity ReturnLine {
+            @identity returnLineId: UUID
+            productId: String @required
+            quantity: Int @min(1)
+            condition: String @required
+            lineRefund: Money
+        }
+        // @chunk:end DomainModel
+    }
+
+    events {
+        // @chunk:start DomainEvents
+        DomainEvent ReturnApproved {
+            returnId: UUID
+            refundAmount: Money
+            approvedAt: DateTime
+        }
+        DomainEvent ReturnRejected {
+            returnId: UUID
+            rejectionReason: String
+            rejectedAt: DateTime
+        }
+        // @chunk:end DomainEvents
+    }
+
+    repositories {
+        // @chunk:start Repositories
+        Repository ReturnRequestRepository for ReturnRequest {
+            findById(id: UUID): ReturnRequest?
+            findByOrderId(orderId: UUID): List<ReturnRequest>
+            save(request: ReturnRequest): Void
+        }
+        // @chunk:end Repositories
+    }
+
+}

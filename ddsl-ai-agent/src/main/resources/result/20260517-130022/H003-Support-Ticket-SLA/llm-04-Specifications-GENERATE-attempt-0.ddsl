@@ -1,0 +1,5 @@
+Specification OverdueTicket {
+    matches Ticket where:
+        - firstResponseDueAt is before now
+        - status is not "RESOLVED"
+}

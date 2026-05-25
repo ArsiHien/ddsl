@@ -1,0 +1,5 @@
+DomainEvent StockReserved {
+    stockItemId: UUID
+    quantity: Int
+    reservedAt: DateTime
+}

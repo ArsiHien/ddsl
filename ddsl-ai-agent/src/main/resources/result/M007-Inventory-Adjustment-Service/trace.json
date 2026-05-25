@@ -1,0 +1,3365 @@
+[ {
+  "index" : 1,
+  "node" : "__START__",
+  "elapsedMs" : 1,
+  "deltaMs" : 1,
+  "phase" : "",
+  "route" : "",
+  "chunkId" : "",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 0.0,
+  "currentDslChars" : 0,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : { },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 2,
+  "node" : "orchestrator",
+  "elapsedMs" : 3705,
+  "deltaMs" : 3703,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 0.0,
+  "currentDslChars" : 0,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "PENDING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 3,
+  "node" : "retriever",
+  "elapsedMs" : 3705,
+  "deltaMs" : 0,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 0,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "PENDING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 4,
+  "node" : "orchestrator",
+  "elapsedMs" : 31761,
+  "deltaMs" : 28055,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 0,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "PENDING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 5,
+  "node" : "synthesizer",
+  "elapsedMs" : 31762,
+  "deltaMs" : 1,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 528,
+  "currentChunkChars" : 528,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "PENDING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 6,
+  "node" : "orchestrator",
+  "elapsedMs" : 32219,
+  "deltaMs" : 457,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainServices",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 785,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "RUNNING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 7,
+  "node" : "retriever",
+  "elapsedMs" : 32220,
+  "deltaMs" : 0,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainServices",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 0.65,
+  "currentDslChars" : 785,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "RUNNING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 8,
+  "node" : "orchestrator",
+  "elapsedMs" : 34632,
+  "deltaMs" : 2412,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainServices",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 0.65,
+  "currentDslChars" : 785,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "RUNNING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 9,
+  "node" : "synthesizer",
+  "elapsedMs" : 34634,
+  "deltaMs" : 1,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainServices",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 0.65,
+  "currentDslChars" : 200,
+  "currentChunkChars" : 200,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "RUNNING",
+    "DomainEvents" : "PENDING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 10,
+  "node" : "orchestrator",
+  "elapsedMs" : 34981,
+  "deltaMs" : 347,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 0.65,
+  "currentDslChars" : 1102,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "RUNNING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 11,
+  "node" : "retriever",
+  "elapsedMs" : 34982,
+  "deltaMs" : 1,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1102,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "RUNNING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 12,
+  "node" : "orchestrator",
+  "elapsedMs" : 48734,
+  "deltaMs" : 13751,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1102,
+  "currentChunkChars" : 0,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "RUNNING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 13,
+  "node" : "synthesizer",
+  "elapsedMs" : 48740,
+  "deltaMs" : 5,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 94,
+  "currentChunkChars" : 94,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "RUNNING"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 14,
+  "node" : "orchestrator",
+  "elapsedMs" : 48743,
+  "deltaMs" : 3,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1329,
+  "currentChunkChars" : 94,
+  "errorCount" : 0,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ ]
+}, {
+  "index" : 15,
+  "node" : "judge",
+  "elapsedMs" : 48745,
+  "deltaMs" : 1,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainEvents",
+  "synthesisMode" : "GENERATE",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1329,
+  "currentChunkChars" : 94,
+  "errorCount" : 11,
+  "repairAttempts" : 0,
+  "planStatuses" : {
+    "DomainModel" : "GENERATED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 16,
+  "node" : "orchestrator",
+  "elapsedMs" : 49116,
+  "deltaMs" : 370,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1329,
+  "currentChunkChars" : 528,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 17,
+  "node" : "retriever",
+  "elapsedMs" : 49117,
+  "deltaMs" : 1,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1329,
+  "currentChunkChars" : 528,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 18,
+  "node" : "orchestrator",
+  "elapsedMs" : 58906,
+  "deltaMs" : 9788,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1329,
+  "currentChunkChars" : 528,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 19,
+  "node" : "synthesizer",
+  "elapsedMs" : 58908,
+  "deltaMs" : 1,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 520,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 20,
+  "node" : "orchestrator",
+  "elapsedMs" : 58911,
+  "deltaMs" : 3,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 21,
+  "node" : "judge",
+  "elapsedMs" : 58913,
+  "deltaMs" : 1,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 1,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 22,
+  "node" : "orchestrator",
+  "elapsedMs" : 59233,
+  "deltaMs" : 319,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 23,
+  "node" : "retriever",
+  "elapsedMs" : 59234,
+  "deltaMs" : 1,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 24,
+  "node" : "orchestrator",
+  "elapsedMs" : 80379,
+  "deltaMs" : 21144,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 25,
+  "node" : "synthesizer",
+  "elapsedMs" : 80381,
+  "deltaMs" : 1,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 457,
+  "currentChunkChars" : 457,
+  "errorCount" : 11,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 26,
+  "node" : "orchestrator",
+  "elapsedMs" : 80385,
+  "deltaMs" : 3,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1234,
+  "currentChunkChars" : 457,
+  "errorCount" : 11,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 27,
+  "node" : "judge",
+  "elapsedMs" : 80387,
+  "deltaMs" : 1,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1234,
+  "currentChunkChars" : 457,
+  "errorCount" : 20,
+  "repairAttempts" : 2,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 28,
+  "node" : "orchestrator",
+  "elapsedMs" : 80688,
+  "deltaMs" : 301,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 0,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1234,
+  "currentChunkChars" : 457,
+  "errorCount" : 20,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 29,
+  "node" : "retriever",
+  "elapsedMs" : 80692,
+  "deltaMs" : 3,
+  "phase" : "RETRIEVING",
+  "route" : "retriever",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1234,
+  "currentChunkChars" : 457,
+  "errorCount" : 20,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 30,
+  "node" : "orchestrator",
+  "elapsedMs" : 83837,
+  "deltaMs" : 3144,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 0,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1234,
+  "currentChunkChars" : 457,
+  "errorCount" : 20,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 31,
+  "node" : "synthesizer",
+  "elapsedMs" : 83839,
+  "deltaMs" : 2,
+  "phase" : "SYNTHESIZING",
+  "route" : "synthesizer",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 520,
+  "currentChunkChars" : 520,
+  "errorCount" : 20,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 32,
+  "node" : "orchestrator",
+  "elapsedMs" : 83843,
+  "deltaMs" : 4,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 20,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected ':' after 'require that', got 'requestedQuantity'",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token ':' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:34",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:52",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:54",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:56",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:60",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:69",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 13,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "13:72",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:39",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 14,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "14:42",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:30",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:47",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 15,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "15:50",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:21",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:26",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:40",
+    "retry_allowed" : true
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "source_chunk" : "DomainModel",
+    "line_number" : 16,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "REJECT",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "16:45",
+    "retry_allowed" : true
+  } ]
+}, {
+  "index" : 33,
+  "node" : "judge",
+  "elapsedMs" : 83847,
+  "deltaMs" : 3,
+  "phase" : "JUDGING",
+  "route" : "judge",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 3,
+  "planStatuses" : {
+    "DomainModel" : "RUNNING",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : false
+  } ]
+}, {
+  "index" : 34,
+  "node" : "orchestrator",
+  "elapsedMs" : 83848,
+  "deltaMs" : 1,
+  "phase" : "FAILED",
+  "route" : "end",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 4,
+  "planStatuses" : {
+    "DomainModel" : "FAILED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : false
+  } ]
+}, {
+  "index" : 35,
+  "node" : "__END__",
+  "elapsedMs" : 83848,
+  "deltaMs" : 0,
+  "phase" : "FAILED",
+  "route" : "end",
+  "chunkId" : "DomainModel",
+  "synthesisMode" : "REPAIR",
+  "retrieverRetries" : 1,
+  "synthesizerRetries" : 1,
+  "retrievalQuality" : 1.0,
+  "currentDslChars" : 1321,
+  "currentChunkChars" : 520,
+  "errorCount" : 11,
+  "repairAttempts" : 4,
+  "planStatuses" : {
+    "DomainModel" : "FAILED",
+    "DomainServices" : "GENERATED",
+    "DomainEvents" : "GENERATED"
+  },
+  "structuredErrors" : [ {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:45",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 17,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "17:48",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:25",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:27",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:36",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:53",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 18,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "18:56",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:21",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:26",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:40",
+    "retry_allowed" : false
+  }, {
+    "error_message" : "Expected 'when' in operations block",
+    "best_partial_code" : "BoundedContext Inventory {\n\n    domain {\n        // @chunk:start DomainModel\n        Aggregate StockItem {\n            @identity stockItemId: UUID\n            sku: String @required\n            quantity: Int @min(0)\n            reservedQuantity: Int @min(0)\n        \n            operations {\n                when reserving stock with requestedQuantity:\n                    require that:\n                        - requestedQuantity > 0\n                        - quantity >= requestedQuantity\n                    then:\n                        - decrease quantity by requestedQuantity\n                        - increase reservedQuantity by requestedQuantity\n                    emit StockReserved with stockItemId\n            }\n        }\n        // @chunk:end DomainModel\n        // @chunk:start DomainServices\n        DomainService InventoryPolicy {\n            when checking reorder need with quantity as Int and reorderPoint as Int:\n                then:\n                    - calculate reorderNeeded as quantity is less than reorderPoint\n        }\n        // @chunk:end DomainServices\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent StockReserved {\n            stockItemId: UUID\n            quantity: Int\n            reservedAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n}\n",
+    "source_chunk" : "DomainModel",
+    "line_number" : 19,
+    "fix_hint" : "Check surrounding token 'when' for correctness.",
+    "verdict" : "ESCALATE",
+    "error_type" : "SYNTAX_ERROR",
+    "error_location" : "19:45",
+    "retry_allowed" : false
+  } ]
+} ]

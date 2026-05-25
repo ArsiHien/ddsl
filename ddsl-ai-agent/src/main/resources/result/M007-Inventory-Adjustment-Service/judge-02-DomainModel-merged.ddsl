@@ -1,0 +1,42 @@
+BoundedContext Inventory {
+
+    domain {
+        // @chunk:start DomainModel
+        Aggregate StockItem {
+            @identity stockItemId: UUID
+            sku: String @required
+            quantity: Int @min(0)
+            reservedQuantity: Int @min(0)
+        
+            operations {
+                when reserving stock with requestedQuantity:
+                    require that:
+                        - requestedQuantity > 0
+                        - quantity >= requestedQuantity
+                    then:
+                        - decrease quantity by requestedQuantity
+                        - increase reservedQuantity by requestedQuantity
+                    emit StockReserved with stockItemId
+            }
+        }
+        // @chunk:end DomainModel
+        // @chunk:start DomainServices
+        DomainService InventoryPolicy {
+            when checking reorder need with quantity as Int and reorderPoint as Int:
+                then:
+                    - calculate reorderNeeded as quantity is less than reorderPoint
+        }
+        // @chunk:end DomainServices
+    }
+
+    events {
+        // @chunk:start DomainEvents
+        DomainEvent StockReserved {
+            stockItemId: UUID
+            quantity: Int
+            reservedAt: DateTime
+        }
+        // @chunk:end DomainEvents
+    }
+
+}

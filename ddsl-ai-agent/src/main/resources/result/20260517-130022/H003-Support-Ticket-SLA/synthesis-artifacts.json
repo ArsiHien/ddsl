@@ -1,0 +1,21 @@
+[ {
+  "mode" : "GENERATE",
+  "code" : "",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainService SlaPolicy {\n    when calculating first response due with priority: String and createdAt: DateTime:\n        then:\n            - calculate firstResponseDueAt as createdAt plus priority duration\n}",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainEvent TicketAssigned {\n    ticketId: UUID\n    agentId: String\n    assignedAt: DateTime\n}\nDomainEvent TicketResolved {\n    ticketId: UUID\n    resolvedAt: DateTime\n}",
+  "chunkId" : "DomainEvents",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Specification OverdueTicket {\n    matches Ticket where:\n        - firstResponseDueAt is before now\n        - status is not \"RESOLVED\"\n}",
+  "chunkId" : "Specifications",
+  "attempt" : 0
+} ]

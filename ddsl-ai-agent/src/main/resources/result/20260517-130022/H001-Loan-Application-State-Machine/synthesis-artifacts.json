@@ -1,0 +1,36 @@
+[ {
+  "mode" : "GENERATE",
+  "code" : "Aggregate LoanApplication {\n    @identity applicationId: UUID\n    applicantId: String @required\n    requestedAmount: Decimal @min(1000)\n    creditScore: Int @min(300) @max(850)\n    status: String @default(\"DRAFT\")\n    submittedAt: DateTime?\n    approvedAt: DateTime?\n\n    invariants {\n        \"Status must be one of DRAFT, SUBMITTED, APPROVED, REJECTED, WITHDRAWN\": status in [\"DRAFT\", \"SUBMITTED\", \"APPROVED\", \"REJECTED\", \"WITHDRAWN\"]\n    }\n\n    operations {\n        when submitting application with submittedAt:\n            require that:\n                - applicantId is required\n                - requestedAmount is required\n                - creditScore is required\n                - status is \"DRAFT\"\n            then:\n                - set status to \"SUBMITTED\"\n                - set submittedAt to submittedAt\n            emit LoanApplicationSubmitted with applicationId, submittedAt\n\n        when approving application with approvedAt:\n            require that:\n                - status is \"SUBMITTED\"\n                - creditScore > 650\n                - requestedAmount > 0\n            then:\n                - set status to \"APPROVED\"\n                - set approvedAt to approvedAt\n            emit LoanApplicationApproved with applicationId, approvedAt\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "",
+  "chunkId" : "StateMachines",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainEvent LoanApplicationSubmitted {\n    applicationId: UUID\n    submittedAt: DateTime\n}\n\nDomainEvent LoanApplicationApproved {\n    applicationId: UUID\n    approvedAt: DateTime\n}",
+  "chunkId" : "DomainEvents",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Repository LoanApplicationRepository for LoanApplication {\n    findById(id: UUID): LoanApplication?\n    save(loanApplication: LoanApplication): Void\n}",
+  "chunkId" : "Repositories",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Specification ApprovableLoan {\n    matches LoanApplication where:\n        - status is \"SUBMITTED\"\n        - creditScore is greater than 650\n}",
+  "chunkId" : "Specifications",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "Aggregate LoanApplication {\n    @identity applicationId: UUID\n    applicantId: String @required\n    requestedAmount: Decimal @min(1000)\n    creditScore: Int @min(300) @max(850)\n    status: String @default(\"DRAFT\")\n    submittedAt: DateTime?\n    approvedAt: DateTime?\n\n    invariants {\n        \"Status must be one of DRAFT, SUBMITTED, APPROVED, REJECTED, WITHDRAWN\": status == \"DRAFT\" or status == \"SUBMITTED\" or status == \"APPROVED\" or status == \"REJECTED\" or status == \"WITHDRAWN\"\n    }\n\n    operations {\n        when submitting application with submittedAt:\n            require that:\n                - applicantId is required\n                - requestedAmount is required\n                - creditScore is required\n                - status is \"DRAFT\"\n            then:\n                - set status to \"SUBMITTED\"\n                - set submittedAt to submittedAt\n            emit LoanApplicationSubmitted with applicationId, submittedAt\n\n        when approving application with approvedAt:\n            require that:\n                - status is \"SUBMITTED\"\n                - creditScore > 650\n                - requestedAmount > 0\n            then:\n                - set status to \"APPROVED\"\n                - set approvedAt to approvedAt\n            emit LoanApplicationApproved with applicationId, approvedAt\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+} ]

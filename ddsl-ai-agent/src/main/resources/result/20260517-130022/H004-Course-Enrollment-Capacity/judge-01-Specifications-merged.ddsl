@@ -1,0 +1,41 @@
+BoundedContext Learning {
+
+    domain {
+    }
+
+    events {
+        // @chunk:start DomainEvents
+        DomainEvent StudentEnrolled {
+            offeringId: UUID
+            studentId: String
+            enrolledAt: DateTime
+        }
+        DomainEvent StudentWaitlisted {
+            offeringId: UUID
+            studentId: String
+            waitlistedAt: DateTime
+        }
+        // @chunk:end DomainEvents
+    }
+
+    repositories {
+        // @chunk:start Repositories
+        Repository CourseOfferingRepository for CourseOffering {
+            findById(id: UUID): CourseOffering?
+            findByCourseCode(courseCode: String): List<CourseOffering>
+            save(courseOffering: CourseOffering): Void
+        }
+        // @chunk:end Repositories
+    }
+
+    specifications {
+        // @chunk:start Specifications
+        Specification OpenForEnrollment {
+            matches CourseOffering where:
+                - status is "PUBLISHED"
+                - enrolledStudents.count < capacity
+        }
+        // @chunk:end Specifications
+    }
+
+}

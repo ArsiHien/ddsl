@@ -1,0 +1,8 @@
+[ {
+  "valid" : true,
+  "compilerOutput" : "{\"valid\":true,\"errors\":[]}",
+  "dsl" : "BoundedContext Events {\n\n    domain {\n    }\n\n    events {\n        // @chunk:start DomainEvents\n        DomainEvent TicketReserved {\n            registrationId: UUID\n            eventId: UUID\n            expiresAt: DateTime\n        }\n        DomainEvent RegistrationConfirmed {\n            registrationId: UUID\n            confirmedAt: DateTime\n        }\n        DomainEvent AttendeeCheckedIn {\n            registrationId: UUID\n            checkedInAt: DateTime\n        }\n        // @chunk:end DomainEvents\n    }\n\n    repositories {\n        // @chunk:start Repositories\n        Repository EventRegistrationRepository for EventRegistration {\n            findById(id: UUID): EventRegistration?\n            findByEventId(eventId: UUID): List<EventRegistration>\n            findByAttendeeEmail(attendeeEmail: String): List<EventRegistration>\n            save(eventRegistration: EventRegistration): Void\n        }\n        // @chunk:end Repositories\n    }\n\n    specifications {\n        // @chunk:start Specifications\n        Specification ExpiredReservation {\n            matches EventRegistration where:\n                - expiresAt is before now\n                - status is RESERVED\n        }\n        \n        Specification ConfirmedRegistration {\n            matches EventRegistration where:\n                - status is CONFIRMED\n        }\n        // @chunk:end Specifications\n    }\n\n}\n",
+  "chunkId" : "Specifications",
+  "attempt" : 0,
+  "compilerFeedback" : "verdict: ACCEPT"
+} ]

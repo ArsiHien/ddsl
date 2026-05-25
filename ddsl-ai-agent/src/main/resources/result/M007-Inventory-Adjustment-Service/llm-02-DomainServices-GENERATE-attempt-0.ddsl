@@ -1,0 +1,5 @@
+DomainService InventoryPolicy {
+    when checking reorder need with quantity as Int and reorderPoint as Int:
+        then:
+            - calculate reorderNeeded as quantity is less than reorderPoint
+}

@@ -1,0 +1,6 @@
+Repository EventRegistrationRepository for EventRegistration {
+    findById(id: UUID): EventRegistration?
+    findByEventId(eventId: UUID): List<EventRegistration>
+    findByAttendeeEmail(attendeeEmail: String): List<EventRegistration>
+    save(eventRegistration: EventRegistration): Void
+}

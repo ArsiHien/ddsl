@@ -1,0 +1,4 @@
+Repository LoanApplicationRepository for LoanApplication {
+    findById(id: UUID): LoanApplication?
+    save(loanApplication: LoanApplication): Void
+}

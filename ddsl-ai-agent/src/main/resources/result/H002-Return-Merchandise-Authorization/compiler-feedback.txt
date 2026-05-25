@@ -1,0 +1,10 @@
+verdict: REJECT
+DDSL Compilation Errors (1 found):
+
+Error 1/1
+  Category: SYNTAX_ERROR
+  Location: 23:85
+  Message: Expected expression, got: >
+  Fix hint: Review syntax around the reported location.
+
+Please fix these errors and regenerate the DDSL code.

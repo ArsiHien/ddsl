@@ -1,0 +1,41 @@
+[ {
+  "mode" : "GENERATE",
+  "code" : "ValueObject Money {\n    amount: Decimal @min(0)\n    currency: String @required @maxLength(3)\n}",
+  "chunkId" : "DomainTypes",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Aggregate ReturnRequest {\n    @identity returnId: UUID\n    orderId: UUID @required\n    customerId: String @required\n    items: List<ReturnLine>\n    reason: String @required\n    status: String @default(\"REQUESTED\")\n    requestedAt: DateTime\n    inspectedAt: DateTime?\n    refundAmount: Money\n\n    invariants {\n        \"All items must have quantity greater than zero\": items.every(item -> item.quantity > 0)\n        \"Reason must not be empty\": reason is not empty\n    }\n\n    operations {\n        when approving return with inspectedAt:\n            require that:\n                - status is \"REQUESTED\"\n                - reason is not empty\n            then:\n                - calculate refundAmount as sum of items.lineRefund\n                - set status to \"APPROVED\"\n                - set inspectedAt to now\n            emit ReturnApproved with returnId, refundAmount, approvedAt\n\n        when rejecting return with rejectionReason:\n            require that:\n                - status is \"REQUESTED\"\n                - rejectionReason is not empty\n            then:\n                - set status to \"REJECTED\"\n            emit ReturnRejected with returnId, rejectionReason, rejectedAt\n    }\n}\n\nEntity ReturnLine {\n    @identity returnLineId: UUID\n    productId: String @required\n    quantity: Int @min(1)\n    condition: String @required\n    lineRefund: Money\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainEvent ReturnApproved {\n    returnId: UUID\n    refundAmount: Money\n    approvedAt: DateTime\n}\nDomainEvent ReturnRejected {\n    returnId: UUID\n    rejectionReason: String\n    rejectedAt: DateTime\n}",
+  "chunkId" : "DomainEvents",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Repository ReturnRequestRepository for ReturnRequest {\n    findById(id: UUID): ReturnRequest?\n    findByOrderId(orderId: UUID): List<ReturnRequest>\n    save(request: ReturnRequest): Void\n}",
+  "chunkId" : "Repositories",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+} ]

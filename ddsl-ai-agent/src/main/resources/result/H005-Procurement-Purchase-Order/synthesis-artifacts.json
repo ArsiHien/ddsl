@@ -1,0 +1,41 @@
+[ {
+  "mode" : "GENERATE",
+  "code" : "ValueObject Money {\n    amount: Decimal @min(0)\n    currency: String @required @maxLength(3)\n}",
+  "chunkId" : "DomainTypes",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Aggregate PurchaseOrder {\n    purchaseOrderId: UUID @identity\n    supplierId: String @required\n    requesterId: String @required\n    lines: List<PurchaseOrderLine>\n    totalAmount: Money\n    status: String @default(\"DRAFT\")\n    approvedAt: DateTime?\n\n    Entity PurchaseOrderLine {\n        lineId: UUID @identity\n        itemCode: String @required\n        quantity: Int @min(1)\n        unitCost: Money @required\n    }\n\n    operations {\n        when submitting purchase order:\n            require that:\n                - supplierId is required\n                - requesterId is required\n                - lines is not empty\n            then:\n                - calculate totalAmount from line costs\n                - set status to \"SUBMITTED\"\n            emit PurchaseOrderSubmitted\n        when approving purchase order with approvedAt, approverId:\n            require that:\n                - status is \"SUBMITTED\"\n                - approverId is required\n                - totalAmount > 0\n            then:\n                - set status to \"APPROVED\"\n                - set approvedAt to approvedAt\n            emit PurchaseOrderApproved\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainService ApprovalPolicy {\n    when checking approval requirement with totalAmount as Money and requesterId as String:\n        calculate approvalRequired as totalAmount > 1000\n        return approvalRequired\n}",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "DomainEvent PurchaseOrderSubmitted {\n    id: UUID\n    submittedAt: DateTime\n    total: Money\n}\n\nDomainEvent PurchaseOrderApproved {\n    id: UUID\n    approverId: String\n    approvedAt: DateTime\n}",
+  "chunkId" : "DomainEvents",
+  "attempt" : 0
+}, {
+  "mode" : "GENERATE",
+  "code" : "Factory PurchaseOrderFactory for PurchaseOrder {\n    when creating PurchaseOrder from supplierId, requesterId, lines:\n        require that:\n            - lines is not empty\n        then:\n            - create PurchaseOrder with new purchaseOrderId, supplierId, requesterId, lines, status set to \"DRAFT\"\n        return PurchaseOrder\n}",
+  "chunkId" : "Factories",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "DomainService ApprovalPolicy {\n    when checking approval requirement with totalAmount and requesterId:\n        return totalAmount > 1000\n}",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "",
+  "chunkId" : "DomainServices",
+  "attempt" : 0
+} ]

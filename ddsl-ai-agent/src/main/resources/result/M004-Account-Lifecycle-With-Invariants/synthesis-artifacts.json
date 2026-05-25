@@ -1,0 +1,21 @@
+[ {
+  "mode" : "GENERATE",
+  "code" : "Aggregate Account {\n    accountId: UUID @identity\n    ownerName: String @required\n    balance: Decimal @min(0)\n    status: String\n\n    invariants {\n        \"Balance must never be negative\": balance >= 0\n        \"Status must be one of OPEN, FROZEN, or CLOSED\": status == \"OPEN\" or status == \"FROZEN\" or status == \"CLOSED\"\n    }\n\n    operations {\n        when depositing with amount:\n            require that:\n                - amount is required\n                - amount > 0\n            then:\n                - increase balance by amount\n\n        when freezing account:\n            require that:\n                - status == \"OPEN\"\n            then:\n                - set status to \"FROZEN\"\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "Aggregate Account {\n    accountId: UUID @identity\n    ownerName: String @required\n    balance: Decimal @min(0)\n    status: String\n\n    invariants {\n        \"Balance must never be negative\": balance >= 0\n        \"Status must be one of OPEN, FROZEN, or CLOSED\": status == \"OPEN\" or status == \"FROZEN\" or status == \"CLOSED\"\n    }\n\n    operations {\n        when depositing with amount:\n            require that:\n                - amount is required\n                - amount is greater than 0\n            then:\n                - increase balance by amount\n\n        when freezing account:\n            require that:\n                - status is \"OPEN\"\n            then:\n                - set status to \"FROZEN\"\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "Aggregate Account {\n    accountId: UUID @identity\n    ownerName: String @required\n    balance: Decimal @min(0)\n    status: String\n\n    invariants {\n        \"Balance must never be negative\": balance >= 0\n        \"Status must be one of OPEN, FROZEN, or CLOSED\": status == \"OPEN\" or status == \"FROZEN\" or status == \"CLOSED\"\n    }\n\n    operations {\n        when depositing with amount:\n            require that:\n                - amount is required\n                - amount > 0\n            then:\n                - increase balance by amount\n\n        when freezing account:\n            require that:\n                - status == \"OPEN\"\n            then:\n                - set status to \"FROZEN\"\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+}, {
+  "mode" : "REPAIR",
+  "code" : "Aggregate Account {\n    accountId: UUID @identity\n    ownerName: String @required\n    balance: Decimal @min(0)\n    status: String\n\n    invariants {\n        \"Balance must never be negative\": balance >= 0\n        \"Status must be one of OPEN, FROZEN, or CLOSED\": status == \"OPEN\" or status == \"FROZEN\" or status == \"CLOSED\"\n    }\n\n    operations {\n        when depositing with amount:\n            require that:\n                - amount is required\n                - amount > 0\n            then:\n                - increase balance by amount\n        when freezing account:\n            require that:\n                - status == \"OPEN\"\n            then:\n                - set status to \"FROZEN\"\n    }\n}",
+  "chunkId" : "DomainModel",
+  "attempt" : 0
+} ]

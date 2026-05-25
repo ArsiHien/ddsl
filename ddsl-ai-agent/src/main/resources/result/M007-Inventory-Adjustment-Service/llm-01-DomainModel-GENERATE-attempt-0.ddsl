@@ -1,0 +1,17 @@
+Aggregate StockItem {
+    @identity stockItemId: UUID
+    sku: String @required @unique
+    quantity: Int @min(0)
+    reservedQuantity: Int @min(0)
+
+    operations {
+        when reserving stock with requestedQuantity:
+            require that:
+                - requestedQuantity > 0
+                - quantity >= requestedQuantity
+            then:
+                - decrease quantity by requestedQuantity
+                - increase reservedQuantity by requestedQuantity
+            emit StockReserved with stockItemId
+    }
+}

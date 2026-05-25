@@ -1,0 +1,250 @@
+verdict: REJECT
+DDSL Compilation Errors (41 found):
+
+Error 1/41
+  Category: SYNTAX_ERROR
+  Location: 52:36
+  Message: Expected 'when' for service operation
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 2/41
+  Category: SYNTAX_ERROR
+  Location: 52:38
+  Message: Expected 'when' for service operation
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 3/41
+  Category: SYNTAX_ERROR
+  Location: 75:38
+  Message: Expected '{' after factory name, got 'for'
+  Fix hint: Check surrounding token '{' for correctness.
+
+Error 4/41
+  Category: SYNTAX_ERROR
+  Location: 75:38
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 5/41
+  Category: SYNTAX_ERROR
+  Location: 75:42
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 6/41
+  Category: SYNTAX_ERROR
+  Location: 75:56
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 7/41
+  Category: SYNTAX_ERROR
+  Location: 76:56
+  Message: Expected ':' after factory rule header, got ','
+  Fix hint: Check surrounding token ':' for correctness.
+
+Error 8/41
+  Category: SYNTAX_ERROR
+  Location: 76:56
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 9/41
+  Category: SYNTAX_ERROR
+  Location: 76:58
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 10/41
+  Category: SYNTAX_ERROR
+  Location: 76:69
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 11/41
+  Category: SYNTAX_ERROR
+  Location: 76:71
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 12/41
+  Category: SYNTAX_ERROR
+  Location: 76:76
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 13/41
+  Category: SYNTAX_ERROR
+  Location: 77:17
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 14/41
+  Category: SYNTAX_ERROR
+  Location: 77:25
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 15/41
+  Category: SYNTAX_ERROR
+  Location: 77:29
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 16/41
+  Category: SYNTAX_ERROR
+  Location: 78:21
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 17/41
+  Category: SYNTAX_ERROR
+  Location: 78:23
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 18/41
+  Category: SYNTAX_ERROR
+  Location: 78:29
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 19/41
+  Category: SYNTAX_ERROR
+  Location: 78:32
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 20/41
+  Category: SYNTAX_ERROR
+  Location: 78:36
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 21/41
+  Category: SYNTAX_ERROR
+  Location: 79:17
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 22/41
+  Category: SYNTAX_ERROR
+  Location: 79:21
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 23/41
+  Category: SYNTAX_ERROR
+  Location: 80:21
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 24/41
+  Category: SYNTAX_ERROR
+  Location: 80:23
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 25/41
+  Category: SYNTAX_ERROR
+  Location: 80:30
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 26/41
+  Category: SYNTAX_ERROR
+  Location: 80:44
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 27/41
+  Category: SYNTAX_ERROR
+  Location: 80:49
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 28/41
+  Category: SYNTAX_ERROR
+  Location: 80:53
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 29/41
+  Category: SYNTAX_ERROR
+  Location: 80:68
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 30/41
+  Category: SYNTAX_ERROR
+  Location: 80:70
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 31/41
+  Category: SYNTAX_ERROR
+  Location: 80:80
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 32/41
+  Category: SYNTAX_ERROR
+  Location: 80:82
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 33/41
+  Category: SYNTAX_ERROR
+  Location: 80:93
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 34/41
+  Category: SYNTAX_ERROR
+  Location: 80:95
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 35/41
+  Category: SYNTAX_ERROR
+  Location: 80:100
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 36/41
+  Category: SYNTAX_ERROR
+  Location: 80:102
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 37/41
+  Category: SYNTAX_ERROR
+  Location: 80:109
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 38/41
+  Category: SYNTAX_ERROR
+  Location: 80:113
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 39/41
+  Category: SYNTAX_ERROR
+  Location: 80:116
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 40/41
+  Category: SYNTAX_ERROR
+  Location: 81:17
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Error 41/41
+  Category: SYNTAX_ERROR
+  Location: 81:24
+  Message: Expected 'when' for factory creation rule
+  Fix hint: Check surrounding token 'when' for correctness.
+
+Please fix these errors and regenerate the DDSL code.

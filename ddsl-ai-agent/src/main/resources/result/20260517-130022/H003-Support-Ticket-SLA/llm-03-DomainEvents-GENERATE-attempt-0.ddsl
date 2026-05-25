@@ -1,0 +1,9 @@
+DomainEvent TicketAssigned {
+    ticketId: UUID
+    agentId: String
+    assignedAt: DateTime
+}
+DomainEvent TicketResolved {
+    ticketId: UUID
+    resolvedAt: DateTime
+}
