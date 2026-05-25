@@ -72,6 +72,10 @@ public class ScaffoldGenerator {
         // Generate event publisher interface
         artifacts.add(generateEventPublisherInterface(context));
 
+        // Generate event handler and subscriber interfaces
+        artifacts.add(generateEventHandlerInterface(context));
+        artifacts.add(generateEventSubscriberInterface(context));
+
         log.info("Generated {} scaffold artifacts for package {}", artifacts.size(), basePackage);
         return artifacts;
     }
@@ -230,6 +234,40 @@ public class ScaffoldGenerator {
             CodeArtifact.ArtifactType.INTERFACE
         );
     }
+
+    private CodeArtifact generateEventHandlerInterface(TemplateContext context) {
+        Map<String, Object> model = Map.of(
+            "packageName", context.sharedPackage(),
+            "interfaceName", "EventHandler",
+            "description", "Interface for handling domain events. " +
+                          "Implementations process specific event types."
+        );
+
+        String content = processTemplate("event-handler-port.ftl", model);
+        return new CodeArtifact(
+            "EventHandler",
+            context.sharedPackage(),
+            content,
+            CodeArtifact.ArtifactType.INTERFACE
+        );
+    }
+
+    private CodeArtifact generateEventSubscriberInterface(TemplateContext context) {
+        Map<String, Object> model = Map.of(
+            "packageName", context.sharedPackage(),
+            "interfaceName", "EventSubscriber",
+            "description", "Interface for subscribing to domain events. " +
+                          "Defines which events a subscriber is interested in."
+        );
+
+        String content = processTemplate("event-subscriber-port.ftl", model);
+        return new CodeArtifact(
+            "EventSubscriber",
+            context.sharedPackage(),
+            content,
+            CodeArtifact.ArtifactType.INTERFACE
+        );
+    }
     
     /**
      * Process a FreeMarker template with the given model.
@@ -267,6 +305,8 @@ public class ScaffoldGenerator {
             case "domain-exception.ftl" -> generateDomainExceptionCode(packageName, description);
             case "specification.ftl" -> generateSpecificationCode(packageName, description);
             case "event-publisher.ftl" -> generateEventPublisherCode(packageName, description);
+            case "event-handler-port.ftl" -> generateEventHandlerCode(packageName, description);
+            case "event-subscriber-port.ftl" -> generateEventSubscriberCode(packageName, description);
             default -> "// Template not found: " + templateName;
         };
     }
@@ -274,28 +314,22 @@ public class ScaffoldGenerator {
     private String generateAggregateRootCode(String packageName, String description) {
         return """
             package %s;
-            
+
             import java.util.List;
-            
+
             /**
              * %s
              *
+             * <p>Aggregates use {@link EventPublisher} directly to publish domain events
+             * rather than collecting them for later publication.</p>
+             *
              * @param <ID> The type of the aggregate's identity
              */
-            public interface AggregateRoot<ID> extends Entity<ID> {
-                
-                /**
-                 * Get all domain events that have been registered by this aggregate.
-                 */
-                List<DomainEvent> getDomainEvents();
-                
-                /**
-                 * Clear all registered domain events.
-                 * Typically called after events have been published.
-                 */
-                void clearDomainEvents();
-            }
-            """.formatted(packageName, description);
+             public interface AggregateRoot<ID> extends Entity<ID> {
+                 // Aggregates publish events directly via EventPublisher
+                 // No getDomainEvents() or clearDomainEvents() methods - deprecated pattern
+             }
+             """.formatted(packageName, description);
     }
     
     private String generateEntityCode(String packageName, String description) {
@@ -476,6 +510,40 @@ private String generateSpecificationCode(String packageName, String description)
                 default void publishAll(List<? extends DomainEvent> events) {
                     events.forEach(this::publish);
                 }
+            }
+            """.formatted(packageName, packageName, description);
+    }
+
+    private String generateEventHandlerCode(String packageName, String description) {
+        return """
+            package %s;
+
+            import %s.DomainEvent;
+
+            /**
+             * %s
+             */
+            public interface EventHandler {
+
+                void handle(DomainEvent event);
+            }
+            """.formatted(packageName, packageName, description);
+    }
+
+    private String generateEventSubscriberCode(String packageName, String description) {
+        return """
+            package %s;
+
+            import %s.DomainEvent;
+
+            /**
+             * %s
+             */
+            public interface EventSubscriber {
+
+                Class<? extends DomainEvent> subscribedTo();
+
+                void onEvent(DomainEvent event);
             }
             """.formatted(packageName, packageName, description);
     }

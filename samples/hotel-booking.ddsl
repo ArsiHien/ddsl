@@ -8,19 +8,7 @@
 
 BoundedContext HotelBooking {
 
-    ubiquitous-language {
-        // Reservation: A booking of one or more rooms by a guest for a date range.
-        // Room:        A physical accommodation unit with a type and rate.
-        // Guest:       A person who makes or holds a reservation.
-        // Stay:        The period a guest occupies a room.
-    }
-
-    // ─── Domain Model ───────────────────────────────────────────────────
-
     domain {
-
-        // ── Aggregate: Reservation (root) ───────────────────────────────
-
         Aggregate Reservation {
             reservationId: UUID @identity
             guest: GuestProfile
@@ -33,24 +21,6 @@ BoundedContext HotelBooking {
             createdAt: DateTime
             updatedAt: DateTime
 
-            // Nested entity
-            
-            Entity RoomAssignment {
-                assignmentId: UUID @identity
-                roomNumber: String @required
-                roomType: String @required
-                nightlyRate: Double @min(0)
-                guestCount: Int @min(1) @max(4)
-            }
-
-            // Invariants with string-literal : expression syntax
-            invariants {
-                "Check-out must be after check-in": checkOut is greater than checkIn
-                "At least one room required": roomAssignments is greater than 0
-                "Total cost must be non-negative": totalCost is greater than 0
-            }
-
-            // Behavior blocks inside operations
             operations {
                 when placing reservation with guest and roomType:
                 require that:

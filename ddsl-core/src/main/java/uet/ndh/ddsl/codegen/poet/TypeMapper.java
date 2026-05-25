@@ -32,6 +32,8 @@ public class TypeMapper {
     private static final String MODEL_SUBPACKAGE = "model";
     private static final String EVENT_SUBPACKAGE = "event";
     private static final String SPECIFICATION_SUBPACKAGE = "specification";
+    private static final String APPLICATION_SUBPACKAGE = "application";
+    private static final String INFRASTRUCTURE_SUBPACKAGE = "infrastructure";
     
     // Primitive type mappings
     private static final Map<String, TypeName> PRIMITIVE_TYPES = Map.ofEntries(
@@ -245,6 +247,18 @@ public class TypeMapper {
     public ClassName getDomainEventInterface() {
         return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "DomainEvent");
     }
+
+    public ClassName getEventHandlerInterface() {
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "EventHandler");
+    }
+
+    public ClassName getEventSubscriberInterface() {
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "EventSubscriber");
+    }
+
+    public ClassName getEventPublisherInterface() {
+        return ClassName.get(basePackage + "." + SHARED_SUBPACKAGE, "EventPublisher");
+    }
     
     /**
      * Create a ClassName for a domain type within an aggregate package.
@@ -281,9 +295,20 @@ public class TypeMapper {
         return basePackage + "." + SPECIFICATION_SUBPACKAGE;
     }
 
+    public String getApplicationPackage() {
+        return basePackage + "." + APPLICATION_SUBPACKAGE;
+    }
+
+    public String getInfrastructurePackage() {
+        return basePackage + "." + INFRASTRUCTURE_SUBPACKAGE;
+    }
+
     /**
      * Get the listener package for event handlers.
+     * @deprecated Use {@link #getApplicationPackage()} instead for application layer,
+     *             or {@link #getInfrastructurePackage()} for infrastructure layer.
      */
+    @Deprecated
     public String getListenerPackage() {
         return basePackage + ".listener";
     }

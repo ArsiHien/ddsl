@@ -29,20 +29,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 BoundedContext HotelBooking {
-
-    ubiquitous-language {
-        // Reservation: A booking of one or more rooms by a guest for a date range.
-        // Room:        A physical accommodation unit with a type and rate.
-        // Guest:       A person who makes or holds a reservation.
-        // Stay:        The period a guest occupies a room.
-    }
-
     domain {
-
-        // ── Aggregate: Reservation ──────────────────────────────────────
-        // Errors: "is" syntax, snake_case, lowercase types, annotation placement,
-        //         natural-language constraints, missing keywords in behaviors
-
         Aggregate Reservation {
             reservation_id is uuid identity
             guest is GuestProfile
@@ -54,20 +41,6 @@ BoundedContext HotelBooking {
             special_requests - text
             created_at - datetime
             updated_at - datetime
-
-            Entity RoomAssignment {
-                assignment_id: uuid identity
-                room_number is text, required
-                room_type is text, required
-                nightly_rate is a number with decimals, cannot be negative
-                guest_count is a whole number, at least 1, max 4
-            }
-
-            invariants {
-                "Check-out must be after check-in": check_out is greater than check_in
-                "At least one room required": room_assignments is greater than 0
-                "Total cost must be non-negative": total_cost is greater than 0
-            }
 
             operations {
                 placing reservation with guest and roomType {

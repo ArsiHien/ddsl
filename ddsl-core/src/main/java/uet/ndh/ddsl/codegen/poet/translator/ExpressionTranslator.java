@@ -524,7 +524,7 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
      */
     private CodeBlock translateEmitClause(EmitClause emitClause) {
         CodeBlock.Builder code = CodeBlock.builder();
-        code.add("// Emit domain events\n");
+        code.add("// Publish domain events\n");
 
         String eventType = emitClause.eventName();
         ClassName eventClass = typeMapper.resolveDomainClassName(eventType);
@@ -536,9 +536,9 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
             // Fallback to old behavior for backward compatibility
             if (!emitClause.eventArguments().isEmpty()) {
                 String args = String.join(", ", emitClause.eventArguments());
-                code.addStatement("registerEvent($T.now($L))", eventClass, args);
+                    code.addStatement("eventPublisher.publish($T.now($L))", eventClass, args);
             } else {
-                code.addStatement("registerEvent($T.now())", eventClass);
+                code.addStatement("eventPublisher.publish($T.now())", eventClass);
             }
         } else {
             // Build argument list from resolved bindings
@@ -558,7 +558,7 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
 
             // Build the statement with proper formatting
             if (argList.isEmpty()) {
-                code.addStatement("registerEvent($T.now())", eventClass);
+                code.addStatement("eventPublisher.publish($T.now())", eventClass);
             } else {
                 String args = String.join(", ", argList);
                 // Check if we need to format Instant.now()
@@ -567,9 +567,9 @@ public class ExpressionTranslator extends BaseAstVisitor<CodeBlock> {
                     CodeBlock argsBlock = CodeBlock.builder()
                         .add(args, INSTANT)
                         .build();
-                    code.addStatement("registerEvent($T.now($L))", eventClass, argsBlock);
+                    code.addStatement("eventPublisher.publish($T.now($L))", eventClass, argsBlock);
                 } else {
-                    code.addStatement("registerEvent($T.now($L))", eventClass, args);
+                code.addStatement("eventPublisher.publish($T.now($L))", eventClass, args);
                 }
             }
         }

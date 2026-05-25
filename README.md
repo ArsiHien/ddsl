@@ -1,232 +1,92 @@
-# Domain-Driven Design DSL (DDSL)
+# DDSL
 
-A sophisticated Domain Specific Language for generating Domain-Driven Design (DDD) code with comprehensive validation, metrics tracking, and code generation capabilities.
+DDSL is a domain-specific language for modeling Domain-Driven Design systems and generating Java code from those models. The repository includes the core compiler, a Language Server Protocol server, an AI-assisted DSL generation backend, and generated-code test suites.
 
-## 🚀 Features
+## Project Structure
 
-### 🎯 Domain Modeling
-- **YAML-based DSL** for defining domain models using DDD tactical patterns
-- **Bounded Contexts** with aggregates, entities, value objects, and services
-- **Rich Type System** with Java type mapping and validation
-- **Comprehensive Validation** with 13+ DDD rules enforcing best practices
+- `ddsl-core` - lexer, parser, AST, symbol/type resolution, validation, and Java code generation.
+- `ddsl-lsp-server` - LSP server for editor integrations, with fat JAR and GraalVM native image targets.
+- `ddsl-ai-agent` - Spring Boot backend that uses OpenRouter, LangGraph4j, Qdrant, and an MCP syntax judge.
+- `ddsl-generated-tests` - JUnit tests for Java code generated from DDSL samples.
+- `samples/` - example `.ddsl` domain models.
 
-### 📊 Metrics & Performance Tracking
-- **Compilation Timing** - Track parsing, validation, code generation, and file writing phases
-- **Synthetic LOC Calculation** - Estimate and measure generated lines of code
-- **Domain Complexity Analysis** - Automatic complexity scoring of domain models
-- **Validation Metrics** - Detailed error and warning categorization
-- **Performance Metrics** - Generation speed (LOC/sec) and throughput analysis
+## Requirements
 
-### 🔍 Validation System
-- **ERROR-level issues** block code generation
-- **WARNING-level issues** allow code generation but provide feedback
-- **Location-accurate error reporting** with line and column information
-- **DDD Pattern Enforcement** including:
-  - Entity identity and immutability rules
-  - Value object immutability and no-identity rules  
-  - Aggregate size limits and reference-by-ID-only rules
-  - Domain event naming and structure rules
-  - Repository and application service patterns
+- Java 25. Use GraalVM Java 25 if you plan to build the native LSP binary.
+- Docker, for running Qdrant locally.
+- An OpenRouter API key, required by `ddsl-ai-agent`.
 
-### 🔨 Code Generation
-- **Pure Java code generation** (Spring Boot compatible)
-- **Lombok integration** for clean, concise generated code
-- **Proper package structure** following DDD conventions
-- **Complete class hierarchy** including entities, VOs, services, repositories
+## Setup
 
-## 🛠️ Usage
+1. Clone the repository and enter the project directory.
 
-### Command Line Interface
+   ```bash
+   git clone <repo-url>
+   cd ddsl
+   ```
 
-#### Generate Code
-```bash
-# Generate Java code from YAML specification
-./ddslc generate --file model.yaml --target java --output target/generated-sources
+2. Configure your OpenRouter API key.
 
-# Or using the built JAR
-java -jar ddsl-1.0-SNAPSHOT.jar shell
-generate --file model.yaml --output target/generated-sources
-```
+   Prefer an environment variable:
 
-#### Validate Only
-```bash
-# Validate domain model without generating code
-./ddslc validate --file model.yaml
+   ```bash
+   export OPENROUTER_API_KEY=your_openrouter_api_key_here
+   ```
 
-# Or using shell
-validate --file model.yaml
-```
+   You can also set it in `ddsl-ai-agent/src/main/resources/application-local.properties` for local development.
 
-### Sample Output with Metrics
-```
-🚀 Starting DDSL compilation...
-📄 Input file: blogdomain.yaml
-🎯 Target: java
-📁 Output: target/generated-sources
+3. Start Qdrant before running the AI agent.
 
-🔄 Starting PARSING...
-✅ Completed PARSING in 45 ms
-🔄 Starting DOMAIN_ANALYSIS...
-✅ Completed DOMAIN_ANALYSIS in 12 ms
-🔄 Starting VALIDATION...
+   ```bash
+   docker compose up -d
+   ```
 
-🔍 Running DDD Tactical Design Validation...
-📋 Checking 13 validation rules
+   Qdrant listens on `localhost:6333` for REST and `localhost:6334` for gRPC.
 
-  ✓ ENTITY_MUST_HAVE_IDENTITY: Entity Must Have Identity... ✅ PASS
-  ✓ VALUE_OBJECT_IMMUTABLE: Value Object Immutable... ❌ 2 issue(s) found
-  ✓ AGGREGATE_ONE_ROOT: Aggregate Has One Root... ✅ PASS
-  ...
+## Build and Test
 
-✅ Completed VALIDATION in 89 ms
-🔄 Starting CODE_GENERATION...
-🔨 Generating code...
-✅ Completed CODE_GENERATION in 234 ms
-🔄 Starting FILE_WRITING...
-✅ Completed FILE_WRITING in 67 ms
+Build all modules:
 
-============================================================
-📊 COMPILATION METRICS REPORT
-============================================================
-
-⏱️  TIMING BREAKDOWN:
-  CODE_GENERATION     :    234 ms
-  VALIDATION          :     89 ms
-  FILE_WRITING        :     67 ms
-  PARSING             :     45 ms
-  DOMAIN_ANALYSIS     :     12 ms
-  TOTAL_TIME          :    447 ms
-
-📈 CODE GENERATION METRICS:
-  Synthetic LOC       :  3,247 lines
-  Files Generated     :     18 files
-  Generation Speed    :  7,265.5 LOC/sec
-
-🔍 VALIDATION METRICS:
-  Errors              :      0 issues
-  Warnings            :      3 issues
-  Total Issues        :      3 total
-
-🏗️  DOMAIN MODEL METRICS:
-  BOUNDED CONTEXTS    : 2
-  TOTAL ENTITIES      : 8
-  TOTAL VALUE OBJECTS : 12
-  TOTAL AGGREGATES    : 4
-  TOTAL REPOSITORIES  : 4
-  COMPLEXITY SCORE    : 156.00
-============================================================
-
-✅ Code generation completed successfully!
-
-📊 Quick Metrics Summary:
-  ⏱️  Total Time: 447 ms
-  📄 Generated Files: 18
-  📏 Synthetic LOC: 3,247 lines
-  📐 Actual LOC: 3,156 lines
-```
-
-## 📋 YAML Specification Format
-
-```yaml
-model:
-  name: "BlogSystem"
-  basePackage: "com.example.blog"
-  version: "1.0.0"
-
-boundedContexts:
-  - name: "BlogContext"
-    package: "blog"
-    
-    valueObjects:
-      - name: "PostTitle"
-        fields:
-          - name: "value"
-            type: "String"
-            final: true
-            constraints:
-              - type: "NOT_EMPTY"
-
-    aggregates:
-      - name: "Post"
-        root:
-          name: "Post"
-          isAggregateRoot: true
-          identityField:
-            name: "postId"
-            type: "UUID"
-          fields:
-            - name: "title"
-              type: "PostTitle"
-              final: true
-    
-    repositories:
-      - name: "PostRepository"
-        aggregateType: "Post"
-        idType: "UUID"
-```
-
-## 🏗️ Architecture
-
-### Core Components
-- **Parser** (`parser/`) - YAML to AST conversion with location tracking
-- **Core** (`core/`) - AST nodes, type system, and validation framework  
-- **Validator** (`validator/`) - DDD tactical design pattern enforcement
-- **Compiler** (`compiler/`) - Orchestration with metrics tracking
-- **CodeGen** (`codegen/`) - Java code generation with synthetic LOC calculation
-- **Shell** (`shell/`) - Interactive command-line interface
-
-### Validation Rules (13+ Implemented)
-1. **Entity Rules** - Identity, equality, immutability
-2. **Value Object Rules** - Immutability, no identity fields
-3. **Aggregate Rules** - Single root, ID-only references, size limits
-4. **Domain Event Rules** - Immutability, past tense naming, required fields  
-5. **Repository Rules** - Per aggregate root only
-6. **Application Service Rules** - No business logic validation
-
-## 🔧 Development
-
-### Build
 ```bash
 ./gradlew build
 ```
 
-### Test
+Run tests:
+
 ```bash
 ./gradlew test
 ```
 
-### Run Shell
+Run only the generated-code tests:
+
+```bash
+./gradlew :ddsl-generated-tests:test
+```
+
+Run the AI agent test runner with local configuration:
+
+```bash
+./gradlew :ddsl-ai-agent:test --tests "NlToDslTestRunner" -Dspring.profiles.active=local
+```
+
+## Run
+
+Start the AI agent Spring Boot server:
+
 ```bash
 ./gradlew bootRun
 ```
 
-## 📊 Metrics Categories
+Build the LSP server fat JAR:
 
-### Timing Metrics
-- **PARSING** - YAML to AST conversion time
-- **DOMAIN_ANALYSIS** - Domain model structure analysis
-- **VALIDATION** - DDD rules validation time
-- **CODE_GENERATION** - AST to Java code generation
-- **FILE_WRITING** - Writing generated files to disk
+```bash
+./gradlew :ddsl-lsp-server:shadowJar
+```
 
-### Code Metrics
-- **Synthetic LOC** - Estimated lines of code before generation
-- **Actual LOC** - Measured lines in generated files (excluding comments/empty lines)
-- **Files Generated** - Total number of generated .java files
-- **Generation Speed** - Lines of code generated per second
+Build the native LSP binary with GraalVM:
 
-### Domain Metrics
-- **Bounded Contexts** - Number of domain contexts
-- **Entities/Value Objects/Aggregates** - Count by type
-- **Complexity Score** - Weighted complexity calculation
-- **Validation Issues** - Errors vs warnings breakdown
+```bash
+./gradlew :ddsl-lsp-server:nativeCompile
+```
 
-### Performance Benchmarks
-- **Small Models** (1-2 aggregates): ~50-200ms total time
-- **Medium Models** (5-10 aggregates): ~200-800ms total time  
-- **Large Models** (20+ aggregates): ~800ms+ total time
-- **Generation Speed**: Typically 5,000-15,000 LOC/sec depending on model complexity
-
----
-
-**Built with Spring Boot, Lombok, and comprehensive DDD tactical design validation.**
+The native binary is generated as `ddsl-lsp`.

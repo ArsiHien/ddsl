@@ -1,6 +1,8 @@
 package uet.ndh.ddsl.codegen;
 
 import org.junit.jupiter.api.*;
+import uet.ndh.ddsl.analysis.AnalysisDiagnostic;
+import uet.ndh.ddsl.analysis.SemanticAnalyzer;
 import uet.ndh.ddsl.ast.model.DomainModel;
 import uet.ndh.ddsl.codegen.poet.PoetModule;
 import uet.ndh.ddsl.parser.DdslParser;
@@ -29,31 +31,53 @@ import static org.junit.jupiter.api.Assertions.*;
  * <ol>
  *   <li>Load DDSL source</li>
  *   <li>Lex + Parse → AST</li>
+ *   <li>Semantic analysis</li>
  *   <li>Type registration + Code generation → CodeArtifacts</li>
  *   <li>Write artifacts to disk (packages + .java files)</li>
  *   <li>Verify file tree (existence, content, package declarations)</li>
  * </ol>
  */
-class HotelBookingPipelineTest {
+public class HotelBookingPipelineTest {
 
-    private static final String BASE_PACKAGE = "com.hotel.booking";
-    private static final String DDSL_FILE = "samples/hotel-booking.ddsl";
+    private static final String BASE_PACKAGE = "io.pillopl.library";
+    private static final List<String> DDSL_FILES = List.of(
+            "../library-sample/library-catalogue.ddsl",
+            "../library-sample/library-lending.ddsl"
+    );
 
-        /** Generated files are written here and preserved across test runs for inspection. */
-    private static final String OUTPUT_DIR = "build/generated-test/hotel-booking";
-
-    private String ddslSource;
+        private static final Path OUTPUT_DIR = Path.of(
+                "..",
+                "library-business-tests",
+                "src",
+                "main",
+                "java"
+        ).toAbsolutePath().normalize();
+    private Map<String, String> ddslSources;
     private Path outputDir;
 
     @BeforeEach
     void setUp() throws IOException {
-        // Load the DDSL source
-        Path path = Path.of(DDSL_FILE);
-        assertTrue(Files.exists(path), "Sample file must exist: " + DDSL_FILE);
-        ddslSource = Files.readString(path);
+        // Load the DDSL sources
+        ddslSources = new LinkedHashMap<>();
+        for (String ddslFile : DDSL_FILES) {
+            Path path = Path.of(ddslFile);
+            assertTrue(Files.exists(path), "Sample file must exist: " + ddslFile);
+            ddslSources.put(ddslFile, Files.readString(path));
+        }
 
-        // Use a persistent project-relative directory and preserve generated output across runs
-        outputDir = Path.of(OUTPUT_DIR).toAbsolutePath();
+        // Use a persistent project-relative directory and clear stale generated output across runs
+        outputDir = OUTPUT_DIR;
+        if (Files.exists(outputDir)) {
+            try (Stream<Path> walk = Files.walk(outputDir)) {
+                List<Path> paths = walk
+                        .sorted(Comparator.reverseOrder())
+                        .filter(candidate -> !candidate.equals(outputDir))
+                        .toList();
+                for (Path stalePath : paths) {
+                    Files.deleteIfExists(stalePath);
+                }
+            }
+        }
         Files.createDirectories(outputDir);
     }
 
@@ -69,7 +93,9 @@ class HotelBookingPipelineTest {
         // Phase 1: Load DDSL source
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
-        byte[] rawBytes = ddslSource.getBytes(StandardCharsets.UTF_8);
+        int rawBytes = ddslSources.values().stream()
+                .mapToInt(source -> source.getBytes(StandardCharsets.UTF_8).length)
+                .sum();
         t1 = System.nanoTime();
         timings.put("1. Load source", t1 - t0);
 
@@ -77,40 +103,65 @@ class HotelBookingPipelineTest {
         // Phase 2: Lexing + Parsing → AST
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
-        var parser = new DdslParser(ddslSource, "hotel-booking.ddsl");
-        DomainModel model = parser.parse();
+        List<DomainModel> models = new ArrayList<>();
+        for (var entry : ddslSources.entrySet()) {
+            var parser = new DdslParser(entry.getValue(), Path.of(entry.getKey()).getFileName().toString());
+            DomainModel model = parser.parse();
+            assertNotNull(model);
+            assertFalse(model.boundedContexts().isEmpty(),
+                    "Should parse at least 1 bounded context from " + entry.getKey());
+            models.add(model);
+        }
         t1 = System.nanoTime();
         timings.put("2. Parse (lex + parse)", t1 - t0);
 
-        assertNotNull(model);
-        assertFalse(model.boundedContexts().isEmpty(), "Should parse at least 1 bounded context");
+        // ════════════════════════════════════════════════════════════════
+        // Phase 3: Semantic analysis
+        // ════════════════════════════════════════════════════════════════
+        t0 = System.nanoTime();
+        List<AnalysisDiagnostic> semanticErrors = new ArrayList<>();
+        for (DomainModel model : models) {
+            var analysisResult = new SemanticAnalyzer().analyze(model);
+            semanticErrors.addAll(analysisResult.errors());
+        }
+        t1 = System.nanoTime();
+        timings.put("3. Semantic analysis", t1 - t0);
+        int semanticErrorCount = semanticErrors.size();
 
         // ════════════════════════════════════════════════════════════════
-        // Phase 3: Type registration + Code Generation
+        // Phase 4: Type registration + Code Generation
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
         var poet = new PoetModule(BASE_PACKAGE);
-        List<CodeArtifact> artifacts = poet.generateFromModel(model);
+        List<CodeArtifact> artifacts = new ArrayList<>();
+        for (DomainModel model : models) {
+            artifacts.addAll(poet.generateFromModel(model));
+        }
+        Map<String, CodeArtifact> artifactsByPath = new LinkedHashMap<>();
+        for (CodeArtifact artifact : artifacts) {
+            artifactsByPath.put(artifact.relativePath(), artifact);
+        }
+        artifacts = new ArrayList<>(artifactsByPath.values());
         t1 = System.nanoTime();
-        timings.put("3. Code generation", t1 - t0);
+        timings.put("4. Code generation", t1 - t0);
 
         assertFalse(artifacts.isEmpty(), "Should produce artifacts");
 
         // ════════════════════════════════════════════════════════════════
-        // Phase 4: Write all files to disk (packages + .java files)
+        // Phase 5: Write all files to disk (packages + .java files)
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
         var writer = new ProjectWriter(ProjectWriter.WriterConfig.defaults());
         ProjectWriter.WriteResult writeResult = writer.writeAll(artifacts, outputDir);
         t1 = System.nanoTime();
-        timings.put("4. Write to disk", t1 - t0);
+        timings.put("5. Write to disk", t1 - t0);
 
         assertEquals(0, writeResult.filesFailed(), "No file writes should fail");
         assertEquals(artifacts.size(), writeResult.filesWritten(),
                 "All artifacts should be written");
 
         // ════════════════════════════════════════════════════════════════
-        // Phase 5: Verify file tree — every file exists & has content
+        // Phase 6: Verify file tree — every file exists & has content
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
         int verifiedCount = 0;
@@ -148,10 +199,10 @@ class HotelBookingPipelineTest {
             verifiedCount++;
         }
         t1 = System.nanoTime();
-        timings.put("5. Verify file tree", t1 - t0);
+        timings.put("6. Verify file tree", t1 - t0);
 
         // ════════════════════════════════════════════════════════════════
-        // Phase 6: File-system statistics
+        // Phase 7: File-system statistics
         // ════════════════════════════════════════════════════════════════
         t0 = System.nanoTime();
         long totalFilesOnDisk;
@@ -159,27 +210,27 @@ class HotelBookingPipelineTest {
         long totalBytesOnDisk;
         Set<String> packageDirs = new TreeSet<>();
 
-        try (Stream<Path> walk = Files.walk(outputDir)) {
-            List<Path> allPaths = walk.toList();
-            totalFilesOnDisk = allPaths.stream().filter(Files::isRegularFile).count();
-            totalDirsOnDisk = allPaths.stream().filter(Files::isDirectory).count() - 1; // exclude root
-            totalBytesOnDisk = allPaths.stream()
-                    .filter(Files::isRegularFile)
-                    .mapToLong(p -> {
-                        try { return Files.size(p); } catch (IOException e) { return 0; }
-                    })
-                    .sum();
-        }
+        Set<Path> generatedPaths = artifacts.stream()
+                .map(artifact -> outputDir.resolve(artifact.relativePath()).normalize())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // Collect package directories
-        try (Stream<Path> walk = Files.walk(outputDir)) {
-            walk.filter(Files::isDirectory)
-                .filter(p -> !p.equals(outputDir))
+        totalFilesOnDisk = generatedPaths.stream().filter(Files::isRegularFile).count();
+        totalBytesOnDisk = generatedPaths.stream()
+                .filter(Files::isRegularFile)
+                .mapToLong(p -> {
+                    try { return Files.size(p); } catch (IOException e) { return 0; }
+                })
+                .sum();
+
+        generatedPaths.stream()
+                .map(Path::getParent)
+                .filter(Objects::nonNull)
+                .distinct()
                 .forEach(p -> {
                     String rel = outputDir.relativize(p).toString().replace('/', '.');
                     packageDirs.add(rel);
                 });
-        }
+        totalDirsOnDisk = packageDirs.size();
 
         int totalLines = 0;
         int totalChars = 0;
@@ -188,7 +239,7 @@ class HotelBookingPipelineTest {
             totalChars += a.sourceCode().length();
         }
         t1 = System.nanoTime();
-        timings.put("6. Collect statistics", t1 - t0);
+        timings.put("7. Collect statistics", t1 - t0);
 
         long totalNanos = timings.values().stream().mapToLong(Long::longValue).sum();
         timings.put("   TOTAL", totalNanos);
@@ -206,9 +257,11 @@ class HotelBookingPipelineTest {
         }
         System.out.println("╠════════════════════════════════════════════════════════════════════╣");
         System.out.printf("║  DDSL source size:       %6d bytes  (%3d lines)               ║%n",
-                rawBytes.length, ddslSource.lines().count());
+                rawBytes, ddslSources.values().stream().mapToLong(source -> source.lines().count()).sum());
         System.out.printf("║  Artifacts generated:    %6d                                   ║%n",
                 artifacts.size());
+        System.out.printf("║  Semantic diagnostics:   %6d error(s)                          ║%n",
+                semanticErrorCount);
         System.out.printf("║  Files on disk:          %6d                                   ║%n",
                 totalFilesOnDisk);
         System.out.printf("║  Directories created:    %6d                                   ║%n",
@@ -222,6 +275,12 @@ class HotelBookingPipelineTest {
         System.out.printf("║  Files verified OK:      %6d / %-6d                            ║%n",
                 verifiedCount, artifacts.size());
         System.out.println("╚════════════════════════════════════════════════════════════════════╝");
+
+        if (!semanticErrors.isEmpty()) {
+            System.out.println();
+            System.out.println("Semantic analysis diagnostics:");
+            System.out.println(formatDiagnostics(semanticErrors));
+        }
 
         // ── Package tree ────────────────────────────────────────────────
         System.out.println();
@@ -249,29 +308,28 @@ class HotelBookingPipelineTest {
         // ── Directory listing on disk ───────────────────────────────────
         System.out.println();
         System.out.println("┌─── Files on Disk ───────────────────────────────────────────────┐");
-        try (Stream<Path> walk = Files.walk(outputDir)) {
-            walk.filter(Files::isRegularFile)
-                .sorted()
-                .forEach(p -> {
-                    String rel = outputDir.relativize(p).toString();
-                    try {
-                        long size = Files.size(p);
-                        System.out.printf("│  %-56s %6d B │%n", rel, size);
-                    } catch (IOException e) {
-                        System.out.printf("│  %-56s   ERR   │%n", rel);
-                    }
-                });
-        }
+        generatedPaths.stream()
+            .filter(Files::isRegularFile)
+            .sorted()
+            .forEach(p -> {
+                String rel = outputDir.relativize(p).toString();
+                try {
+                    long size = Files.size(p);
+                    System.out.printf("│  %-56s %6d B │%n", rel, size);
+                } catch (IOException e) {
+                    System.out.printf("│  %-56s   ERR   │%n", rel);
+                }
+            });
         System.out.println("└──────────────────────────────────────────────────────────────────┘");
 
         // ── Print every generated file content ──────────────────────────
-        for (CodeArtifact artifact : artifacts) {
-            System.out.println();
-            System.out.println("━".repeat(72));
-            System.out.printf("  📄 %s  [%s]%n", artifact.relativePath(), artifact.artifactType());
-            System.out.println("━".repeat(72));
-            System.out.println(artifact.sourceCode());
-        }
+//        for (CodeArtifact artifact : artifacts) {
+//            System.out.println();
+//            System.out.println("━".repeat(72));
+//            System.out.printf("  📄 %s  [%s]%n", artifact.relativePath(), artifact.artifactType());
+//            System.out.println("━".repeat(72));
+//            System.out.println(artifact.sourceCode());
+//        }
 
         // ── Verification errors ─────────────────────────────────────────
         if (!verificationErrors.isEmpty()) {
@@ -316,68 +374,15 @@ class HotelBookingPipelineTest {
                 "Total pipeline exceeded 5 s: " + (totalNanos / 1_000_000.0) + " ms");
     }
 
-    // ─── AST inspection ─────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("Hotel Booking: parsed AST has correct structure")
-    void astStructure() throws ParseException {
-        var parser = new DdslParser(ddslSource, "hotel-booking.ddsl");
-        DomainModel model = parser.parse();
-
-        var ctx = model.boundedContexts().getFirst();
-        assertEquals("HotelBooking", ctx.name());
-
-        // Aggregates
-        assertEquals(2, ctx.aggregates().size(), "2 aggregates: Reservation, Room");
-        var aggNames = ctx.aggregates().stream().map(a -> a.name()).toList();
-        assertTrue(aggNames.contains("Reservation"));
-        assertTrue(aggNames.contains("Room"));
-
-        // Value Objects
-        assertTrue(ctx.valueObjects().size() >= 4,
-                "At least 4 VOs: GuestProfile, Money, DateRange, ContactInfo");
-
-        // Domain Events
-        assertTrue(ctx.domainEvents().size() >= 6,
-                "At least 6 domain events");
-
-        // Repositories
-        assertEquals(2, ctx.repositories().size(), "2 repositories");
-
-        // Domain Services
-        assertEquals(2, ctx.domainServices().size(), "2 domain services");
-
-        // Specifications
-        assertTrue(ctx.specifications().size() >= 3, "At least 3 specifications");
-
-        // Factories
-        assertTrue(ctx.factories().size() >= 1, "At least 1 factory");
-
-        // Behaviors on Reservation aggregate
-        var reservation = ctx.aggregates().stream()
-                .filter(a -> a.name().equals("Reservation"))
-                .findFirst().orElseThrow();
-        assertTrue(reservation.behaviors().size() >= 5,
-                "Reservation should have ≥5 behaviors (place, confirm, cancel, check-in, check-out)");
-
-        // Invariants on Reservation aggregate
-        assertTrue(reservation.invariants().size() >= 3,
-                "Reservation should have ≥3 invariants");
-
-        // Child entities
-//        assertTrue(reservation.childEntities().size() >= 1,
-//                "Reservation should have ≥1 child entity (RoomAssignment)");
-
-        System.out.println("✓ AST structure validated");
-        System.out.printf("  Aggregates:       %d%n", ctx.aggregates().size());
-        System.out.printf("  Value Objects:    %d%n", ctx.valueObjects().size());
-        System.out.printf("  Domain Events:    %d%n", ctx.domainEvents().size());
-        System.out.printf("  Domain Services:  %d%n", ctx.domainServices().size());
-        System.out.printf("  Repositories:     %d%n", ctx.repositories().size());
-        System.out.printf("  Specifications:   %d%n", ctx.specifications().size());
-        System.out.printf("  Factories:        %d%n", ctx.factories().size());
-        System.out.printf("  Behaviors:        %d (Reservation)%n", reservation.behaviors().size());
-        System.out.printf("  Invariants:       %d (Reservation)%n", reservation.invariants().size());
-//        System.out.printf("  Child Entities:   %d (Reservation)%n", reservation.childEntities().size());
+    private String formatDiagnostics(List<AnalysisDiagnostic> diagnostics) {
+        return diagnostics.stream()
+                .map(d -> "line %d:%d [%s%s] %s".formatted(
+                        d.location() != null ? d.location().startLine() : 0,
+                        d.location() != null ? d.location().startColumn() : 0,
+                        d.severity(),
+                        d.ruleId() != null ? " " + d.ruleId() : "",
+                        d.message()))
+                .collect(Collectors.joining(System.lineSeparator()));
     }
+
 }

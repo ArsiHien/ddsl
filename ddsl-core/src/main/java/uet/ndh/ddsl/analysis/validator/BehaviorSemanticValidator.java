@@ -70,7 +70,7 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
             "does", "else", "emit", "end", "ends", "equal", "equals", "error", "errors",
             "exists", "fail", "false", "for", "format", "from", "given", "greater", "group",
             "grouped", "has", "have", "if", "in", "is", "item", "items", "last", "least",
-            "length", "less", "match", "matches", "maximum", "minimum", "more", "no", "not",
+            "length", "less", "line", "match", "matches", "maximum", "minimum", "more", "no", "not",
             "now", "null", "of", "on", "one", "only", "or", "otherwise", "present", "record",
             "remove", "require", "required", "return", "set", "starts", "status", "sum", "than", "that",
             "the", "then", "to", "today", "tomorrow", "true", "until", "valid", "warning",
@@ -267,7 +267,9 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
             if (resolved == null || resolved.isEmpty()) {
                 // Fallback to old validation if resolver hasn't run
                 for (String eventArg : decl.emitClause().eventArguments()) {
-                    validateIdentifierText(eventArg, validTargets, decl.emitClause().span(), "emit argument");
+                    if (!isImplicitTemporalEventArgument(eventArg)) {
+                        validateIdentifierText(eventArg, validTargets, decl.emitClause().span(), "emit argument");
+                    }
                 }
             } else {
                 // New validation using resolved bindings
@@ -395,6 +397,10 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
         return null;
     }
 
+    private boolean isImplicitTemporalEventArgument(String eventArg) {
+        return eventArg != null && eventArg.endsWith("At");
+    }
+
     private void validateBehaviorParameters(List<ParameterDecl> parameters, Set<String> validTargets) {
         for (ParameterDecl parameter : parameters) {
             if (parameter == null || parameter.name() == null || parameter.name().isBlank()) {
@@ -490,11 +496,38 @@ public class BehaviorSemanticValidator extends TreeWalkingVisitor<Void> {
                     // Validate the quantified collection only; nested property checks
                     // are usually evaluated against collection elements.
                     validateIdentifierText(condition.quantifierTarget(), scopeTargets, location, context);
+            case COMPARISON, STATE_IS -> validateNaturalComparisonCondition(condition, scopeTargets, location, context);
             default -> {
                 validateExpressionReferences(condition.leftExpression(), scopeTargets, location, context);
                 validateExpressionReferences(condition.rightExpression(), scopeTargets, location, context);
             }
         }
+    }
+
+    private void validateNaturalComparisonCondition(
+            uet.ndh.ddsl.ast.behavior.NaturalLanguageCondition condition,
+            Set<String> scopeTargets,
+            uet.ndh.ddsl.ast.SourceSpan location,
+            String context
+    ) {
+        if (condition.rightExpression() instanceof VariableExpr
+                && isNaturalEqualityPredicate(condition)) {
+            if (condition.leftExpression() instanceof VariableExpr leftVariable
+                    && !scopeTargets.contains(leftVariable.name())
+                    && !isEquivalentToScopedName(leftVariable.name(), scopeTargets)) {
+                return;
+            }
+            validateExpressionReferences(condition.leftExpression(), scopeTargets, location, context);
+            return;
+        }
+
+        validateExpressionReferences(condition.leftExpression(), scopeTargets, location, context);
+        validateExpressionReferences(condition.rightExpression(), scopeTargets, location, context);
+    }
+
+    private boolean isNaturalEqualityPredicate(uet.ndh.ddsl.ast.behavior.NaturalLanguageCondition condition) {
+        return condition.type() == uet.ndh.ddsl.ast.behavior.NaturalLanguageCondition.ConditionType.STATE_IS
+                || condition.comparisonOperator() == uet.ndh.ddsl.ast.behavior.NaturalLanguageCondition.ComparisonOperator.EQUAL;
     }
 
     private void validateExpressionReferences(

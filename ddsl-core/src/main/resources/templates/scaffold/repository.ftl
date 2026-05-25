@@ -11,7 +11,7 @@ import java.util.Optional;
  * @param <T> The aggregate root type
  * @param <ID> The aggregate's identity type
  */
-public interface Repository<T extends AggregateRoot<ID>, ID> {
+public interface Repository<T, ID> {
     
     /**
      * Find an aggregate by its identity.

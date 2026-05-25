@@ -21,8 +21,13 @@ dependencies {
 
     implementation("org.slf4j:slf4j-api:2.0.17")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
-}
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
+    testImplementation("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.hamcrest:hamcrest:2.2")
+    testCompileOnly("org.projectlombok:lombok:1.18.38")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.38")}
 
 dependencyManagement {
     imports {
@@ -31,5 +36,6 @@ dependencyManagement {
 }
 
 tasks.withType<Test> {
-    enabled = false
+    useJUnitPlatform()
+    enabled = true
 }

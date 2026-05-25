@@ -7,6 +7,8 @@ import uet.ndh.ddsl.agent.node.JudgeNode;
 import uet.ndh.ddsl.agent.node.OrchestratorNode;
 import uet.ndh.ddsl.mcp.DdslValidationTool;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -336,6 +338,240 @@ var state = new DdslState(Map.ofEntries(
         }
 
         @Test
+        @DisplayName("Natural increase and decrease then-statements are valid")
+        void increaseDecreaseThenStatementsAreValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Inventory {
+                        domain {
+                            Aggregate StockItem {
+                                @identity itemId: UUID
+                                quantity: Int
+                                reservedQuantity: Int
+
+                                operations {
+                                    when reserving stock with requestedQuantity:
+                                        require that:
+                                            - requestedQuantity is required
+                                        then:
+                                            - decrease quantity by requestedQuantity
+                                            - increase reservedQuantity by requestedQuantity
+                                }
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated inventory adjustment DSL should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Invariant method call accepts lambda predicate argument")
+        void invariantLambdaPredicateIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Returns {
+                        domain {
+                            Aggregate ReturnAuthorization {
+                                @identity returnId: UUID
+                                items: List<ReturnItem>
+
+                                invariants {
+                                    "All items must have quantity greater than zero": items.every(item -> item.quantity > 0)
+                                }
+                            }
+
+                            Entity ReturnItem {
+                                @identity itemId: UUID
+                                quantity: Int
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated return authorization invariant should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Factory for target type and from-parameter rule is valid")
+        void factoryForTargetTypeWithParameterRuleIsValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Procurement {
+                        domain {
+                            Aggregate PurchaseOrder {
+                                @identity purchaseOrderId: UUID
+                                supplierId: String
+                                requesterId: String
+                                status: String
+                            }
+                        }
+
+                        factories {
+                            Factory PurchaseOrderFactory for PurchaseOrder {
+                                when creating PurchaseOrder from supplierId, requesterId, lines:
+                                    require that:
+                                        - lines is not empty
+                                    then:
+                                        - create PurchaseOrder with new purchaseOrderId, supplierId, requesterId, lines, status set to "DRAFT"
+                                    return PurchaseOrder
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated purchase order factory DSL should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Factory creation can infer produced type before with-parameters")
+        void factoryCreationInfersProducedTypeBeforeWithParameters() throws Exception {
+            String ddsl = """
+                    BoundedContext Procurement {
+                        domain {
+                            Aggregate PurchaseOrder {
+                                @identity purchaseOrderId: UUID
+                                supplierId: String
+                                requesterId: String
+                            }
+
+                            Entity PurchaseOrderLine {
+                                @identity lineId: UUID
+                                itemCode: String
+                            }
+                        }
+
+                        factories {
+                            Factory PurchaseOrderFactory for PurchaseOrder {
+                                when creating with supplierId: String, requesterId: String, lines: List<PurchaseOrderLine>:
+                                    require that:
+                                        - lines is not empty
+                                    return PurchaseOrder
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Factory should infer PurchaseOrder from declaration: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("DomainService then-clause accepts bare comparison expression")
+        void domainServiceThenClauseAcceptsBareComparisonExpression() throws Exception {
+            String ddsl = """
+                    BoundedContext Procurement {
+                        domain {
+                            ValueObject Money {
+                                amount: Decimal @min(0)
+                                currency: String
+                            }
+
+                            DomainService ApprovalPolicy {
+                                when checking approval requirement with totalAmount: Money, requesterId: String:
+                                    then:
+                                        - totalAmount > 1000
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "DomainService comparison then-statement should parse: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
+        @DisplayName("Saved failing result artifacts now validate")
+        void savedFailingResultArtifactsNowValidate() throws Exception {
+            Path moduleRoot = Path.of("").toAbsolutePath().endsWith("ddsl-ai-agent")
+                    ? Path.of("")
+                    : Path.of("ddsl-ai-agent");
+            List<Path> finalArtifacts = List.of(
+                    moduleRoot.resolve("src/main/resources/result/M004-Account-Lifecycle-With-Invariants/final.ddsl"),
+                    moduleRoot.resolve("src/main/resources/result/M007-Inventory-Adjustment-Service/final.ddsl"),
+                    moduleRoot.resolve("src/main/resources/result/H002-Return-Merchandise-Authorization/final.ddsl"),
+                    moduleRoot.resolve("src/main/resources/result/H005-Procurement-Purchase-Order/final.ddsl")
+            );
+
+            for (Path artifact : finalArtifacts) {
+                String json = tool.validateDSL(Files.readString(artifact));
+                Map<String, Object> result = mapper.readValue(json, Map.class);
+                assertTrue((Boolean) result.get("valid"), artifact + " should validate after parser compatibility fixes: " + json);
+                assertTrue(((List<?>) result.get("errors")).isEmpty(), artifact + " should have no errors");
+            }
+        }
+
+        @Test
+        @DisplayName("Loan state-machine prose conditions do not become unresolved identifiers")
+        void loanStateMachineProseConditionsAreValid() throws Exception {
+            String ddsl = """
+                    BoundedContext Lending {
+                        domain {
+                            Aggregate LoanApplication {
+                                @identity applicationId: UUID
+                                applicantId: String @required
+                                requestedAmount: Decimal @min(1000)
+                                creditScore: Int @min(300) @max(850)
+                                status: String
+                                submittedAt: DateTime?
+                                approvedAt: DateTime?
+
+                                operations {
+                                    when submit with applicantData:
+                                        require that:
+                                            - status is "DRAFT"
+                                            - applicantData is complete
+                                        then:
+                                            - set status to "SUBMITTED"
+                                            - set submittedAt to now
+                                        emit LoanApplicationSubmitted
+
+                                    when approve:
+                                        require that:
+                                            - status is "SUBMITTED"
+                                            - creditScore >= 650
+                                            - requestedAmount <= policyLimit
+                                        then:
+                                            - set status to "APPROVED"
+                                            - set approvedAt to now
+                                        emit LoanApplicationApproved
+
+                                    when reject:
+                                        require that:
+                                            - status is "SUBMITTED"
+                                            - risk is too high
+                                        then:
+                                            - set status to "REJECTED"
+                                        emit LoanApplicationRejected
+                                }
+                            }
+                        }
+                    }
+                    """;
+
+            String json = tool.validateDSL(ddsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+
+            assertTrue((Boolean) result.get("valid"), "Generated H001 state-machine prose should be accepted: " + json);
+            assertTrue(((List<?>) result.get("errors")).isEmpty(), "No errors expected");
+        }
+
+        @Test
         @DisplayName("Empty input returns error")
         void emptyInput() throws Exception {
             String json = tool.validateDSL("");
@@ -417,6 +653,117 @@ var state = new DdslState(Map.ofEntries(
             Map<String, String> outputs = (Map<String, String>) updates.get(DdslState.KEY_CHUNK_OUTPUTS);
             assertEquals(existingDomainModel, outputs.get("DomainModel"));
             assertTrue(String.valueOf(updates.get(DdslState.KEY_CURRENT_DSL)).contains("Aggregate CourseOffering"));
+        }
+
+        @Test
+        @DisplayName("Legacy StateMachine chunk is normalized before merge")
+        void legacyStateMachineChunkIsNormalizedBeforeMerge() throws Exception {
+            String domainModel = """
+                    Aggregate LoanApplication {
+                        @identity applicationId: UUID
+                        status: String
+                        creditScore: Int
+                        requestedAmount: Decimal
+                    }
+                    """;
+            String legacyStateMachine = """
+                    StateMachine LoanApplicationStatus {
+                        initial: DRAFT
+                        final: REJECTED, WITHDRAWN
+                        transitions:
+                            - from DRAFT to SUBMITTED when: applicantDataComplete
+                            - from SUBMITTED to APPROVED when: creditScore >= 650 and requestedAmount <= policyLimit
+                            - from SUBMITTED to REJECTED when: riskTooHigh
+                            - from DRAFT to WITHDRAWN
+                    }
+                    """;
+            List<PlanStep> plan = List.of(new PlanStep(
+                    "StateMachines",
+                    "Define state machine",
+                    List.of("DomainModel"),
+                    "RUNNING"
+            ));
+            var state = new DdslState(Map.ofEntries(
+                    Map.entry(DdslState.KEY_USER_INPUT, "BoundedContext Lending state machine"),
+                    Map.entry(DdslState.KEY_CURRENT_DSL, legacyStateMachine),
+                    Map.entry(DdslState.KEY_PLAN_GRAPH, PlanStep.toMaps(plan)),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_ID, "StateMachines"),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_TASK, "Define state machine"),
+                    Map.entry(DdslState.KEY_CHUNK_OUTPUTS, Map.of("DomainModel", domainModel)),
+                    Map.entry(DdslState.KEY_SYNTHESIS_MODE, "GENERATE"),
+                    Map.entry(DdslState.KEY_ORCHESTRATOR_PHASE, "SYNTHESIZING"),
+                    Map.entry(DdslState.KEY_REPAIR_HISTORY, List.of()),
+                    Map.entry(DdslState.KEY_STRUCTURED_ERRORS, List.of()),
+                    Map.entry(DdslState.KEY_ERROR_LOGS, List.of()),
+                    Map.entry(DdslState.KEY_IS_SUCCESSFUL, false)
+            ));
+
+            Map<String, Object> updates = orchestratorNode.apply(state);
+            String mergedDsl = String.valueOf(updates.get(DdslState.KEY_CURRENT_DSL));
+
+            assertTrue(mergedDsl.contains("state machine for status"));
+            assertFalse(mergedDsl.contains("StateMachine LoanApplicationStatus"));
+
+            String json = new DdslValidationTool().validateDSL(mergedDsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+            assertTrue((Boolean) result.get("valid"), "Normalized state machine should validate: " + json);
+        }
+
+        @Test
+        @DisplayName("Bare state machine transitions receive default condition before merge")
+        void bareStateMachineTransitionsReceiveDefaultConditionBeforeMerge() throws Exception {
+            String domainModel = """
+                    Aggregate LoanApplication {
+                        @identity applicationId: UUID
+                        status: String
+                    }
+                    """;
+            String stateMachine = """
+                    state machine for status {
+                        states:
+                            - DRAFT (initial)
+                            - SUBMITTED
+                            - APPROVED
+                            - REJECTED (final)
+                            - WITHDRAWN (final)
+                        transitions:
+                            - DRAFT -> SUBMITTED
+                            - SUBMITTED -> APPROVED
+                            - SUBMITTED -> REJECTED
+                            - DRAFT -> WITHDRAWN
+                            - SUBMITTED -> WITHDRAWN
+                    }
+                    """;
+            List<PlanStep> plan = List.of(new PlanStep(
+                    "StateMachines",
+                    "Define state machine",
+                    List.of("DomainModel"),
+                    "RUNNING"
+            ));
+            var state = new DdslState(Map.ofEntries(
+                    Map.entry(DdslState.KEY_USER_INPUT, "BoundedContext Lending state machine"),
+                    Map.entry(DdslState.KEY_CURRENT_DSL, stateMachine),
+                    Map.entry(DdslState.KEY_PLAN_GRAPH, PlanStep.toMaps(plan)),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_ID, "StateMachines"),
+                    Map.entry(DdslState.KEY_CURRENT_CHUNK_TASK, "Define state machine"),
+                    Map.entry(DdslState.KEY_CHUNK_OUTPUTS, Map.of("DomainModel", domainModel)),
+                    Map.entry(DdslState.KEY_SYNTHESIS_MODE, "REPAIR"),
+                    Map.entry(DdslState.KEY_ORCHESTRATOR_PHASE, "SYNTHESIZING"),
+                    Map.entry(DdslState.KEY_REPAIR_HISTORY, List.of()),
+                    Map.entry(DdslState.KEY_STRUCTURED_ERRORS, List.of()),
+                    Map.entry(DdslState.KEY_ERROR_LOGS, List.of()),
+                    Map.entry(DdslState.KEY_IS_SUCCESSFUL, false)
+            ));
+
+            Map<String, Object> updates = orchestratorNode.apply(state);
+            String mergedDsl = String.valueOf(updates.get(DdslState.KEY_CURRENT_DSL));
+
+            assertTrue(mergedDsl.contains("- DRAFT -> SUBMITTED: always"));
+            assertTrue(mergedDsl.contains("- SUBMITTED -> WITHDRAWN: always"));
+
+            String json = new DdslValidationTool().validateDSL(mergedDsl);
+            Map<String, Object> result = mapper.readValue(json, Map.class);
+            assertTrue((Boolean) result.get("valid"), "Bare transition normalization should validate: " + json);
         }
     }
 

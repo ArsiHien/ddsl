@@ -107,7 +107,7 @@ public class OrchestratorNode implements NodeAction<DdslState> {
         List<String> downstreamDependencies = includeDomainTypes ? List.of("DomainTypes", "DomainModel") : List.of("DomainModel");
         if (includeStateMachines) {
             plan.add(step("StateMachines",
-                    "Define only explicitly requested StateMachine declarations for aggregate/entity lifecycle transitions. Output raw StateMachine declarations only.",
+                    "Define only explicitly requested state machines for aggregate/entity lifecycle transitions. Use parser-compatible syntax only: `state machine for status { states: ... transitions: ... }`. Do not output `StateMachine Name { ... }`.",
                     downstreamDependencies));
         }
         if (includeDomainServices) {
@@ -404,9 +404,17 @@ public class OrchestratorNode implements NodeAction<DdslState> {
             return;
         }
 
+        String sanitized = sanitizeChunk(code);
+        if ("StateMachines".equals(chunkId)) {
+            sanitized = normalizeStateMachineChunk(sanitized);
+        }
+        if (sanitized.isBlank()) {
+            return;
+        }
+
         appendLine(sb, " ".repeat(Math.max(0, indent)) + "// @chunk:start " + chunkId);
         int start = lineCount(sb) + 1;
-        for (String line : sanitizeChunk(code).split("\\R")) {
+        for (String line : sanitized.split("\\R")) {
             appendLine(sb, " ".repeat(Math.max(0, indent)) + line);
         }
         int end = lineCount(sb);
@@ -419,6 +427,149 @@ public class OrchestratorNode implements NodeAction<DdslState> {
         sanitized = stripSingleWrapper(sanitized, "BoundedContext\\s+\\w+");
         sanitized = stripSingleWrapper(sanitized, "(?:domain|events|event-handlers|repositories|factories|specifications|use-cases|ubiquitous-language)");
         return sanitized.strip();
+    }
+
+    private String normalizeStateMachineChunk(String code) {
+        String trimmed = code.strip();
+        if (trimmed.toLowerCase(Locale.ROOT).startsWith("state machine ")) {
+            return normalizeBareStateMachineTransitions(trimmed);
+        }
+
+        Pattern legacyPattern = Pattern.compile("(?is)^StateMachine\\s+(\\w+)\\s*\\{(.*)}\\s*$");
+        Matcher matcher = legacyPattern.matcher(trimmed);
+        if (!matcher.matches()) {
+            return trimmed;
+        }
+
+        String machineName = matcher.group(1);
+        String body = matcher.group(2);
+        String controlledField = inferStateMachineField(machineName);
+        Map<String, StateFlags> states = new LinkedHashMap<>();
+        List<String> transitions = new ArrayList<>();
+
+        for (String rawLine : body.split("\\R")) {
+            String line = rawLine.trim();
+            if (line.isBlank() || line.equalsIgnoreCase("transitions:")) {
+                continue;
+            }
+
+            if (line.toLowerCase(Locale.ROOT).startsWith("initial:")) {
+                for (String state : splitStateList(line.substring(line.indexOf(':') + 1))) {
+                    states.computeIfAbsent(state, ignored -> new StateFlags()).initial = true;
+                }
+                continue;
+            }
+
+            if (line.toLowerCase(Locale.ROOT).startsWith("final:")) {
+                for (String state : splitStateList(line.substring(line.indexOf(':') + 1))) {
+                    states.computeIfAbsent(state, ignored -> new StateFlags()).fin = true;
+                }
+                continue;
+            }
+
+            Matcher transition = Pattern.compile("(?i)^-\\s*from\\s+(\\w+)\\s+to\\s+(\\w+)(?:\\s+when\\s*:\\s*(.+))?\\s*$")
+                    .matcher(line);
+            if (transition.matches()) {
+                String source = transition.group(1);
+                String target = transition.group(2);
+                String condition = transition.group(3);
+                states.computeIfAbsent(source, ignored -> new StateFlags());
+                states.computeIfAbsent(target, ignored -> new StateFlags());
+                transitions.add("- " + source + " -> " + target + ": "
+                        + (condition == null || condition.isBlank() ? "always" : "when " + condition.strip()));
+            }
+        }
+
+        if (states.isEmpty() || transitions.isEmpty()) {
+            return trimmed;
+        }
+
+        StringBuilder normalized = new StringBuilder();
+        normalized.append("state machine for ").append(controlledField).append(" {\n");
+        normalized.append("    states:\n");
+        for (Map.Entry<String, StateFlags> entry : states.entrySet()) {
+            StateFlags flags = entry.getValue();
+            normalized.append("        - ").append(entry.getKey());
+            if (flags.initial && flags.fin) {
+                normalized.append(" (initial, final)");
+            } else if (flags.initial) {
+                normalized.append(" (initial)");
+            } else if (flags.fin) {
+                normalized.append(" (final)");
+            }
+            normalized.append("\n");
+        }
+        normalized.append("\n");
+        normalized.append("    transitions:\n");
+        for (String transition : transitions) {
+            normalized.append("        ").append(transition).append("\n");
+        }
+        normalized.append("}");
+        return normalizeBareStateMachineTransitions(normalized.toString());
+    }
+
+    private String normalizeBareStateMachineTransitions(String code) {
+        StringBuilder normalized = new StringBuilder();
+        boolean inTransitions = false;
+        for (String line : code.split("\\R", -1)) {
+            String trimmed = line.trim();
+            if (trimmed.equalsIgnoreCase("transitions:")) {
+                inTransitions = true;
+                normalized.append(line).append("\n");
+                continue;
+            }
+
+            if (inTransitions && trimmed.equals("}")) {
+                inTransitions = false;
+                normalized.append(line).append("\n");
+                continue;
+            }
+
+            if (inTransitions && trimmed.startsWith("- ")) {
+                String transition = trimmed.substring(2).strip();
+                if (transition.contains("->") && !transition.contains(":")) {
+                    int whenIndex = indexOfWordIgnoreCase(transition, "when");
+                    if (whenIndex >= 0) {
+                        String route = transition.substring(0, whenIndex).strip();
+                        String condition = transition.substring(whenIndex + "when".length()).strip();
+                        line = line.substring(0, line.indexOf('-')) + "- " + route + ": when " + condition;
+                    } else {
+                        line = line + ": always";
+                    }
+                }
+            }
+
+            normalized.append(line).append("\n");
+        }
+        return normalized.toString().stripTrailing();
+    }
+
+    private int indexOfWordIgnoreCase(String text, String word) {
+        Matcher matcher = Pattern.compile("(?i)\\b" + Pattern.quote(word) + "\\b").matcher(text);
+        return matcher.find() ? matcher.start() : -1;
+    }
+
+    private String inferStateMachineField(String machineName) {
+        if (machineName != null && machineName.endsWith("Status")) {
+            return "status";
+        }
+        return "status";
+    }
+
+    private List<String> splitStateList(String raw) {
+        List<String> states = new ArrayList<>();
+        for (String part : raw.split(",")) {
+            String state = part.trim();
+            if (!state.isBlank()) {
+                states.add(state);
+            }
+        }
+        return states;
+    }
+
+    private static final class StateFlags {
+        private boolean initial;
+        private boolean fin;
     }
 
     private String stripSingleWrapper(String code, String wrapperPattern) {

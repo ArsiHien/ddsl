@@ -52,7 +52,7 @@ public class NlToDslTestRunner {
     }
 
     private void loadTestCases() throws IOException {
-        ClassPathResource resource = new ClassPathResource("test-cases/nl-to-dsl-test-cases-easy.json");
+        ClassPathResource resource = new ClassPathResource("test-cases/nl-to-dsl-test-cases-hard-5.json");
         TestSuite testSuite = objectMapper.readValue(resource.getInputStream(), TestSuite.class);
         this.testCases = testSuite.testCases();
         log.info("Loaded {} test cases", testCases.size());

@@ -1347,18 +1347,22 @@ public class DdslParser {
         Token nameToken = consume(TokenType.IDENTIFIER, "Expected factory name");
         String name = nameToken != null ? nameToken.getLexeme() : "Unknown";
         
-        consume(TokenType.LEFT_BRACE, "Expected '{' after factory name");
-        
         // Determine created type from factory name (e.g., OrderFactory -> Order)
         String createdTypeName = name.replace("Factory", "");
         TypeRef producedType = new TypeRef(span, createdTypeName, null, false, false, null);
+
+        if (match(TokenType.FOR)) {
+            producedType = typeReference();
+        }
+
+        consume(TokenType.LEFT_BRACE, "Expected '{' after factory name");
         
         List<FactoryMethodDecl> creationMethods = new ArrayList<>();
         List<FactoryCreationRuleDecl> creationRules = new ArrayList<>();
         
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.WHEN)) {
-                FactoryCreationRuleDecl rule = factoryCreationRule();
+                FactoryCreationRuleDecl rule = factoryCreationRule(producedType);
                 if (rule != null) {
                     creationRules.add(rule);
                 }
@@ -1373,18 +1377,33 @@ public class DdslParser {
         return new FactoryDecl(span, name, producedType, creationMethods, creationRules, null);
     }
     
-    private FactoryCreationRuleDecl factoryCreationRule() {
+    private FactoryCreationRuleDecl factoryCreationRule(TypeRef producedType) {
         SourceSpan span = currentSpan();
         
         advance(); // consume 'when'
         consume(TokenType.CREATING, "Expected 'creating' after 'when' in factory");
         
         // Parse: creating EntityType from SourceType with params
-        TypeRef entityType = typeReference();
-        
-        consume(TokenType.FROM, "Expected 'from' after entity type");
-        
-        TypeRef sourceType = typeReference();
+        TypeRef entityType;
+        if (check(TokenType.WITH) || check(TokenType.FROM)) {
+            entityType = producedType;
+        } else {
+            entityType = typeReference();
+        }
+
+        String sourceDescription = "";
+        if (match(TokenType.FROM)) {
+            if (looksLikeFactoryParameterList()) {
+                List<ParameterDecl> parameters = parameterList();
+                sourceDescription = parameters.stream()
+                        .map(ParameterDecl::name)
+                        .reduce((left, right) -> left + ", " + right)
+                        .orElse("");
+            } else {
+                TypeRef sourceType = typeReference();
+                sourceDescription = sourceType.name();
+            }
+        }
 
         if (check(TokenType.WITH)) {
             advance();
@@ -1395,7 +1414,10 @@ public class DdslParser {
 
         // Parse clauses - skip for now, just build the rule
         StringBuilder description = new StringBuilder();
-        description.append("creating ").append(entityType.name()).append(" from ").append(sourceType.name());
+        description.append("creating ").append(entityType.name());
+        if (!sourceDescription.isBlank()) {
+            description.append(" from ").append(sourceDescription);
+        }
 
         while (!check(TokenType.WHEN) && !check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             if (check(TokenType.REQUIRE) || check(TokenType.GIVEN) || check(TokenType.THEN) || check(TokenType.RETURN)) {
@@ -2983,6 +3005,18 @@ public class DdslParser {
             consume(TokenType.FROM, "Expected 'from' after expression");
             Token targetToken = consumeIdentifierLike("Expected identifier after 'from'");
             target = targetToken != null ? targetToken.getLexeme() : "";
+        } else if (checkIdentifierLike() && isIncreaseOrDecrease(peek())) {
+            boolean increase = lexemeEquals(peek(), "increase");
+            advance();
+            type = ThenClause.ThenStatement.ThenStatementType.CHANGE;
+            Token targetToken = consumeIdentifierLike("Expected identifier after 'increase/decrease'");
+            target = targetToken != null ? targetToken.getLexeme() : "";
+            consume(TokenType.BY, "Expected 'by' after identifier");
+            Expr delta = expression();
+            value = new BinaryExpr(span,
+                    new VariableExpr(span, target),
+                    increase ? BinaryExpr.BinaryOperator.PLUS : BinaryExpr.BinaryOperator.MINUS,
+                    delta);
         } else if (check(TokenType.SAVE)) {
             advance();
             type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
@@ -3012,9 +3046,11 @@ public class DdslParser {
             type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
             value = expression();
         } else if (checkIdentifierLike()) {
-            ThenClause.ThenStatement naturalCall = parseNaturalMethodCallStatement(span);
-            if (naturalCall != null) {
-                return naturalCall;
+            if (!isComparisonOperatorToken(peekNext().getType())) {
+                ThenClause.ThenStatement naturalCall = parseNaturalMethodCallStatement(span);
+                if (naturalCall != null) {
+                    return naturalCall;
+                }
             }
             value = expression();
             type = ThenClause.ThenStatement.ThenStatementType.METHOD_CALL;
@@ -3025,6 +3061,20 @@ public class DdslParser {
         }
         
         return ThenClause.ThenStatement.simple(span, type, target, value);
+    }
+
+    private boolean isComparisonOperatorToken(TokenType tokenType) {
+        return tokenType == TokenType.IS
+                || tokenType == TokenType.EQUALS
+                || tokenType == TokenType.GT
+                || tokenType == TokenType.LT
+                || tokenType == TokenType.RIGHT_ANGLE
+                || tokenType == TokenType.LEFT_ANGLE
+                || tokenType == TokenType.GTE
+                || tokenType == TokenType.LTE
+                || tokenType == TokenType.NEQ
+                || tokenType == TokenType.EQ
+                || tokenType == TokenType.EXCEEDS;
     }
 
     private ThenClause.ThenStatement parseExecuteCallStatement(SourceSpan span) {
@@ -3403,6 +3453,7 @@ public class DdslParser {
         }
         
         // Check for object construction: return TypeName with:
+        int expressionStart = current;
         Token typeToken = consume(TokenType.IDENTIFIER, "Expected return type");
         String entityType = typeToken != null ? typeToken.getLexeme() : "";
         
@@ -3433,7 +3484,8 @@ public class DdslParser {
         }
         
         // Simple expression return
-        return ReturnClause.expression(span, new VariableExpr(span, entityType));
+        current = expressionStart;
+        return ReturnClause.expression(span, expression());
     }
     
     // ========== Expression Parsing ==========
@@ -3746,7 +3798,7 @@ public class DdslParser {
                 if (!check(TokenType.RIGHT_PAREN)) {
                     do {
                         if (check(TokenType.COMMA)) advance();
-                        arguments.add(expression());
+                        arguments.add(lambdaArgumentOrExpression());
                     } while (check(TokenType.COMMA));
                 }
                 
@@ -3784,6 +3836,51 @@ public class DdslParser {
         }
         
         return expr;
+    }
+
+    private Expr lambdaArgumentOrExpression() {
+        if (isLambdaArgumentStart()) {
+            return parseLambdaArgumentAsOpaqueExpression();
+        }
+        return expression();
+    }
+
+    private boolean isLambdaArgumentStart() {
+        return checkIdentifierLike() && checkNext(TokenType.DASH) && checkAhead(2, TokenType.RIGHT_ANGLE);
+    }
+
+    private Expr parseLambdaArgumentAsOpaqueExpression() {
+        SourceSpan span = currentSpan();
+        StringBuilder raw = new StringBuilder();
+        appendAndAdvance(raw); // parameter name
+        appendAndAdvance(raw); // '-'
+        appendAndAdvance(raw); // '>'
+
+        int parenDepth = 0;
+        while (!isAtEnd()) {
+            if (parenDepth == 0 && (check(TokenType.COMMA) || check(TokenType.RIGHT_PAREN))) {
+                break;
+            }
+            if (check(TokenType.LEFT_PAREN)) {
+                parenDepth++;
+            } else if (check(TokenType.RIGHT_PAREN)) {
+                if (parenDepth == 0) {
+                    break;
+                }
+                parenDepth--;
+            }
+            appendAndAdvance(raw);
+        }
+
+        return new VariableExpr(span, raw.toString().trim());
+    }
+
+    private void appendAndAdvance(StringBuilder raw) {
+        if (!raw.isEmpty()) {
+            raw.append(' ');
+        }
+        raw.append(peek().getLexeme());
+        advance();
     }
     
     private Expr primaryExpression() {
@@ -4942,6 +5039,13 @@ public class DdslParser {
     private Token peek() {
         return tokens.get(current);
     }
+
+    private Token peekNext() {
+        if (current + 1 >= tokens.size()) {
+            return tokens.getLast();
+        }
+        return tokens.get(current + 1);
+    }
     
     private Token previous() {
         return tokens.get(current - 1);
@@ -4967,6 +5071,14 @@ public class DdslParser {
         }
         error(message + ", got '" + peek().getLexeme() + "'");
         return null;
+    }
+
+    private boolean isIncreaseOrDecrease(Token token) {
+        return lexemeEquals(token, "increase") || lexemeEquals(token, "decrease");
+    }
+
+    private boolean looksLikeFactoryParameterList() {
+        return checkIdentifierLike() && checkNext(TokenType.COMMA);
     }
 
     /**

@@ -149,16 +149,19 @@ public class AggregateTranslator {
                     .build());
         }
         
-        // Add domain events collection
-        ClassName domainEventInterface = typeMapper.getDomainEventInterface();
-        TypeName eventListType = ParameterizedTypeName.get(LIST, domainEventInterface);
-        FieldSpec eventsField = FieldSpec.builder(eventListType, "domainEvents", Modifier.PRIVATE, Modifier.FINAL)
-            .initializer("new $T<>()", ARRAY_LIST)
-            .build();
-        classBuilder.addField(eventsField);
+        // Check if aggregate has emit clauses
+        boolean hasEmitClauses = hasEmitClauses(aggregate, root);
+        
+        // Add EventPublisher field if aggregate emits events
+        if (hasEmitClauses) {
+            ClassName eventPublisherInterface = typeMapper.getEventPublisherInterface();
+            FieldSpec eventPublisherField = FieldSpec.builder(eventPublisherInterface, "eventPublisher", Modifier.PRIVATE, Modifier.FINAL)
+                .build();
+            classBuilder.addField(eventPublisherField);
+        }
         
         // Add constructor
-        classBuilder.addMethod(buildAggregateConstructor(root, inferredDependencies));
+        classBuilder.addMethod(buildAggregateConstructor(root, inferredDependencies, hasEmitClauses));
         
         // Register field types for behavior parameter resolution
         // e.g. field "guest: GuestProfile" allows param "guest" to resolve to GuestProfile
@@ -179,11 +182,6 @@ public class AggregateTranslator {
         for (BehaviorDecl behavior : mergedBehaviors) {
             classBuilder.addMethod(expressionTranslator.translateBehavior(behavior));
         }
-        
-        // Add domain event methods
-        classBuilder.addMethod(buildRegisterEventMethod(domainEventInterface));
-        classBuilder.addMethod(buildGetDomainEventsMethod(eventListType));
-        classBuilder.addMethod(buildClearDomainEventsMethod());
         
         // Add equals/hashCode based on identity
         if (root.identity() != null) {
@@ -378,8 +376,8 @@ public class AggregateTranslator {
         
         return builder.build();
     }
-    
-    private MethodSpec buildAggregateConstructor(EntityDecl root, Map<String, TypeName> inferredDependencies) {
+
+    private MethodSpec buildAggregateConstructor(EntityDecl root, Map<String, TypeName> inferredDependencies, boolean hasEmitClauses) {
         MethodSpec.Builder constructor = MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC);
         
@@ -404,6 +402,13 @@ public class AggregateTranslator {
             constructor.addStatement("this.$N = $N", dep.getKey(), dep.getKey());
         }
         
+        // Add EventPublisher parameter if aggregate emits events
+        if (hasEmitClauses) {
+            ClassName eventPublisherInterface = typeMapper.getEventPublisherInterface();
+            constructor.addParameter(eventPublisherInterface, "eventPublisher");
+            constructor.addStatement("this.eventPublisher = eventPublisher");
+        }
+        
         return constructor.build();
     }
 
@@ -426,6 +431,23 @@ public class AggregateTranslator {
         }
 
         return deps;
+    }
+
+    private boolean hasEmitClauses(AggregateDecl aggregate, EntityDecl root) {
+        List<BehaviorDecl> mergedBehaviors = new ArrayList<>(root.behaviors());
+        for (BehaviorDecl behavior : aggregate.behaviors()) {
+            if (!mergedBehaviors.contains(behavior)) {
+                mergedBehaviors.add(behavior);
+            }
+        }
+
+        for (BehaviorDecl behavior : mergedBehaviors) {
+            if (behavior.emitClause() != null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void collectExternalReceiversFromThenStatement(ThenClause.ThenStatement statement,
@@ -499,31 +521,6 @@ public class AggregateTranslator {
         }
         
         return constructor.build();
-    }
-    
-    private MethodSpec buildRegisterEventMethod(ClassName domainEventInterface) {
-        return MethodSpec.methodBuilder("registerEvent")
-            .addModifiers(Modifier.PROTECTED)
-            .addParameter(domainEventInterface, "event")
-            .addStatement("this.domainEvents.add(event)")
-            .build();
-    }
-    
-    private MethodSpec buildGetDomainEventsMethod(TypeName eventListType) {
-        return MethodSpec.methodBuilder("getDomainEvents")
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(Override.class)
-            .returns(eventListType)
-            .addStatement("return $T.copyOf(this.domainEvents)", LIST)
-            .build();
-    }
-    
-    private MethodSpec buildClearDomainEventsMethod() {
-        return MethodSpec.methodBuilder("clearDomainEvents")
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(Override.class)
-            .addStatement("this.domainEvents.clear()")
-            .build();
     }
     
     private MethodSpec buildEqualsMethod(String className, String identityFieldName) {
