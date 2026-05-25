@@ -1,9 +1,0 @@
-DomainEvent LoanApplicationSubmitted {
-    applicationId: UUID
-    submittedAt: DateTime
-}
-
-DomainEvent LoanApplicationApproved {
-    applicationId: UUID
-    approvedAt: DateTime
-}

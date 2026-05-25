@@ -1,5 +1,0 @@
-DomainService SlaPolicy {
-    when calculating first response due with priority: String and createdAt: DateTime:
-        then:
-            - calculate firstResponseDueAt as createdAt plus priority duration
-}

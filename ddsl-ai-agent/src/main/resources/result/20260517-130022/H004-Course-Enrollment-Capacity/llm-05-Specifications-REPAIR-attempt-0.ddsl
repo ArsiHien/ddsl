@@ -1,5 +1,0 @@
-Specification OpenForEnrollment {
-    matches CourseOffering where:
-        - status is "PUBLISHED"
-        - enrolledStudents < capacity
-}

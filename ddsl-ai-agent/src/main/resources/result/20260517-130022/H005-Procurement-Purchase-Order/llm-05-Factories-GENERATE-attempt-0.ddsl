@@ -1,8 +1,0 @@
-Factory PurchaseOrderFactory for PurchaseOrder {
-    when creating PurchaseOrder from supplierId, requesterId, lines:
-        require that:
-            - lines is not empty
-        then:
-            - create PurchaseOrder with new purchaseOrderId, supplierId, requesterId, lines, status set to "DRAFT"
-        return PurchaseOrder
-}

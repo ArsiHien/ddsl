@@ -1,5 +1,0 @@
-DomainService ApprovalPolicy {
-    when checking approval requirement with totalAmount as Money and requesterId as String:
-        calculate approvalRequired as totalAmount > 1000
-        return approvalRequired
-}

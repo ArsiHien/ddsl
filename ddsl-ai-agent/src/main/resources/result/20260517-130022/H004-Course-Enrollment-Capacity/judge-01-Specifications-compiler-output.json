@@ -1,1 +1,0 @@
-{"valid":false,"errors":[{"category":"SYNTAX_ERROR","location":"36:36","message":"Expected property name after '.', got 'count'","suggestion":"Check surrounding token '.' for correctness."}]}
