@@ -21,7 +21,7 @@ DDSL is a domain-specific language for modeling Domain-Driven Design systems and
 1. Clone the repository and enter the project directory.
 
    ```bash
-   git clone <repo-url>
+   git clone [<repo-url>](https://github.com/ArsiHien/ddsl.git)
    cd ddsl
    ```
 
